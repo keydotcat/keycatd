@@ -1,0 +1,46 @@
+package models
+
+import (
+	"database/sql"
+	"log"
+
+	"github.com/keydotcat/backend/db"
+	_ "github.com/lib/pq"
+)
+
+var mdb *sql.DB
+
+func init() {
+	var err error
+	mdb, err = sql.Open("postgres", "user=root dbname=test sslmode=disable port=26257")
+	if err != nil {
+		panic(err)
+	}
+	tables := []string{}
+	rows, err := mdb.Query("SHOW TABLES")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	var name string
+	for rows.Next() {
+		if err := rows.Scan(&name); err != nil {
+			panic(err)
+		}
+		tables = append(tables, name)
+	}
+	for _, tname := range tables {
+		if _, err = mdb.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
+			panic(err)
+		}
+	}
+	m := db.NewMigrateMgr(mdb)
+	if err := m.LoadMigrations(); err != nil {
+		panic(err)
+	}
+	lid, err := m.ApplyRequiredMigrations()
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Executed migrations until %d", lid)
+}

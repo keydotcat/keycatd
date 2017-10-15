@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -21,8 +22,9 @@ func NewMigrateMgr(db *sql.DB) *MigrateMgr {
 	return &MigrateMgr{db, make(map[int]string)}
 }
 
-func (m *MigrateMgr) loadAssets() error {
+func (m *MigrateMgr) LoadMigrations() error {
 	return static.Walk("data/migrations", func(path string, fi os.FileInfo, err error) error {
+		log.Println("Found migration", path)
 		if !strings.HasSuffix(path, ".sql") {
 			return nil
 		}
@@ -35,7 +37,7 @@ func (m *MigrateMgr) loadAssets() error {
 		if b == -1 || e == -1 {
 			return util.NewErrorf("Could not find migration id for %s. Seems to have an invalid format", path)
 		}
-		idx, err := strconv.Atoi(path[b:e])
+		idx, err := strconv.Atoi(path[b+1 : b+e])
 		if err != nil {
 			return util.NewErrorf("Could not parse number for db migration %s: %s", path, err)
 		}
@@ -119,7 +121,7 @@ func (m *MigrateMgr) applyMigration(mid int) error {
 }
 
 func (m *MigrateMgr) checkIfMigrationsTableExists() (bool, error) {
-	rows, err := db.Query("SHOW TABLES")
+	rows, err := m.db.Query("SHOW TABLES")
 	if err != nil {
 		return false, util.NewErrorf("Could not retrieve tables: %s", err)
 	}
