@@ -22,4 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
-data/version/current data/version/history static/data.go
+
+data/version/current
+data/version/history
+static/data.go

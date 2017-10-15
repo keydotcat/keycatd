@@ -3,19 +3,22 @@ package db
 import (
 	"database/sql"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/keydotcat/backend/static"
 	"github.com/keydotcat/backend/util"
 )
 
 type MigrateMgr struct {
-	assets map[int][]byte
+	db         *sql.DB
+	migrations map[int]string
 }
 
-func NewMigrateMgr(db *sql.DB) error {
-	return &MigrateMgr{db, make(map[int][]byte)}
+func NewMigrateMgr(db *sql.DB) *MigrateMgr {
+	return &MigrateMgr{db, make(map[int]string)}
 }
 
 func (m *MigrateMgr) loadAssets() error {
@@ -23,21 +26,120 @@ func (m *MigrateMgr) loadAssets() error {
 		if !strings.HasSuffix(path, ".sql") {
 			return nil
 		}
-		data, err := Asset(path)
+		data, err := static.Asset(path)
 		if err != nil {
 			return util.NewErrorFrom(err)
 		}
-		b := string.LastIndex(path, "/")
-		e := string.FirstIndex(path[b:], "_")
+		b := strings.LastIndex(path, "/")
+		e := strings.Index(path[b:], "_")
+		if b == -1 || e == -1 {
+			return util.NewErrorf("Could not find migration id for %s. Seems to have an invalid format", path)
+		}
 		idx, err := strconv.Atoi(path[b:e])
 		if err != nil {
 			return util.NewErrorf("Could not parse number for db migration %s: %s", path, err)
 		}
-		assets[idx] = data
+		m.migrations[idx] = string(data)
 		return nil
 	})
 }
 
 func (m *MigrateMgr) GetLastMigrationInstalled() (int, error) {
+	if exists, err := m.checkIfMigrationsTableExists(); err != nil {
+		return 0, err
+	} else if !exists {
+		if err = m.createMigrationsTable(); err != nil {
+			return 0, err
+		}
+	}
+	var mid int
+	err := m.db.QueryRow("SELECT \"Id\" FROM \"DBMigrations\" ORDER BY \"Id\" DESC LIMIT 1").Scan(&mid)
+	if err == sql.ErrNoRows {
+		return 0, nil
+	} else if err != nil {
+		return 0, util.NewErrorf("Could not retrieve last migration installed: %s", err)
+	}
+	return mid, nil
+}
 
+func (m *MigrateMgr) CheckIfMigrationIsRequired() (int, error) {
+	mid, err := m.GetLastMigrationInstalled()
+	if err != nil {
+		return 0, err
+	}
+	required := 0
+	for kid := range m.migrations {
+		if kid > mid {
+			required += 1
+		}
+	}
+	return required, nil
+}
+
+func (m *MigrateMgr) ApplyRequiredMigrations() (int, error) {
+	lid, err := m.GetLastMigrationInstalled()
+	if err != nil {
+		return 0, err
+	}
+	ids := make([]int, 0, len(m.migrations))
+	for kid := range m.migrations {
+		ids = append(ids, kid)
+	}
+	sort.Ints(ids)
+	for _, mid := range ids {
+		if mid <= lid {
+			continue
+		}
+		if err = m.applyMigration(mid); err != nil {
+			return 0, err
+		}
+		lid = mid
+	}
+	return lid, nil
+}
+
+func (m *MigrateMgr) applyMigration(mid int) error {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return util.NewErrorFrom(err)
+	}
+	data, ok := m.migrations[mid]
+	if !ok {
+		panic("Requested migration of non existant id")
+	}
+	_, err = tx.Exec(data)
+	if err != nil {
+		return util.NewErrorf("Could not process migration %d: %s", mid, err)
+	}
+	_, err = tx.Exec(`INSERT INTO "DBMigrations" ("Id","CreatedAt") VALUES ($1,$2)`, mid, time.Now().UTC())
+	if err != nil {
+		return util.NewErrorf("Could not write executed migration to table: %s", err)
+	}
+	return util.NewErrorFrom(tx.Commit())
+}
+
+func (m *MigrateMgr) checkIfMigrationsTableExists() (bool, error) {
+	rows, err := db.Query("SHOW TABLES")
+	if err != nil {
+		return false, util.NewErrorf("Could not retrieve tables: %s", err)
+	}
+	defer rows.Close()
+	var name string
+	for rows.Next() {
+		if err := rows.Scan(&name); err != nil {
+			return false, util.NewErrorf("Could not retrieve table name: %s", err)
+		}
+		if name == "DBMigrations" {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (m *MigrateMgr) createMigrationsTable() error {
+	_, err := m.db.Exec("CREATE TABLE \"DBMigrations\" (\"Id\" INT NOT NULL, \"CreatedAt\" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT \"primary\" PRIMARY KEY (\"Id\" DESC), FAMILY \"primary\" (\"Id\", \"CreatedAt\") )")
+	if err != nil {
+		return util.NewErrorf("Could not create migrations table: %s", err)
+	}
+	return nil
 }
