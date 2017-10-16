@@ -24,3 +24,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/facebookgo/stack"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"

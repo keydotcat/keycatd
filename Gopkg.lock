@@ -7,9 +7,21 @@
   packages = ["."]
   revision = "751773369052141c013c6e827a71e8f35c07879c"
 
+[[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [".","oid"]
+  revision = "017e4c14d80628353eaee677a1aeffe47a10c0dc"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["bcrypt","blowfish"]
+  revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5d77cd5d14830df47fc1396282fbd808b324499f3de552d363ad03159043bc80"
+  inputs-digest = "c501a8b729429b964d81de4efffefaa7179e8fff771fac3961c952ccac8fe5ca"
   solver-name = "gps-cdcl"
   solver-version = 1
