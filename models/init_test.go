@@ -1,16 +1,19 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
 	"github.com/keydotcat/backend/db"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var mdb *sql.DB
 
 func init() {
+	HASH_PASSWD_COST = bcrypt.MinCost
 	var err error
 	mdb, err = sql.Open("postgres", "user=root dbname=test sslmode=disable port=26257")
 	if err != nil {
@@ -30,6 +33,7 @@ func init() {
 		tables = append(tables, name)
 	}
 	for _, tname := range tables {
+		log.Printf("Dropping %s", tname)
 		if _, err = mdb.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
 			panic(err)
 		}
@@ -43,4 +47,8 @@ func init() {
 		panic(err)
 	}
 	log.Printf("Executed migrations until %d", lid)
+}
+
+func getCtx() context.Context {
+	return AddDBToContext(context.Background(), mdb)
 }
