@@ -34,9 +34,10 @@ DROP TABLE IF EXISTS "Invites";
 CREATE TABLE "Invites" (
 	"Team" STRING NOT NULL REFERENCES "Teams" ("Id"),
 	"Email" STRING NOT NULL,
+	"CreatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("Team", "Email"),
 	INDEX email ("Email" ASC),
-	FAMILY "primary" ("Team", "Email")
+	FAMILY "primary" ("Team", "Email", "CreatedAt")
 ) INTERLEAVE IN PARENT "Teams" ("Team");
 
 DROP TABLE IF EXISTS "Team_Users";
@@ -63,9 +64,11 @@ DROP TABLE IF EXISTS "Vaults";
 CREATE TABLE "Vaults" (
 	"Id" STRING NOT NULL,
 	"Team" STRING NOT NULL REFERENCES "Teams" ("Id"),
- 	"PublicKey" STRING NOT NULL,
+ 	"PublicKey" BITEA NOT NULL,
+	"CreatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"UpdatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("Team", "Id" ASC),
-	FAMILY "primary" ("Id", "Team", "PublicKey")
+	FAMILY "primary" ("Id", "Team", "PublicKey", "CreatedAt", "UpdatedAt")
 ) INTERLEAVE IN PARENT "Teams" ("Team");
 
 DROP TABLE IF EXISTS "Vault_User";
@@ -74,8 +77,10 @@ CREATE TABLE "Vault_User" (
 	"Vault" STRING NOT NULL,
 	"Username" STRING NOT NULL,
 	"Key" STRING NOT NULL,
+	"CreatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"UpdatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("Team", "Vault", "Username" ASC),
-	FAMILY "primary" ("Team", "Vault", "Username", "Key"),
+	FAMILY "primary" ("Team", "Vault", "Username", "Key", "CreatedAt", "UpdatedAt"),
 	CONSTRAINT "fk_TeamsVaults" FOREIGN KEY ("Team", "Vault" ) REFERENCES "Vaults"
 ) INTERLEAVE IN PARENT "Vaults" ("Team", "Vault");
 
@@ -85,8 +90,10 @@ CREATE TABLE "Secrets" (
 	"Vault" STRING NOT NULL,
 	"Id"  STRING NOT NULL,
 	"Data" BYTES NOT NULL,
+	"CreatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"UpdatedAt" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("Team", "Vault", "Id" ASC),
-	FAMILY "primary" ("Team", "Vault", "Id",  "Data"),
+	FAMILY "primary" ("Team", "Vault", "Id",  "Data", "UpdatedAt", "CreatedAt"),
 	CONSTRAINT "fk_TeamsVaults" FOREIGN KEY ("Team", "Vault" ) REFERENCES "Vaults"
 ) INTERLEAVE IN PARENT "Vaults" ("Team","Vault");
 
