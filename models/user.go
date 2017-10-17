@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -60,7 +61,7 @@ func (u *User) insert(tx *sql.Tx) error {
 	}
 	u.CreatedAt = time.Now().UTC()
 	u.UpdatedAt = u.CreatedAt
-	_, err := tx.Exec(`INSERT INTO "Users" ("Id", "Email", "UnconfirmedEmail", "HashPass", "FullName", "ConfirmedAt", "LockedAt", "SignInCount", "FailedAttempts", "PublicKey", "Key", "CreatedAt", "UpdatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, u.Id, u.Email, u.UnconfirmedEmail, u.HashedPassword, u.FullName, u.ConfirmedAt, u.LockedAt, u.SignInCount, u.FailedAttempts, u.PublicKey, u.Key, u.CreatedAt, u.UpdatedAt)
+	_, err := tx.Exec(fmt.Sprintf(`INSERT INTO "Users" %s VALUES %s`, insertUserFields, insertUserBind), fieldsUser(u)...)
 	if err != nil {
 		return util.NewErrorf("Could not create user: %s", err)
 	}
