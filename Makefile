@@ -3,6 +3,7 @@ GIT_VERSION = $(shell git describe --abbrev=8 --dirty --always 2>/dev/null)
 .PHONY: static
 
 cmds:
+	go get github.com/jteeuwen/go-bindata/...
 	go get github.com/acasajus/scaneo
 
 git-static: models/autogen.go

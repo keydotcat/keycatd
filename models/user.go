@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"regexp"
 	"time"
 
@@ -22,7 +21,7 @@ type User struct {
 	Id               string
 	Email            string
 	UnconfirmedEmail string
-	HashedPassword   []byte
+	HashPass         []byte
 	FullName         string
 	ConfirmedAt      pq.NullTime
 	LockedAt         pq.NullTime
@@ -61,8 +60,11 @@ func (u *User) insert(tx *sql.Tx) error {
 	}
 	u.CreatedAt = time.Now().UTC()
 	u.UpdatedAt = u.CreatedAt
-	_, err := tx.Exec(fmt.Sprintf(`INSERT INTO "Users" %s VALUES %s`, insertUserFields, insertUserBind), fieldsUser(u)...)
+	_, err := u.dbInsert(tx)
 	if err != nil {
+		if isDuplicateErr(err) {
+			return util.NewErrorf("Username already taken")
+		}
 		return util.NewErrorf("Could not create user: %s", err)
 	}
 	return nil
@@ -76,7 +78,7 @@ func (u *User) validate() error {
 	if len(u.FullName) == 0 {
 		errs.SetFieldError("fullname", "invalid")
 	}
-	if len(u.HashedPassword) < 6 {
+	if len(u.HashPass) < 6 {
 		errs.SetFieldError("password", "too short")
 	}
 	if !reValidEmail.MatchString(u.Email) {
@@ -96,10 +98,10 @@ func (u *User) SetPassword(pass string) error {
 	if err != nil {
 		return util.NewErrorf("Could not hash password: %s", err)
 	}
-	u.HashedPassword = hpas
+	u.HashPass = hpas
 	return nil
 }
 
 func (u *User) CheckPassword(pass string) error {
-	return bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(pass))
+	return bcrypt.CompareHashAndPassword(u.HashPass, []byte(pass))
 }

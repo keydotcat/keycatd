@@ -38,7 +38,7 @@ func (t *Team) insert(tx *sql.Tx) error {
 	if err := t.validate(); err != nil {
 		return err
 	}
-	_, err := tx.Exec(`INSERT INTO "Teams" ("Id", "Name", "Owner", "BelongsToUser", "Size", "CreatedAt", "UpdatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7)`, t.Id, t.Name, t.Owner, t.BelongsToUser, t.Size, t.CreatedAt, t.UpdatedAt)
+	_, err := t.dbInsert(tx)
 	if err != nil {
 		return util.NewErrorf("Could not create team: %s", err)
 	}
