@@ -76,7 +76,7 @@ CREATE TABLE "vault_user" (
 	"team" STRING NOT NULL, 
 	"vault" STRING NOT NULL,
 	"user" STRING NOT NULL,
-	"key" STRING NOT NULL,
+	"key" BLOB NOT NULL,
 	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("team", "vault", "user" ASC),

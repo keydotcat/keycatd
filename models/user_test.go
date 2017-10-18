@@ -9,7 +9,7 @@ import (
 
 func TestCreateUser(t *testing.T) {
 	ctx := getCtx()
-	vkp := VaultKeyPair{}
+	vkp := VaultKeyPair{make([]byte, 32), map[string][]byte{"test": []byte("crap")}}
 	u, err := NewUser(ctx, "test", "easdsa", "asdas@asdas.com", "somepass", make([]byte, 32), make([]byte, 32), vkp)
 	if err != nil {
 		fmt.Println(util.GetStack(err))

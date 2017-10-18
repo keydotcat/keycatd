@@ -8,13 +8,13 @@ import (
 )
 
 type Team struct {
-	Id            string `scaneo:"pk"`
-	Name          string
-	Owner         string
-	BelongsToUser bool
-	Size          int
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	Id        string `scaneo:"pk"`
+	Name      string
+	Owner     string
+	Primary   bool
+	Size      int
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func createUserTeam(tx *sql.Tx, owner *User, name string, vaultKeys VaultKeyPair) (*Team, error) {
@@ -29,6 +29,16 @@ func createUserTeam(tx *sql.Tx, owner *User, name string, vaultKeys VaultKeyPair
 		now,
 	}
 	if err := t.insert(tx); err != nil {
+		return nil, err
+	}
+	tu := &teamUser{t.Id, owner.Id, true, false}
+	if err := tu.insert(tx); err != nil {
+		return nil, err
+	}
+	if err := vaultKeys.checkKeysForEveryone([]string{owner.Id}); err != nil {
+		return nil, err
+	}
+	if _, err := createVault(tx, "Generic", t.Id, vaultKeys); err != nil {
 		return nil, err
 	}
 	return t, nil
