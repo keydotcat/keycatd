@@ -18,7 +18,7 @@ var (
 )
 
 type User struct {
-	Id               string
+	Id               string `scaneo:"pk" json:"id"`
 	Email            string
 	UnconfirmedEmail string
 	HashPass         []byte
@@ -33,7 +33,7 @@ type User struct {
 	UpdatedAt        time.Time
 }
 
-func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte) (*User, error) {
+func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte, vaultKeys VaultKeyPair) (*User, error) {
 	u := &User{
 		Id:               id,
 		Email:            email,
@@ -49,7 +49,7 @@ func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, 
 		if err := u.insert(tx); err != nil {
 			return err
 		}
-		_, err := createUserTeam(tx, u, u.FullName)
+		_, err := createUserTeam(tx, u, u.FullName, vaultKeys)
 		return err
 	})
 }
@@ -66,6 +66,18 @@ func (u *User) insert(tx *sql.Tx) error {
 			return util.NewErrorf("Username already taken")
 		}
 		return util.NewErrorf("Could not create user: %s", err)
+	}
+	return nil
+}
+
+func (u *User) update(tx *sql.Tx) error {
+	if err := u.validate(); err != nil {
+		return err
+	}
+	u.UpdatedAt = u.CreatedAt
+	_, err := u.dbUpdate(tx)
+	if err != nil {
+		return util.NewErrorf("Could not update user: %s", err)
 	}
 	return nil
 }

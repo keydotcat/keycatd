@@ -8,7 +8,7 @@ import (
 )
 
 type Team struct {
-	Id            string
+	Id            string `scaneo:"pk"`
 	Name          string
 	Owner         string
 	BelongsToUser bool
@@ -17,7 +17,7 @@ type Team struct {
 	UpdatedAt     time.Time
 }
 
-func createUserTeam(tx *sql.Tx, owner *User, name string) (*Team, error) {
+func createUserTeam(tx *sql.Tx, owner *User, name string, vaultKeys VaultKeyPair) (*Team, error) {
 	now := time.Now().UTC()
 	t := &Team{
 		util.GenerateRandomToken(16),
