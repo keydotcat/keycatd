@@ -81,7 +81,8 @@ CREATE TABLE "vault_user" (
 	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("team", "vault", "user" ASC),
 	FAMILY "primary" ("team", "vault", "user", "key", "created_at", "updated_at"),
-	CONSTRAINT "fk_Team" FOREIGN KEY ("team", "vault" ) REFERENCES "vault"
+	CONSTRAINT "fk_Vault" FOREIGN KEY ("team", "vault") REFERENCES "vault",
+	CONSTRAINT "fk_TeamUser" FOREIGN KEY ("team", "user") REFERENCES "team_user"
 ) INTERLEAVE IN PARENT "vault" ("team", "vault");
 
 DROP TABLE IF EXISTS "Secret";

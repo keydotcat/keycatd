@@ -11,7 +11,7 @@ type VaultKeyPair struct {
 	Keys      map[string][]byte `json:"keys"`
 }
 
-func (vkp VaultKeyPair) checkKeysForEveryone(ppl []string) error {
+func (vkp VaultKeyPair) checkKeyIdsMatch(ppl []string) error {
 	if vkp.Keys == nil {
 		return util.NewErrorf("No keys for vault")
 	}

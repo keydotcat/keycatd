@@ -21,8 +21,7 @@ func createVault(tx *sql.Tx, id, team string, vkp VaultKeyPair) (*Vault, error) 
 		return nil, err
 	}
 	for u, k := range vkp.Keys {
-		vu := &vaultUser{Team: v.Team, Vault: v.Id, User: u, Key: k}
-		if err := vu.insert(tx); err != nil {
+		if err := v.addUser(tx, u, k); err != nil {
 			return nil, err
 		}
 	}
@@ -58,4 +57,9 @@ func (v Vault) validate() error {
 		errs.SetFieldError("public_key", "invalid")
 	}
 	return errs.Camo()
+}
+
+func (v Vault) addUser(tx *sql.Tx, username string, key []byte) error {
+	vu := &vaultUser{Team: v.Team, Vault: v.Id, User: username, Key: key}
+	return vu.insert(tx)
 }

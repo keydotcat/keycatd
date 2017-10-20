@@ -49,7 +49,14 @@ func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, 
 		if err := u.insert(tx); err != nil {
 			return err
 		}
-		_, err := createUserTeam(tx, u, u.FullName, vaultKeys)
+		_, err := createTeam(tx, u, true, u.FullName, vaultKeys)
+		return err
+	})
+}
+
+func (u *User) CreateTeam(ctx context.Context, name string, vaultKeys VaultKeyPair) (t *Team, err error) {
+	return t, doTx(ctx, func(tx *sql.Tx) error {
+		t, err = createTeam(tx, u, false, name, vaultKeys)
 		return err
 	})
 }
@@ -99,7 +106,7 @@ func (u *User) validate() error {
 	if len(u.PublicKey) != 32 {
 		errs.SetFieldError("public_key", "invalid")
 	}
-	if len(u.Key) != 32 {
+	if len(u.Key) < 32 {
 		errs.SetFieldError("private_key", "invalid")
 	}
 	return errs.Camo()
@@ -116,4 +123,17 @@ func (u *User) SetPassword(pass string) error {
 
 func (u *User) CheckPassword(pass string) error {
 	return bcrypt.CompareHashAndPassword(u.HashPass, []byte(pass))
+}
+
+func (u *User) GetTeams(ctx context.Context) []*Team {
+	db := GetDB(ctx)
+	rows, err := db.Query(`SELECT `+selectTeamFullFields+` FROM "team", "team_user" WHERE  "team_user"."team" = "team".id AND "team_user"."user" = $1`, u.Id)
+	if err != nil {
+		panic("Could not retrieve teams: " + err.Error())
+	}
+	teams, err := scanTeams(rows)
+	if err != nil {
+		panic("Could not scan teams: " + err.Error())
+	}
+	return teams
 }

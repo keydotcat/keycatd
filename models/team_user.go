@@ -24,3 +24,15 @@ func (tu *teamUser) insert(tx *sql.Tx) error {
 	}
 	return nil
 }
+
+func (tu *teamUser) update(tx *sql.Tx) error {
+	_, err := tu.dbUpdate(tx)
+
+	if err != nil {
+		if isDuplicateErr(err) {
+			return util.NewErrorf("User %s is already in team", tu.User)
+		}
+		return util.NewErrorf("Could not update user in team: %s", err)
+	}
+	return nil
+}
