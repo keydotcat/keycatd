@@ -1,6 +1,10 @@
 package models
 
-import "github.com/lib/pq"
+import (
+	"database/sql"
+
+	"github.com/lib/pq"
+)
 
 func isDuplicateErr(err error) bool {
 	if err == nil {
@@ -8,4 +12,8 @@ func isDuplicateErr(err error) bool {
 	}
 	pe, ok := err.(*pq.Error)
 	return ok && pe.Code == "23505"
+}
+
+func isNotExistsErr(err error) bool {
+	return err == sql.ErrNoRows
 }

@@ -58,4 +58,18 @@ func TestCreateUser(t *testing.T) {
 	if vault.Id != DEFAULT_VAULT_NAME {
 		t.Errorf("Team name mismatch expected %s and got %s", DEFAULT_VAULT_NAME, vault.Id)
 	}
+	nu := FindUser(ctx, u.Id)
+	if nu == nil {
+		t.Fatalf("Could not find user by email")
+	}
+	if nu.Id != u.Id {
+		t.Errorf("Mismatch in user IDs. Got %s and expected %s", nu.Id, u.Id)
+	}
+	nu = FindUserByEmail(ctx, u.Email)
+	if nu == nil {
+		t.Fatalf("Could not find user by email")
+	}
+	if nu.Id != u.Id {
+		t.Errorf("Mismatch in user IDs. Got %s and expected %s", nu.Id, u.Id)
+	}
 }

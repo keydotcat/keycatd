@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -52,6 +53,43 @@ func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, 
 		_, err := createTeam(tx, u, true, u.FullName, vaultKeys)
 		return err
 	})
+}
+
+func FindUser(ctx context.Context, id string) (u *User) {
+	doTx(ctx, func(tx *sql.Tx) error {
+		u = findUser(tx, id)
+		return nil
+	})
+	return u
+}
+
+func findUser(tx *sql.Tx, id string) *User {
+	return findUserByField(tx, "id", id)
+}
+
+func FindUserByEmail(ctx context.Context, email string) (u *User) {
+	doTx(ctx, func(tx *sql.Tx) error {
+		u = findUserByEmail(tx, email)
+		return nil
+	})
+	return u
+}
+
+func findUserByEmail(tx *sql.Tx, email string) *User {
+	return findUserByField(tx, "email", email)
+}
+
+func findUserByField(tx *sql.Tx, fieldName, value string) *User {
+	r := tx.QueryRow(fmt.Sprintf(`SELECT %s FROM "user" WHERE "%s" = $1`, selectUserFields, fieldName), value)
+	u := &User{}
+	err := u.dbScanRow(r)
+	if err != nil {
+		if isNotExistsErr(err) {
+			return nil
+		}
+		panic("Could not find user, error in sql statement: " + err.Error())
+	}
+	return u
 }
 
 func (u *User) CreateTeam(ctx context.Context, name string, vaultKeys VaultKeyPair) (t *Team, err error) {

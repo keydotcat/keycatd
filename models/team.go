@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/keydotcat/backend/util"
@@ -113,8 +114,22 @@ func (t *Team) CreateVault(ctx context.Context, name string, vaultKeys VaultKeyP
 }
 
 func (t *Team) filterTeamUsers(tx *sql.Tx, uids ...string) ([]*teamUser, error) {
+	binds := make([]string, len(uids)+1)
+	binds[0] = t.Id
+	for i := range uids {
+		//Pos x of array is $(x+1) since binds start at index 1
+		binds[i+1] = fmt.Sprintf("$%d", i+2)
+	}
+	stmt := fmt.Sprintf(`SELECT %s FROM "team_user" WHERE "team_user"."team" = $1 AND "team_user"."user" in (%s)`, selectTeamUserFields, binds)
+	rows, err := tx.Query(stmt, binds)
+	if err != nil {
+		panic("Could not retrieve team user states: " + err.Error())
+	}
+	tus, err := scanTeamUsers(rows)
+	if err != nil {
+		panic("Could not scan team users: " + err.Error())
+	}
 	teamUsers := make([]*teamUser, len(uids))
-	tus := t.getTeamUsers(tx)
 	for i, uid := range uids {
 		belongsToTeam := false
 		for _, tu := range tus {
@@ -160,6 +175,62 @@ func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, 
 		ta.Admin = true
 		return ta.update(tx)
 	})
+}
+
+func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomerEmail string) error {
+	return doTx(ctx, func(tx *sql.Tx) error {
+		nu := findUserByEmail(tx, newcomerEmail)
+		if nu != nil {
+			return t.addUser(tx, admin, nu)
+		}
+		//TODO: Send Invite
+		return t.generateInvite(tx, admin, newcomerEmail)
+	})
+}
+
+func (t *Team) getUserTeamForUser(tx *sql.Tx, u *User) *teamUser {
+	tu := &teamUser{Team: t.Id, User: u.Id}
+	err := tu.dbFind(tx)
+	if err == nil {
+		return tu
+	}
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	panic("Could not retrieve team user state: " + err.Error())
+}
+
+func (t *Team) generateInvite(tx *sql.Tx, admin *User, email string) error {
+	if !reValidEmail.MatchString(email) {
+		return util.NewErrorf("%s doesn't seem to be a valid email", email)
+	}
+	if err := t.checkAdmin(tx, admin); err != nil {
+		return err
+	}
+	i := &Invite{Team: t.Id, Email: email}
+	return i.insert(tx)
+}
+
+func (t *Team) checkAdmin(tx *sql.Tx, u *User) error {
+	tu := t.getUserTeamForUser(tx, u)
+	if tu == nil {
+		return util.NewErrorf("You don't belong to this team")
+	} else if !tu.Admin {
+		return util.NewErrorf("You're not admin for this group")
+	}
+	return nil
+}
+
+func (t *Team) addUser(tx *sql.Tx, admin *User, newUser *User) error {
+	if err := t.checkAdmin(tx, admin); err != nil {
+		return err
+	}
+	tu := t.getUserTeamForUser(tx, newUser)
+	if tu != nil {
+		return util.NewErrorf("%s already belongs to team", newUser.Id)
+	}
+	tu = &teamUser{t.Id, newUser.Id, false, false}
+	return tu.insert(tx)
 }
 
 func (t *Team) demoteUser(ctx context.Context, demoter *User, demotee *User) error {
