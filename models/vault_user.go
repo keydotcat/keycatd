@@ -21,12 +21,11 @@ func (tu *vaultUser) insert(tx *sql.Tx) error {
 	tu.CreatedAt = now
 	tu.UpdatedAt = now
 	_, err := tu.dbInsert(tx)
-
-	if err != nil {
-		if isDuplicateErr(err) {
-			return util.NewErrorf("User %s is already in vault", tu.User)
-		}
-		return util.NewErrorf("Could not add user to vault: %s", err)
+	if isDuplicateErr(err) {
+		return util.NewErrorf("User %s is already in vault", tu.User)
+	}
+	if isErrOrPanic(err) {
+		return util.NewErrorFrom(err)
 	}
 	return nil
 }

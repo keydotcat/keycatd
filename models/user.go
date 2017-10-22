@@ -85,7 +85,7 @@ func findUserByField(tx *sql.Tx, fieldName, value string) (*User, error) {
 		return nil, nil
 	}
 	isErrOrPanic(err)
-	return u, err
+	return u, util.NewErrorFrom(err)
 }
 
 func (u *User) CreateTeam(ctx context.Context, name string, vaultKeys VaultKeyPair) (t *Team, err error) {
@@ -106,7 +106,7 @@ func (u *User) insert(tx *sql.Tx) error {
 		return util.NewErrorf("Username already taken")
 	}
 	isErrOrPanic(err)
-	return err
+	return util.NewErrorFrom(err)
 }
 
 func (u *User) update(tx *sql.Tx) error {
@@ -116,7 +116,7 @@ func (u *User) update(tx *sql.Tx) error {
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbUpdate(tx)
 	isErrOrPanic(err)
-	return err
+	return util.NewErrorFrom(err)
 }
 
 func (u *User) validate() error {
@@ -159,9 +159,9 @@ func (u *User) GetTeams(ctx context.Context) ([]*Team, error) {
 	db := GetDB(ctx)
 	rows, err := db.Query(`SELECT `+selectTeamFullFields+` FROM "team", "team_user" WHERE  "team_user"."team" = "team".id AND "team_user"."user" = $1`, u.Id)
 	if isErrOrPanic(err) {
-		return nil, err
+		return nil, util.NewErrorFrom(err)
 	}
 	teams, err := scanTeams(rows)
 	isErrOrPanic(err)
-	return teams, err
+	return teams, util.NewErrorFrom(err)
 }

@@ -15,24 +15,19 @@ type teamUser struct {
 
 func (tu *teamUser) insert(tx *sql.Tx) error {
 	_, err := tu.dbInsert(tx)
-
-	if err != nil {
-		if isDuplicateErr(err) {
-			return util.NewErrorf("User %s is already in team", tu.User)
-		}
-		return util.NewErrorf("Could not add user to team: %s", err)
+	if isDuplicateErr(err) {
+		return util.NewErrorFrom(ErrAlreadyInTeam)
+	}
+	if isErrOrPanic(err) {
+		return util.NewErrorFrom(err)
 	}
 	return nil
 }
 
 func (tu *teamUser) update(tx *sql.Tx) error {
 	_, err := tu.dbUpdate(tx)
-
-	if err != nil {
-		if isDuplicateErr(err) {
-			return util.NewErrorf("User %s is already in team", tu.User)
-		}
-		return util.NewErrorf("Could not update user in team: %s", err)
+	if isErrOrPanic(err) {
+		return util.NewErrorFrom(err)
 	}
 	return nil
 }

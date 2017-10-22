@@ -30,11 +30,11 @@ func (u *Invite) insert(tx *sql.Tx) error {
 	}
 	u.CreatedAt = time.Now().UTC()
 	_, err := u.dbInsert(tx)
-	if err != nil {
-		if isDuplicateErr(err) {
-			return nil
-		}
-		return util.NewErrorf("Could not create invite: %s", err)
+	if isDuplicateErr(err) {
+		return util.NewErrorFrom(ErrAlreadyInvited)
+	}
+	if isErrOrPanic(err) {
+		return err
 	}
 	return nil
 }
