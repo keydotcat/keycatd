@@ -36,11 +36,11 @@ func (v *Vault) insert(tx *sql.Tx) error {
 	v.CreatedAt = now
 	v.UpdatedAt = now
 	_, err := v.dbInsert(tx)
-	if err != nil {
-		if isDuplicateErr(err) {
-			return util.NewErrorf("Vault name already exists")
-		}
-		return util.NewErrorf("Could not create vault: %s", err)
+	switch {
+	case isDuplicateErr(err):
+		return util.NewErrorf("Vault name already exists")
+	case isErrOrPanic(err):
+		return err
 	}
 	return nil
 }

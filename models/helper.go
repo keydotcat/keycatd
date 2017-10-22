@@ -17,3 +17,13 @@ func isDuplicateErr(err error) bool {
 func isNotExistsErr(err error) bool {
 	return err == sql.ErrNoRows
 }
+
+func isErrOrPanic(err error) bool {
+	if err != nil {
+		if err != sql.ErrTxDone || err != sql.ErrConnDone {
+			panic("Could not execute sql statement: " + err.Error())
+		}
+		return true
+	}
+	return false
+}

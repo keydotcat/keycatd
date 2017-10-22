@@ -25,8 +25,13 @@ func doTx(ctx context.Context, ftor func(*sql.Tx) error) error {
 		panic(err)
 	}
 	if err = ftor(tx); err != nil {
-		if rerr := tx.Rollback(); rerr != nil {
-			return util.NewErrorf("Could not rollback transaction: %s (prev error was %s)", rerr, err)
+		switch err {
+		case sql.ErrConnDone, sql.ErrTxDone:
+			return err
+		default:
+			if rerr := tx.Rollback(); rerr != nil {
+				return util.NewErrorf("Could not rollback transaction: %s (prev error was %s)", rerr, err)
+			}
 		}
 		return err
 	}

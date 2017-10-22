@@ -53,10 +53,8 @@ func (t *Team) insert(tx *sql.Tx) error {
 		return err
 	}
 	_, err := t.dbInsert(tx)
-	if err != nil {
-		return util.NewErrorf("Could not create team: %s", err)
-	}
-	return nil
+	isErrOrPanic(err)
+	return err
 }
 
 func (t *Team) validate() error {
@@ -70,40 +68,34 @@ func (t *Team) validate() error {
 	return errs.Camo()
 }
 
-func (t *Team) getAdminUsers(tx *sql.Tx) []*User {
+func (t *Team) getAdminUsers(tx *sql.Tx) ([]*User, error) {
 	rows, err := tx.Query(`SELECT `+selectUserFullFields+` FROM "user", "team_user" WHERE "team_user"."team" = $1 AND "user"."id" = "team_user"."user" AND "team_user"."admin" = true`, t.Id)
-	if err != nil {
-		panic("Could not retrieve users: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	users, err := scanUsers(rows)
-	if err != nil {
-		panic("Could not scan users: " + err.Error())
-	}
-	return users
+	isErrOrPanic(err)
+	return users, err
 }
 
-func (t *Team) getUsers(tx *sql.Tx) []*User {
+func (t *Team) getUsers(tx *sql.Tx) ([]*User, error) {
 	rows, err := tx.Query(`SELECT `+selectUserFullFields+` FROM "user", "team_user" WHERE "team_user"."team" = $1 AND "user"."id" = "team_user"."user"`, t.Id)
-	if err != nil {
-		panic("Could not retrieve users: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	users, err := scanUsers(rows)
-	if err != nil {
-		panic("Could not scan users: " + err.Error())
-	}
-	return users
+	isErrOrPanic(err)
+	return users, err
 }
 
-func (t *Team) getTeamUsers(tx *sql.Tx) []*teamUser {
+func (t *Team) getUsersAfiliation(tx *sql.Tx) ([]*teamUser, error) {
 	rows, err := tx.Query(`SELECT `+selectTeamUserFullFields+` FROM "team_user" WHERE "team_user"."team" = $1`, t.Id)
-	if err != nil {
-		panic("Could not retrieve team user states: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	users, err := scanTeamUsers(rows)
-	if err != nil {
-		panic("Could not scan team users: " + err.Error())
-	}
-	return users
+	isErrOrPanic(err)
+	return users, err
 }
 
 func (t *Team) CreateVault(ctx context.Context, name string, vaultKeys VaultKeyPair) (v *Vault, err error) {
@@ -122,12 +114,12 @@ func (t *Team) filterTeamUsers(tx *sql.Tx, uids ...string) ([]*teamUser, error) 
 	}
 	stmt := fmt.Sprintf(`SELECT %s FROM "team_user" WHERE "team_user"."team" = $1 AND "team_user"."user" in (%s)`, selectTeamUserFields, binds)
 	rows, err := tx.Query(stmt, binds)
-	if err != nil {
-		panic("Could not retrieve team user states: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	tus, err := scanTeamUsers(rows)
-	if err != nil {
-		panic("Could not scan team users: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	teamUsers := make([]*teamUser, len(uids))
 	for i, uid := range uids {
@@ -158,7 +150,10 @@ func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, 
 		if teamUsers[1].Admin {
 			return util.NewErrorf("%s is admin", promotee.Id)
 		}
-		missingVaults := t.getVaultsMissingForUser(tx, promotee)
+		missingVaults, err := t.getVaultsMissingForUser(tx, promotee)
+		if err != nil {
+			return err
+		}
 		vaultIds := make([]string, len(missingVaults))
 		for i, v := range missingVaults {
 			vaultIds[i] = v.Id
@@ -177,27 +172,32 @@ func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, 
 	})
 }
 
-func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomerEmail string) error {
-	return doTx(ctx, func(tx *sql.Tx) error {
-		nu := findUserByEmail(tx, newcomerEmail)
+func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomerEmail string) (bool, error) {
+	add := false
+	return add, doTx(ctx, func(tx *sql.Tx) error {
+		nu, err := findUserByEmail(tx, newcomerEmail)
+		if err != nil {
+			return err
+		}
 		if nu != nil {
+			add = true
 			return t.addUser(tx, admin, nu)
 		}
-		//TODO: Send Invite
 		return t.generateInvite(tx, admin, newcomerEmail)
 	})
 }
 
-func (t *Team) getUserTeamForUser(tx *sql.Tx, u *User) *teamUser {
+func (t *Team) getUserTeamForUser(tx *sql.Tx, u *User) (*teamUser, error) {
 	tu := &teamUser{Team: t.Id, User: u.Id}
 	err := tu.dbFind(tx)
-	if err == nil {
-		return tu
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case isErrOrPanic(err):
+		return nil, err
+	default:
+		return tu, nil
 	}
-	if err == sql.ErrNoRows {
-		return nil
-	}
-	panic("Could not retrieve team user state: " + err.Error())
 }
 
 func (t *Team) generateInvite(tx *sql.Tx, admin *User, email string) error {
@@ -212,7 +212,10 @@ func (t *Team) generateInvite(tx *sql.Tx, admin *User, email string) error {
 }
 
 func (t *Team) checkAdmin(tx *sql.Tx, u *User) error {
-	tu := t.getUserTeamForUser(tx, u)
+	tu, err := t.getUserTeamForUser(tx, u)
+	if err != nil {
+		return err
+	}
 	if tu == nil {
 		return util.NewErrorf("You don't belong to this team")
 	} else if !tu.Admin {
@@ -225,7 +228,10 @@ func (t *Team) addUser(tx *sql.Tx, admin *User, newUser *User) error {
 	if err := t.checkAdmin(tx, admin); err != nil {
 		return err
 	}
-	tu := t.getUserTeamForUser(tx, newUser)
+	tu, err := t.getUserTeamForUser(tx, newUser)
+	if err != nil {
+		return err
+	}
 	if tu != nil {
 		return util.NewErrorf("%s already belongs to team", newUser.Id)
 	}
@@ -251,27 +257,27 @@ func (t *Team) demoteUser(ctx context.Context, demoter *User, demotee *User) err
 	})
 }
 
-func (t *Team) GetVaultsForUser(ctx context.Context, u *User) []*Vault {
+func (t *Team) GetVaultsForUser(ctx context.Context, u *User) ([]*Vault, error) {
 	db := GetDB(ctx)
 	rows, err := db.Query(`SELECT `+selectVaultFullFields+` FROM "vault", "vault_user" WHERE  "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
-	if err != nil {
-		panic("Could not retrieve vaults: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	vaults, err := scanVaults(rows)
-	if err != nil {
-		panic("Could not scan vaults: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
-	return vaults
+	return vaults, nil
 }
 
-func (t *Team) getVaultsMissingForUser(tx *sql.Tx, u *User) []*Vault {
+func (t *Team) getVaultsMissingForUser(tx *sql.Tx, u *User) ([]*Vault, error) {
 	rows, err := tx.Query(`SELECT `+selectVaultFullFields+` FROM "vault" WHERE "vault"."id" NOT IN ( SELECT "vault"."id" FROM "vault", "vault_user" WHERE "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
-	if err != nil {
-		panic("Could not retrieve vaults: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	vaults, err := scanVaults(rows)
-	if err != nil {
-		panic("Could not scan vaults: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
-	return vaults
+	return vaults, nil
 }

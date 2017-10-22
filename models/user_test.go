@@ -39,7 +39,10 @@ func TestCreateUser(t *testing.T) {
 	if err != nil && "Username already taken" != err.Error() {
 		t.Fatal(err)
 	}
-	teams := u.GetTeams(ctx)
+	teams, err := u.GetTeams(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(teams) != 1 {
 		t.Fatalf("Expected to have 1 team and got %d", len(teams))
 	}
@@ -50,7 +53,10 @@ func TestCreateUser(t *testing.T) {
 	if team.Owner != u.Id {
 		t.Errorf("Team owner mismatch expected %s and got %s", u.Id, team.Owner)
 	}
-	vaults := team.GetVaultsForUser(ctx, u)
+	vaults, err := team.GetVaultsForUser(ctx, u)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(vaults) != 1 {
 		t.Fatalf("Expected to have 1 vaults and got %d", len(vaults))
 	}
@@ -58,14 +64,20 @@ func TestCreateUser(t *testing.T) {
 	if vault.Id != DEFAULT_VAULT_NAME {
 		t.Errorf("Team name mismatch expected %s and got %s", DEFAULT_VAULT_NAME, vault.Id)
 	}
-	nu := FindUser(ctx, u.Id)
+	nu, err := FindUser(ctx, u.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if nu == nil {
 		t.Fatalf("Could not find user by email")
 	}
 	if nu.Id != u.Id {
 		t.Errorf("Mismatch in user IDs. Got %s and expected %s", nu.Id, u.Id)
 	}
-	nu = FindUserByEmail(ctx, u.Email)
+	nu, err = FindUserByEmail(ctx, u.Email)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if nu == nil {
 		t.Fatalf("Could not find user by email")
 	}

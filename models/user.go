@@ -55,41 +55,37 @@ func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, 
 	})
 }
 
-func FindUser(ctx context.Context, id string) (u *User) {
-	doTx(ctx, func(tx *sql.Tx) error {
-		u = findUser(tx, id)
-		return nil
+func FindUser(ctx context.Context, id string) (u *User, err error) {
+	return u, doTx(ctx, func(tx *sql.Tx) error {
+		u, err = findUser(tx, id)
+		return err
 	})
-	return u
 }
 
-func findUser(tx *sql.Tx, id string) *User {
+func findUser(tx *sql.Tx, id string) (*User, error) {
 	return findUserByField(tx, "id", id)
 }
 
-func FindUserByEmail(ctx context.Context, email string) (u *User) {
-	doTx(ctx, func(tx *sql.Tx) error {
-		u = findUserByEmail(tx, email)
-		return nil
+func FindUserByEmail(ctx context.Context, email string) (u *User, err error) {
+	return u, doTx(ctx, func(tx *sql.Tx) error {
+		u, err = findUserByEmail(tx, email)
+		return err
 	})
-	return u
 }
 
-func findUserByEmail(tx *sql.Tx, email string) *User {
+func findUserByEmail(tx *sql.Tx, email string) (*User, error) {
 	return findUserByField(tx, "email", email)
 }
 
-func findUserByField(tx *sql.Tx, fieldName, value string) *User {
+func findUserByField(tx *sql.Tx, fieldName, value string) (*User, error) {
 	r := tx.QueryRow(fmt.Sprintf(`SELECT %s FROM "user" WHERE "%s" = $1`, selectUserFields, fieldName), value)
 	u := &User{}
 	err := u.dbScanRow(r)
-	if err != nil {
-		if isNotExistsErr(err) {
-			return nil
-		}
-		panic("Could not find user, error in sql statement: " + err.Error())
+	if isNotExistsErr(err) {
+		return nil, nil
 	}
-	return u
+	isErrOrPanic(err)
+	return u, err
 }
 
 func (u *User) CreateTeam(ctx context.Context, name string, vaultKeys VaultKeyPair) (t *Team, err error) {
@@ -106,13 +102,11 @@ func (u *User) insert(tx *sql.Tx) error {
 	u.CreatedAt = time.Now().UTC()
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbInsert(tx)
-	if err != nil {
-		if isDuplicateErr(err) {
-			return util.NewErrorf("Username already taken")
-		}
-		return util.NewErrorf("Could not create user: %s", err)
+	if isDuplicateErr(err) {
+		return util.NewErrorf("Username already taken")
 	}
-	return nil
+	isErrOrPanic(err)
+	return err
 }
 
 func (u *User) update(tx *sql.Tx) error {
@@ -121,10 +115,8 @@ func (u *User) update(tx *sql.Tx) error {
 	}
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbUpdate(tx)
-	if err != nil {
-		return util.NewErrorf("Could not update user: %s", err)
-	}
-	return nil
+	isErrOrPanic(err)
+	return err
 }
 
 func (u *User) validate() error {
@@ -163,15 +155,13 @@ func (u *User) CheckPassword(pass string) error {
 	return bcrypt.CompareHashAndPassword(u.HashPass, []byte(pass))
 }
 
-func (u *User) GetTeams(ctx context.Context) []*Team {
+func (u *User) GetTeams(ctx context.Context) ([]*Team, error) {
 	db := GetDB(ctx)
 	rows, err := db.Query(`SELECT `+selectTeamFullFields+` FROM "team", "team_user" WHERE  "team_user"."team" = "team".id AND "team_user"."user" = $1`, u.Id)
-	if err != nil {
-		panic("Could not retrieve teams: " + err.Error())
+	if isErrOrPanic(err) {
+		return nil, err
 	}
 	teams, err := scanTeams(rows)
-	if err != nil {
-		panic("Could not scan teams: " + err.Error())
-	}
-	return teams
+	isErrOrPanic(err)
+	return teams, err
 }
