@@ -8,4 +8,5 @@ var (
 	ErrUnauthorized   = errors.New("You can't do that")
 	ErrAlreadyInTeam  = errors.New("Already belongs to team")
 	ErrAlreadyInvited = errors.New("Alredy invited")
+	ErrAlreadyExists  = errors.New("Already exists")
 )

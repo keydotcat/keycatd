@@ -103,7 +103,7 @@ func (u *User) insert(tx *sql.Tx) error {
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbInsert(tx)
 	if isDuplicateErr(err) {
-		return util.NewErrorf("Username already taken")
+		return util.NewErrorf(ErrAlreadyExists)
 	}
 	isErrOrPanic(err)
 	return util.NewErrorFrom(err)
@@ -145,7 +145,7 @@ func (u *User) validate() error {
 func (u *User) SetPassword(pass string) error {
 	hpas, err := bcrypt.GenerateFromPassword([]byte(pass), HASH_PASSWD_COST)
 	if err != nil {
-		return util.NewErrorf("Could not hash password: %s", err)
+		panic(err)
 	}
 	u.HashPass = hpas
 	return nil
