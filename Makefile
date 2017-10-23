@@ -17,5 +17,5 @@ static: git-static
 dev-static: git-static
 	go-bindata -debug -o static/data.go -pkg static data/**
 
-models/autogen.go: models/user.go models/team.go models/vault.go models/team_user.go models/vault_user.go models/invite.go
+models/autogen.go: models/user.go models/team.go models/vault.go models/team_user.go models/vault_user.go models/invite.go models/token.go models/secret.go
 	 scaneo -p models -u -o $@ $^
