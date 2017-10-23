@@ -85,8 +85,8 @@ CREATE TABLE "vault_user" (
 	CONSTRAINT "fk_TeamUser" FOREIGN KEY ("team", "user") REFERENCES "team_user"
 ) INTERLEAVE IN PARENT "vault" ("team", "vault");
 
-DROP TABLE IF EXISTS "Secret";
-CREATE TABLE "Secret" (
+DROP TABLE IF EXISTS "secret";
+CREATE TABLE "secret" (
 	"team" STRING NOT NULL,
 	"vault" STRING NOT NULL,
 	"id"  STRING NOT NULL,

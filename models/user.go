@@ -114,9 +114,8 @@ func (u *User) update(tx *sql.Tx) error {
 		return err
 	}
 	u.UpdatedAt = u.CreatedAt
-	_, err := u.dbUpdate(tx)
-	isErrOrPanic(err)
-	return util.NewErrorFrom(err)
+	res, err := u.dbUpdate(tx)
+	return treatUpdateErr(res, err)
 }
 
 func (u *User) validate() error {

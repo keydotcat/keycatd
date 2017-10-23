@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -45,6 +46,15 @@ func (v *Vault) insert(tx *sql.Tx) error {
 	return nil
 }
 
+func (v *Vault) update(tx *sql.Tx) error {
+	if err := v.validate(); err != nil {
+		return err
+	}
+	v.UpdatedAt = time.Now().UTC()
+	res, err := v.dbUpdate(tx)
+	return treatUpdateErr(res, err)
+}
+
 func (v Vault) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if len(v.Id) == 0 {
@@ -60,6 +70,63 @@ func (v Vault) validate() error {
 }
 
 func (v Vault) addUser(tx *sql.Tx, username string, key []byte) error {
+	if err := v.update(tx); err != nil {
+		return err
+	}
 	vu := &vaultUser{Team: v.Team, Vault: v.Id, User: username, Key: key}
 	return vu.insert(tx)
+}
+
+func (v Vault) AddSecret(ctx context.Context, s *Secret) error {
+	s.Team = v.Team
+	s.Vault = v.Id
+	var err error
+	for retry := 0; retry < 3; retry++ {
+		s.Id = util.GenerateRandomToken(10)
+		err = doTx(ctx, func(tx *sql.Tx) error {
+			if err := v.update(tx); err != nil {
+				return err
+			}
+			return s.insert(tx)
+		})
+		if err == ErrAlreadyExists {
+			continue
+		}
+		break
+	}
+	return err
+}
+
+func (v Vault) UpdateSecret(ctx context.Context, s *Secret) error {
+	s.Team = v.Team
+	s.Vault = v.Id
+	return doTx(ctx, func(tx *sql.Tx) error {
+		if err := v.update(tx); err != nil {
+			return err
+		}
+		return s.update(tx)
+	})
+}
+
+func (v Vault) DeleteSecret(ctx context.Context, sid string) error {
+	return doTx(ctx, func(tx *sql.Tx) error {
+		if err := v.update(tx); err != nil {
+			return err
+		}
+		res, err := tx.Exec(`DELETE FROM "secret" WHERE "secret"."id" = $1`, sid)
+		return treatUpdateErr(res, err)
+	})
+}
+
+func (v Vault) GetSecrets(ctx context.Context) ([]*Secret, error) {
+	db := GetDB(ctx)
+	rows, err := db.Query(`SELECT `+selectSecretFields+` FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2`, v.Team, v.Id)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	secrets, err := scanSecrets(rows)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	return secrets, nil
 }

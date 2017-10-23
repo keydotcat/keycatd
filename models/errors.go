@@ -10,4 +10,5 @@ var (
 	ErrAlreadyInvited = errors.New("Alredy invited")
 	ErrAlreadyExists  = errors.New("Already exists")
 	ErrInvalidKeys    = errors.New("Invalid keys for vault")
+	ErrDoesntExist    = errors.New("Doesn't exist")
 )

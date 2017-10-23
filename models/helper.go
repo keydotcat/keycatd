@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 
+	"github.com/keydotcat/backend/util"
 	"github.com/lib/pq"
 )
 
@@ -26,4 +27,16 @@ func isErrOrPanic(err error) bool {
 		return true
 	}
 	return false
+}
+
+func treatUpdateErr(res sql.Result, err error) error {
+	if isErrOrPanic(err) {
+		return util.NewErrorFrom(err)
+	}
+	if n, err := res.RowsAffected(); n == 0 {
+		return util.NewErrorFrom(ErrDoesntExist)
+	} else if err != nil {
+		return util.NewErrorFrom(err)
+	}
+	return nil
 }
