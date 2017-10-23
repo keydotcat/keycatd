@@ -17,6 +17,9 @@ type vaultUser struct {
 }
 
 func (tu *vaultUser) insert(tx *sql.Tx) error {
+	if err := tu.validate(); err != nil {
+		return err
+	}
 	now := time.Now().UTC()
 	tu.CreatedAt = now
 	tu.UpdatedAt = now
