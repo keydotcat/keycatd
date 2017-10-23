@@ -11,13 +11,21 @@ var a32b = make([]byte, 32)
 
 func getDummyUser() *User {
 	ctx := getCtx()
-	uid := util.GenerateRandomToken(10)
-	vkp := VaultKeyPair{a32b, map[string][]byte{uid: a32b}}
+	uid := "u_" + util.GenerateRandomToken(10)
+	vkp := getDummyVaultKeyPair(uid)
 	u, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, a32b, a32b, vkp)
 	if err != nil {
 		panic(err)
 	}
 	return u
+}
+
+func getDummyVaultKeyPair(ids ...string) VaultKeyPair {
+	vkp := VaultKeyPair{a32b, map[string][]byte{}}
+	for _, id := range ids {
+		vkp.Keys[id] = a32b
+	}
+	return vkp
 }
 
 func TestCreateUser(t *testing.T) {
@@ -36,7 +44,7 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Invalid username: %s vs test", u.Id)
 	}
 	u, err = NewUser(ctx, "test", "easdsa", "asdas@asdas.com", "somepass", make([]byte, 32), make([]byte, 32), vkp)
-	if err != nil && "Username already taken" != err.Error() {
+	if err != nil && !util.CheckErr(err, ErrAlreadyExists) {
 		t.Fatal(err)
 	}
 	teams, err := u.GetTeams(ctx)

@@ -9,4 +9,5 @@ var (
 	ErrAlreadyInTeam  = errors.New("Already belongs to team")
 	ErrAlreadyInvited = errors.New("Alredy invited")
 	ErrAlreadyExists  = errors.New("Already exists")
+	ErrInvalidKeys    = errors.New("Invalid keys for vault")
 )

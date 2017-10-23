@@ -1,10 +1,6 @@
 package models
 
-import (
-	"strings"
-
-	"github.com/keydotcat/backend/util"
-)
+import "github.com/keydotcat/backend/util"
 
 type VaultKeyPair struct {
 	PublicKey []byte            `json:"public_key"`
@@ -13,7 +9,7 @@ type VaultKeyPair struct {
 
 func (vkp VaultKeyPair) checkKeyIdsMatch(ppl []string) error {
 	if vkp.Keys == nil {
-		return util.NewErrorf("No keys for vault")
+		return util.NewErrorFrom(ErrInvalidKeys)
 	}
 	var ko []string
 	for _, p := range ppl {
@@ -22,7 +18,7 @@ func (vkp VaultKeyPair) checkKeyIdsMatch(ppl []string) error {
 		}
 	}
 	if ko != nil {
-		return util.NewErrorf("Missing vault keys for %s", strings.Join(ko, ", "))
+		return util.NewErrorFrom(ErrInvalidKeys)
 	}
 	for kp := range vkp.Keys {
 		found := false
@@ -37,7 +33,7 @@ func (vkp VaultKeyPair) checkKeyIdsMatch(ppl []string) error {
 		}
 	}
 	if ko != nil {
-		return util.NewErrorf("Extra vault keys for %s", strings.Join(ko, ", "))
+		return util.NewErrorFrom(ErrInvalidKeys)
 	}
 	return nil
 }

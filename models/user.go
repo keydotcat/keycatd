@@ -103,7 +103,7 @@ func (u *User) insert(tx *sql.Tx) error {
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbInsert(tx)
 	if isDuplicateErr(err) {
-		return util.NewErrorf(ErrAlreadyExists)
+		return util.NewErrorFrom(ErrAlreadyExists)
 	}
 	isErrOrPanic(err)
 	return util.NewErrorFrom(err)

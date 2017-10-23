@@ -38,7 +38,7 @@ func (v *Vault) insert(tx *sql.Tx) error {
 	_, err := v.dbInsert(tx)
 	switch {
 	case isDuplicateErr(err):
-		return util.NewErrorf("Vault name already exists")
+		return util.NewErrorFrom(ErrAlreadyExists)
 	case isErrOrPanic(err):
 		return err
 	}

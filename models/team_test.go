@@ -69,3 +69,104 @@ func TestAddExistingUserToTeam(t *testing.T) {
 		t.Fatalf("Expected error %s and got %s", ErrAlreadyInTeam, err)
 	}
 }
+
+func TestCreateVault(t *testing.T) {
+	ctx := getCtx()
+	owner, team := getDummyOwnerWithTeam()
+	invitee := getDummyUser()
+	_, err := team.AddOrInviteUserByEmail(ctx, owner, invitee.Email)
+	if err != nil {
+		t.Fatal(err)
+	}
+	vkp := getDummyVaultKeyPair(owner.Id)
+	vname := util.GenerateRandomToken(5)
+	vaults, err := team.GetVaultsForUser(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := []string{}
+	for _, v := range vaults {
+		keys = append(keys, v.Id)
+	}
+	vkp = getDummyVaultKeyPair(keys...)
+	err = team.PromoteUser(ctx, owner, invitee, vkp)
+	if err != nil {
+		t.Fatalf("Unexpected when promoting a user: %s", err)
+	}
+	_, err = team.CreateVault(ctx, vname, vkp)
+	if !util.CheckErr(err, ErrInvalidKeys) {
+		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
+	}
+	vkp = getDummyVaultKeyPair(owner.Id)
+	_, err = team.CreateVault(ctx, vname, vkp)
+	if !util.CheckErr(err, ErrInvalidKeys) {
+		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
+	}
+	vkp = getDummyVaultKeyPair(owner.Id, invitee.Id)
+	_, err = team.CreateVault(ctx, vname, vkp)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	vaults, err = team.GetVaultsForUser(ctx, invitee)
+	if len(vaults) != 2 {
+		t.Fatalf("Invalid number of vaults")
+	}
+}
+
+func TestPromoteUser(t *testing.T) {
+	ctx := getCtx()
+	owner, team := getDummyOwnerWithTeam()
+	invitee := getDummyUser()
+	_, err := team.AddOrInviteUserByEmail(ctx, owner, invitee.Email)
+	if err != nil {
+		t.Fatal(err)
+	}
+	vkp := getDummyVaultKeyPair(owner.Id)
+	err = team.PromoteUser(ctx, owner, invitee, vkp)
+	if !util.CheckErr(err, ErrInvalidKeys) {
+		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
+	}
+	vaults, err := team.GetVaultsForUser(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := []string{}
+	for _, v := range vaults {
+		keys = append(keys, v.Id)
+	}
+	vkp = getDummyVaultKeyPair(keys...)
+	err = team.PromoteUser(ctx, owner, invitee, vkp)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	isAdmin, err := team.CheckAdmin(ctx, invitee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isAdmin {
+		t.Fatalf("User was supposed to be an admin!")
+	}
+	iVaults, err := team.GetVaultsForUser(ctx, invitee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(iVaults) != len(vaults) {
+		t.Errorf("Expected to have the same vaults for both admins!")
+	}
+	err = team.DemoteUser(ctx, invitee, owner)
+	if !util.CheckErr(err, ErrUnauthorized) {
+		t.Fatalf("Unexpected error: %s vs %s", ErrUnauthorized, err)
+	}
+	err = team.DemoteUser(ctx, owner, invitee)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err)
+	}
+	isAdmin, err = team.CheckAdmin(ctx, invitee)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isAdmin {
+		t.Fatalf("User was supposed NOT to be an admin!")
+	}
+
+}

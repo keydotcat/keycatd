@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/keydotcat/backend/util"
@@ -100,20 +101,33 @@ func (t *Team) getUsersAfiliation(tx *sql.Tx) ([]*teamUser, error) {
 
 func (t *Team) CreateVault(ctx context.Context, name string, vaultKeys VaultKeyPair) (v *Vault, err error) {
 	return v, doTx(ctx, func(tx *sql.Tx) error {
+		users, err := t.getAdminUsers(tx)
+		if err != nil {
+			return err
+		}
+		uids := make([]string, len(users))
+		for i, u := range users {
+			uids[i] = u.Id
+		}
+		if err = vaultKeys.checkKeyIdsMatch(uids); err != nil {
+			return err
+		}
 		v, err = createVault(tx, name, t.Id, vaultKeys)
 		return err
 	})
 }
 
 func (t *Team) filterTeamUsers(tx *sql.Tx, uids ...string) ([]*teamUser, error) {
-	binds := make([]string, len(uids)+1)
-	binds[0] = t.Id
+	bindValues := make([]interface{}, len(uids)+1)
+	bindIds := make([]string, len(uids))
+	bindValues[0] = t.Id
 	for i := range uids {
 		//Pos x of array is $(x+1) since binds start at index 1
-		binds[i+1] = fmt.Sprintf("$%d", i+2)
+		bindIds[i] = fmt.Sprintf("$%d", i+2)
+		bindValues[i+1] = uids[i]
 	}
-	stmt := fmt.Sprintf(`SELECT %s FROM "team_user" WHERE "team_user"."team" = $1 AND "team_user"."user" in (%s)`, selectTeamUserFields, binds)
-	rows, err := tx.Query(stmt, binds)
+	stmt := fmt.Sprintf(`SELECT %s FROM "team_user" WHERE "team_user"."team" = $1 AND "team_user"."user" in (%s)`, selectTeamUserFields, strings.Join(bindIds, ","))
+	rows, err := tx.Query(stmt, bindValues...)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}
@@ -211,6 +225,20 @@ func (t *Team) generateInvite(tx *sql.Tx, admin *User, email string) error {
 	return i.insert(tx)
 }
 
+func (t *Team) CheckAdmin(ctx context.Context, u *User) (isAdmin bool, err error) {
+	return isAdmin, doTx(ctx, func(tx *sql.Tx) error {
+		err = t.checkAdmin(tx, u)
+		switch {
+		case err == nil:
+			isAdmin = true
+		case util.CheckErr(err, ErrUnauthorized):
+			isAdmin = false
+			err = nil
+		}
+		return err
+	})
+}
+
 func (t *Team) checkAdmin(tx *sql.Tx, u *User) error {
 	tu, err := t.getUserAffiliation(tx, u)
 	if err != nil {
@@ -239,7 +267,10 @@ func (t *Team) addUser(tx *sql.Tx, admin *User, newUser *User) error {
 	return tu.insert(tx)
 }
 
-func (t *Team) demoteUser(ctx context.Context, demoter *User, demotee *User) error {
+func (t *Team) DemoteUser(ctx context.Context, demoter *User, demotee *User) error {
+	if t.Owner == demotee.Id {
+		return util.NewErrorFrom(ErrUnauthorized)
+	}
 	return doTx(ctx, func(tx *sql.Tx) error {
 		teamUsers, err := t.filterTeamUsers(tx, demoter.Id, demotee.Id)
 		if err != nil {
@@ -271,7 +302,8 @@ func (t *Team) GetVaultsForUser(ctx context.Context, u *User) ([]*Vault, error) 
 }
 
 func (t *Team) getVaultsMissingForUser(tx *sql.Tx, u *User) ([]*Vault, error) {
-	rows, err := tx.Query(`SELECT `+selectVaultFullFields+` FROM "vault" WHERE "vault"."id" NOT IN ( SELECT "vault"."id" FROM "vault", "vault_user" WHERE "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
+	cmd := `SELECT ` + selectVaultFullFields + ` FROM "vault" WHERE "vault"."team" = $1 AND "vault"."id" NOT IN ( SELECT "vault"."id" FROM "vault", "vault_user" WHERE "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2)`
+	rows, err := tx.Query(cmd, t.Id, u.Id)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}
