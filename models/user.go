@@ -19,22 +19,22 @@ var (
 )
 
 type User struct {
-	Id               string `scaneo:"pk" json:"id"`
-	Email            string
-	UnconfirmedEmail string
-	HashPass         []byte
-	FullName         string
-	ConfirmedAt      pq.NullTime
-	LockedAt         pq.NullTime
-	SignInCount      int
-	FailedAttempts   int
-	PublicKey        []byte
-	Key              []byte
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	Id               string      `scaneo:"pk" json:"id"`
+	Email            string      `json:"email"`
+	UnconfirmedEmail string      `json:"-"`
+	HashPass         []byte      `json:"-"`
+	FullName         string      `json:"fullname"`
+	ConfirmedAt      pq.NullTime `json:"confirmed_at,omitempty"`
+	LockedAt         pq.NullTime `json:"locked_at,omitempty"`
+	SignInCount      int         `json:"sign_in_count"`
+	FailedAttempts   int         `json:"failed_attempts"`
+	PublicKey        []byte      `json:"public_key"`
+	Key              []byte      `json:"-"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
-func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte, vaultKeys VaultKeyPair) (*User, error) {
+func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte, vaultKeys VaultKeyPair) (*User, *Token, error) {
 	u := &User{
 		Id:               id,
 		Email:            email,
@@ -43,11 +43,15 @@ func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, 
 		PublicKey:        pubkey,
 		Key:              key,
 	}
+	t := &Token{Type: TOKEN_VERIFICATION, User: u.Id}
 	if err := u.SetPassword(password); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return u, doTx(ctx, func(tx *sql.Tx) error {
+	return u, t, doTx(ctx, func(tx *sql.Tx) error {
 		if err := u.insert(tx); err != nil {
+			return err
+		}
+		if err := t.insert(tx); err != nil {
 			return err
 		}
 		_, err := createTeam(tx, u, true, u.FullName, vaultKeys)

@@ -56,8 +56,11 @@ CREATE TABLE "token" (
 	"id" STRING NOT NULL,
 	"type" INT NOT NULL,
 	"user" STRING NULL REFERENCES "user" ("id"),
+	"extra" STRING NULL, 
+	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("id" ASC),
-	FAMILY "primary" ("id", "type", "user")
+	FAMILY "primary" ("id", "type", "user", "extra", "created_at", "updated_at")
 );
 
 DROP TABLE IF EXISTS "vault";

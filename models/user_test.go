@@ -13,7 +13,7 @@ func getDummyUser() *User {
 	ctx := getCtx()
 	uid := "u_" + util.GenerateRandomToken(10)
 	vkp := getDummyVaultKeyPair(uid)
-	u, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, a32b, a32b, vkp)
+	u, _, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, a32b, a32b, vkp)
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +31,7 @@ func getDummyVaultKeyPair(ids ...string) VaultKeyPair {
 func TestCreateUser(t *testing.T) {
 	ctx := getCtx()
 	vkp := VaultKeyPair{make([]byte, 32), map[string][]byte{"test": []byte("crap")}}
-	u, err := NewUser(ctx, "test", "easdsa", "asdas@asdas.com", "somepass", make([]byte, 32), make([]byte, 32), vkp)
+	u, tok, err := NewUser(ctx, "test", "easdsa", "asdas@asdas.com", "somepass", make([]byte, 32), make([]byte, 32), vkp)
 	if err != nil {
 		fmt.Println(util.GetStack(err))
 		t.Fatal(err)
@@ -43,9 +43,12 @@ func TestCreateUser(t *testing.T) {
 		fmt.Println(util.GetStack(err))
 		t.Errorf("Invalid username: %s vs test", u.Id)
 	}
-	u, err = NewUser(ctx, "test", "easdsa", "asdas@asdas.com", "somepass", make([]byte, 32), make([]byte, 32), vkp)
+	u, tok, err = NewUser(ctx, "test", "easdsa", "asdas@asdas.com", "somepass", make([]byte, 32), make([]byte, 32), vkp)
 	if err != nil && !util.CheckErr(err, ErrAlreadyExists) {
 		t.Fatal(err)
+	}
+	if tok.Type != TOKEN_VERIFICATION || tok.User != u.Id {
+		t.Fatalf("Token verification incomplete")
 	}
 	teams, err := u.GetTeams(ctx)
 	if err != nil {
