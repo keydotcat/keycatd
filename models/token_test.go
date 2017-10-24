@@ -1,16 +1,24 @@
 package models
 
 import (
+	"crypto/rand"
 	"testing"
 
 	"github.com/keydotcat/backend/util"
+	"golang.org/x/crypto/nacl/box"
 )
 
 func TestConfirmEmail(t *testing.T) {
 	ctx := getCtx()
 	uid := "u_" + util.GenerateRandomToken(10)
-	vkp := getDummyVaultKeyPair(uid)
-	u, tok, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, a32b, a32b, vkp)
+	ppub, ppriv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	pub := (*ppub)[:]
+	priv := (*ppriv)[:]
+	vkp := getDummyVaultKeyPair(priv, uid)
+	u, tok, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, pub, priv, vkp)
 	if err != nil {
 		panic(err)
 	}

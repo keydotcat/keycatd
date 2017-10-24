@@ -1,10 +1,13 @@
 package models
 
 import (
+	"crypto/rand"
 	"fmt"
 	"testing"
 
 	"github.com/keydotcat/backend/util"
+	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/nacl/box"
 )
 
 var a32b = make([]byte, 32)
@@ -12,18 +15,38 @@ var a32b = make([]byte, 32)
 func getDummyUser() *User {
 	ctx := getCtx()
 	uid := "u_" + util.GenerateRandomToken(10)
-	vkp := getDummyVaultKeyPair(uid)
-	u, _, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, a32b, a32b, vkp)
+	ppub, ppriv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	pub := (*ppub)[:]
+	priv := (*ppriv)[:]
+	vkp := getDummyVaultKeyPair(priv, uid)
+	u, _, err := NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, pub, signAndPack(priv, priv), vkp)
 	if err != nil {
 		panic(err)
 	}
 	return u
 }
 
-func getDummyVaultKeyPair(ids ...string) VaultKeyPair {
-	vkp := VaultKeyPair{a32b, map[string][]byte{}}
+func signAndPack(key []byte, msg []byte) []byte {
+	sig := ed25519.Sign(ed25519.PrivateKey(key), msg)
+	response := make([]byte, SignatureSize+len(msg))
+	copy(response[:SignatureSize], sig)
+	copy(response[SignatureSize:], msg)
+	return response
+}
+
+func getDummyVaultKeyPair(signer []byte, ids ...string) VaultKeyPair {
+	ppub, ppriv, err := box.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	pub := (*ppub)[:]
+	priv := (*ppriv)[:]
+	vkp := VaultKeyPair{signAndPack(signer, pub), map[string][]byte{}}
 	for _, id := range ids {
-		vkp.Keys[id] = a32b
+		vkp.Keys[id] = signAndPack(priv, priv)
 	}
 	return vkp
 }

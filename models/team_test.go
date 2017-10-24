@@ -80,7 +80,7 @@ func TestCreateVault(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vkp := getDummyVaultKeyPair(owner.Id)
+	vkp := getDummyVaultKeyPair(owner.Key, owner.Id)
 	vname := util.GenerateRandomToken(5)
 	vaults, err := team.GetVaultsForUser(ctx, owner)
 	if err != nil {
@@ -90,7 +90,7 @@ func TestCreateVault(t *testing.T) {
 	for _, v := range vaults {
 		keys = append(keys, v.Id)
 	}
-	vkp = getDummyVaultKeyPair(keys...)
+	vkp = getDummyVaultKeyPair(owner.Key, keys...)
 	err = team.PromoteUser(ctx, owner, invitee, vkp)
 	if err != nil {
 		t.Fatalf("Unexpected when promoting a user: %s", err)
@@ -99,12 +99,12 @@ func TestCreateVault(t *testing.T) {
 	if !util.CheckErr(err, ErrInvalidKeys) {
 		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
 	}
-	vkp = getDummyVaultKeyPair(owner.Id)
+	vkp = getDummyVaultKeyPair(owner.Key, owner.Id)
 	_, err = team.CreateVault(ctx, owner, vname, vkp)
 	if !util.CheckErr(err, ErrInvalidKeys) {
 		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
 	}
-	vkp = getDummyVaultKeyPair(owner.Id, invitee.Id)
+	vkp = getDummyVaultKeyPair(owner.Key, owner.Id, invitee.Id)
 	_, err = team.CreateVault(ctx, owner, vname, vkp)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
@@ -123,7 +123,7 @@ func TestPromoteUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vkp := getDummyVaultKeyPair(owner.Id)
+	vkp := getDummyVaultKeyPair(owner.Key, owner.Id)
 	err = team.PromoteUser(ctx, owner, invitee, vkp)
 	if !util.CheckErr(err, ErrInvalidKeys) {
 		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
@@ -136,7 +136,7 @@ func TestPromoteUser(t *testing.T) {
 	for _, v := range vaults {
 		keys = append(keys, v.Id)
 	}
-	vkp = getDummyVaultKeyPair(keys...)
+	vkp = getDummyVaultKeyPair(owner.Key, keys...)
 	err = team.PromoteUser(ctx, owner, invitee, vkp)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
