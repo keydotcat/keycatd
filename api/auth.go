@@ -2,10 +2,39 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
 )
+
+func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *http.Request {
+	authHdr := strings.Split(r.Header.Get("Authorization"), " ")
+	if len(authHdr) < 2 || authHdr[0] != "Bearer" {
+		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+		return nil
+	}
+	s, err := ah.sm.UpdateSession(authHdr[1], r.UserAgent())
+	if err != nil {
+		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+		return nil
+	}
+	if s.RequiresCSRF {
+		if !ah.csrf.checkToken(w, r) {
+			http.Error(w, "Invalid CSRF token", http.StatusUnauthorized)
+			return nil
+		}
+	}
+	u, err := models.FindUser(r.Context(), s.UserId)
+	if util.CheckErr(err, models.ErrDoesntExist) {
+		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+		ah.sm.DeleteAllSessions(u.Id)
+		return nil
+	} else if err != nil {
+		panic(err)
+	}
+	return r.WithContext(ctxAddUser(r.Context(), u))
+}
 
 type authRegisterRequest struct {
 	Id             string `json:"id"`

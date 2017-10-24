@@ -13,13 +13,13 @@ import (
 const DEFAULT_VAULT_NAME = "Generic"
 
 type Team struct {
-	Id        string `scaneo:"pk"`
-	Name      string
-	Owner     string
-	Primary   bool
-	Size      int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        string    `scaneo:"pk" json:"id"`
+	Name      string    `json:"name"`
+	Owner     string    `json:"owner"`
+	Primary   bool      `json:"primary"`
+	Size      int       `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func createTeam(tx *sql.Tx, owner *User, primary bool, name string, vaultKeys VaultKeyPair) (*Team, error) {
@@ -99,7 +99,11 @@ func (t *Team) getUsersAfiliation(tx *sql.Tx) ([]*teamUser, error) {
 	return users, util.NewErrorFrom(err)
 }
 
-func (t *Team) CreateVault(ctx context.Context, name string, vaultKeys VaultKeyPair) (v *Vault, err error) {
+func (t *Team) CreateVault(ctx context.Context, u *User, name string, signedVaultKeys VaultKeyPair) (v *Vault, err error) {
+	vaultKeys, err := signedVaultKeys.verifyAndUnpack(u.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 	return v, doTx(ctx, func(tx *sql.Tx) error {
 		users, err := t.getAdminUsers(tx)
 		if err != nil {

@@ -58,14 +58,21 @@ func TestRedisSessionManager(t *testing.T) {
 			t.Errorf("Didn't find session %s", k)
 		}
 	}
-	err = rs.UpdateSession("nonexistant", "asd")
+	s, err := rs.UpdateSession(sess[0].Id, sess[0].Agent+":")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Id != sess[0].Id || s.Agent != sess[0].Agent+":" {
+		t.Fatalf("Session hasn't been updated")
+	}
+	_, err = rs.UpdateSession("nonexistant", "asd")
 	if !util.CheckErr(err, models.ErrDoesntExist) {
 		t.Fatalf("Unexpected error: %s vs %s", models.ErrDoesntExist, err)
 	}
 	if err = rs.DeleteSession(sess[0].Id); err != nil {
 		t.Fatal(err)
 	}
-	err = rs.UpdateSession(sess[0].Id, "asd")
+	_, err = rs.UpdateSession(sess[0].Id, "asd")
 	if !util.CheckErr(err, models.ErrDoesntExist) {
 		t.Fatalf("Unexpected error: %s vs %s", models.ErrDoesntExist, err)
 	}

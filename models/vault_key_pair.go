@@ -1,6 +1,9 @@
 package models
 
-import "github.com/keydotcat/backend/util"
+import (
+	"github.com/keydotcat/backend/util"
+	"golang.org/x/crypto/ed25519"
+)
 
 type VaultKeyPair struct {
 	PublicKey []byte            `json:"public_key"`
@@ -36,4 +39,42 @@ func (vkp VaultKeyPair) checkKeyIdsMatch(ppl []string) error {
 		return util.NewErrorFrom(ErrInvalidKeys)
 	}
 	return nil
+}
+
+const (
+	PublicKeySize = 32
+	SignatureSize = 64
+)
+
+func verifyAndUnpack(pubkey []byte, signedData []byte) ([]byte, error) {
+	if l := len(pubkey); l != PublicKeySize {
+		return nil, util.NewErrorFrom(ErrInvalidPublicKey)
+	}
+	if len(signedData) < SignatureSize || signedData[63]&224 != 0 {
+		return nil, util.NewErrorFrom(ErrInvalidSignature)
+	}
+	msg := signedData[SignatureSize:]
+	sign := signedData[:SignatureSize]
+
+	if ed25519.Verify(ed25519.PublicKey(pubkey), sign, msg) {
+		return msg, nil
+	}
+	return nil, util.NewErrorFrom(ErrInvalidSignature)
+}
+
+func (vkp VaultKeyPair) verifyAndUnpack(pubkey []byte) (VaultKeyPair, error) {
+	unpacked := VaultKeyPair{}
+	if data, err := verifyAndUnpack(pubkey, vkp.PublicKey); err != nil {
+		return unpacked, err
+	} else {
+		unpacked.PublicKey = data
+	}
+	for k, v := range vkp.Keys {
+		if data, err := verifyAndUnpack(pubkey, v); err != nil {
+			return unpacked, err
+		} else {
+			unpacked.Keys[k] = data
+		}
+	}
+	return unpacked, nil
 }

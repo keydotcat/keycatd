@@ -95,17 +95,17 @@ func TestCreateVault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected when promoting a user: %s", err)
 	}
-	_, err = team.CreateVault(ctx, vname, vkp)
+	_, err = team.CreateVault(ctx, owner, vname, vkp)
 	if !util.CheckErr(err, ErrInvalidKeys) {
 		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
 	}
 	vkp = getDummyVaultKeyPair(owner.Id)
-	_, err = team.CreateVault(ctx, vname, vkp)
+	_, err = team.CreateVault(ctx, owner, vname, vkp)
 	if !util.CheckErr(err, ErrInvalidKeys) {
 		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
 	}
 	vkp = getDummyVaultKeyPair(owner.Id, invitee.Id)
-	_, err = team.CreateVault(ctx, vname, vkp)
+	_, err = team.CreateVault(ctx, owner, vname, vkp)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}

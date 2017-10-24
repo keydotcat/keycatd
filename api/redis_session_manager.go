@@ -92,13 +92,14 @@ func (r redisSessionManager) storeSession(s *Session) error {
 	return nil
 }
 
-func (r redisSessionManager) UpdateSession(id, agent string) error {
+func (r redisSessionManager) UpdateSession(id, agent string) (Session, error) {
 	s, err := r.getSession(id)
 	if err != nil {
-		return err
+		return Session{}, err
 	}
 	s.Agent = agent
-	return r.storeSession(s)
+	s.LastAccess = time.Now().UTC()
+	return *s, r.storeSession(s)
 }
 
 func (r redisSessionManager) DeleteSession(id string) error {

@@ -34,14 +34,21 @@ type User struct {
 	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
-func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte, vaultKeys VaultKeyPair) (*User, *Token, error) {
+func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte, signedVaultKeys VaultKeyPair) (*User, *Token, error) {
 	u := &User{
 		Id:               id,
 		Email:            email,
 		UnconfirmedEmail: email,
 		FullName:         fullname,
 		PublicKey:        pubkey,
-		Key:              key,
+	}
+	vaultKeys, err := signedVaultKeys.verifyAndUnpack(u.PublicKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	u.Key, err = verifyAndUnpack(u.PublicKey, key)
+	if err != nil {
+		return nil, nil, err
 	}
 	t := &Token{Type: TOKEN_VERIFICATION, User: u.Id}
 	if err := u.SetPassword(password); err != nil {
@@ -92,7 +99,11 @@ func findUserByField(tx *sql.Tx, fieldName, value string) (*User, error) {
 	return u, util.NewErrorFrom(err)
 }
 
-func (u *User) CreateTeam(ctx context.Context, name string, vaultKeys VaultKeyPair) (t *Team, err error) {
+func (u *User) CreateTeam(ctx context.Context, name string, signedVaultKeys VaultKeyPair) (t *Team, err error) {
+	vaultKeys, err := signedVaultKeys.verifyAndUnpack(u.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 	return t, doTx(ctx, func(tx *sql.Tx) error {
 		t, err = createTeam(tx, u, false, name, vaultKeys)
 		return err
@@ -136,10 +147,10 @@ func (u *User) validate() error {
 	if !reValidEmail.MatchString(u.Email) {
 		errs.SetFieldError("email", "invalid")
 	}
-	if len(u.PublicKey) != 32 {
+	if len(u.PublicKey) != PublicKeySize {
 		errs.SetFieldError("public_key", "invalid")
 	}
-	if len(u.Key) < 32 {
+	if len(u.Key) < PublicKeySize {
 		errs.SetFieldError("private_key", "invalid")
 	}
 	return errs.Camo()

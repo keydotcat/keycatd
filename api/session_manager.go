@@ -12,7 +12,7 @@ type Session struct {
 
 type SessionManager interface {
 	NewSession(userId string, agent string, csrf bool) (Session, error)
-	UpdateSession(id, agent string) error
+	UpdateSession(id, agent string) (Session, error)
 	DeleteSession(id string) error
 	GetAllSessions(userId string) ([]Session, error)
 	DeleteAllSessions(userId string) error
