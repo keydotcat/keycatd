@@ -9,7 +9,7 @@ import (
 
 type Invite struct {
 	Team      string `scaneo:"pk"`
-	Email     string `saneo:"pk"`
+	Email     string `scaneo:"pk"`
 	CreatedAt time.Time
 }
 

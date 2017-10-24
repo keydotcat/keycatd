@@ -190,14 +190,15 @@ func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomer
 	add := false
 	return add, doTx(ctx, func(tx *sql.Tx) error {
 		nu, err := findUserByEmail(tx, newcomerEmail)
-		if err != nil {
+		switch {
+		case util.CheckErr(err, ErrDoesntExist):
+			return t.generateInvite(tx, admin, newcomerEmail)
+		case err != nil:
 			return err
-		}
-		if nu != nil {
+		default:
 			add = true
 			return t.addUser(tx, admin, nu)
 		}
-		return t.generateInvite(tx, admin, newcomerEmail)
 	})
 }
 

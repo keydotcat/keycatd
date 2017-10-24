@@ -18,8 +18,8 @@ func MainHandler(db *sql.DB) http.Handler {
 func apiRootHandler(w ResponseWriter, r *Request) {
 	head, req.URL.Path = ShiftPath(req.URL.Path)
 	switch head {
-	case "register":
-		apiRegister(w, r)
+	case "auth":
+		apiAuth(w, r)
 	default:
 		http.NotFound(w, r)
 	}

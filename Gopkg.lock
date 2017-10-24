@@ -15,6 +15,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mediocregopher/radix.v3"
+  packages = [".","resp"]
+  revision = "d285b9d40ad446202117b4bf102c0b00e116660a"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["bcrypt","blowfish"]
   revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
@@ -22,6 +28,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c501a8b729429b964d81de4efffefaa7179e8fff771fac3961c952ccac8fe5ca"
+  inputs-digest = "68956b19162cf28793838b71d54885ccbf6fcce27df677a64de1f1904d7f29c2"
   solver-name = "gps-cdcl"
   solver-version = 1

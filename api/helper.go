@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
+
+	"github.com/keydotcat/backend/models"
+	"github.com/keydotcat/backend/util"
 )
 
 func shiftPath(p string) (head, tail string) {
@@ -20,8 +24,28 @@ func jsonErr(w ResponseWriter) {
 	http.Error(w, "Could not decode JSON data", http.StatusBadRequest)
 }
 
-func httpErr(w ResponseWriter, err error) {
-	http.Error(w, err.Error(), http.StatusBadRequest)
+func httpErr(w ResponseWriter, err error) bool {
+	if util.CheckErr(err, models.ErrDoesntExist) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return true
+	} else {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return true
+	}
+	return false
+}
+
+func jsonResponse(w ResponseWriter, obj interface{}) error {
+	b := bufPool.Get()
+	defer bufPool.Put(b)
+	if err := json.NewEncoder(b).Encode(obj); err != nil {
+		panic(err)
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Length", strconv.Itoa(len(b.Bytes())))
+	w.WriteHeader(http.StatusOK)
+	b.WriteTo(w)
+	return nil
 }
 
 func jsonDecode(w http.ResponseWrite, r *http.Request, max int64, obj interface{}) error {

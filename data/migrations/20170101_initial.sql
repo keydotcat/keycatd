@@ -60,6 +60,7 @@ CREATE TABLE "token" (
 	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("id" ASC),
+	INDEX "idx_type_user" ("type","user"),
 	FAMILY "primary" ("id", "type", "user", "extra", "created_at", "updated_at")
 );
 

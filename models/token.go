@@ -1,21 +1,33 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
 	"github.com/keydotcat/backend/util"
 )
 
-const TOKEN_VERIFICATION = "verification"
+const TOKEN_VERIFICATION = 0
 
 type Token struct {
 	Id        string    `scaneo:"pk" json:"id"`
-	Type      string    `json:"-"`
+	Type      int       `json:"-"`
 	User      string    `json:"-"`
 	Extra     string    `json:"extra,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func FindToken(ctx context.Context, id string) (*Token, error) {
+	t := &Token{Id: id}
+	err := doTx(ctx, func(tx *sql.Tx) error {
+		return t.dbFind(tx)
+	})
+	if isNotExistsErr(err) {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	return t, nil
 }
 
 func (u *Token) validate() error {
@@ -54,4 +66,26 @@ func (u *Token) update(tx *sql.Tx) error {
 	u.UpdatedAt = time.Now().UTC()
 	res, err := u.dbUpdate(tx)
 	return treatUpdateErr(res, err)
+}
+
+func (t *Token) ConfirmEmail(ctx context.Context) (u *User, err error) {
+	if t.Type != TOKEN_VERIFICATION {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	return u, doTx(ctx, func(tx *sql.Tx) error {
+		u, err = findUser(tx, t.User)
+		if err != nil {
+			return err
+		}
+		if err = treatUpdateErr(t.dbDelete(tx)); err != nil {
+			return err
+		}
+		u.Email = u.UnconfirmedEmail
+		u.UnconfirmedEmail = ""
+		if !u.ConfirmedAt.Valid {
+			u.ConfirmedAt.Valid = true
+			u.ConfirmedAt.Time = time.Now().UTC()
+		}
+		return u.update(tx)
+	})
 }

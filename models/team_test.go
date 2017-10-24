@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/keydotcat/backend/util"
@@ -42,6 +43,7 @@ func TestInviteUserToTeam(t *testing.T) {
 	owner, team := getDummyOwnerWithTeam()
 	added, err := team.AddOrInviteUserByEmail(ctx, owner, "a@a.com")
 	if err != nil {
+		fmt.Println(util.GetStack(err))
 		t.Fatal(err)
 	}
 	if added {

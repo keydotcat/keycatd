@@ -86,7 +86,7 @@ func findUserByField(tx *sql.Tx, fieldName, value string) (*User, error) {
 	u := &User{}
 	err := u.dbScanRow(r)
 	if isNotExistsErr(err) {
-		return nil, nil
+		return nil, util.NewErrorFrom(ErrDoesntExist)
 	}
 	isErrOrPanic(err)
 	return u, util.NewErrorFrom(err)
@@ -167,4 +167,17 @@ func (u *User) GetTeams(ctx context.Context) ([]*Team, error) {
 	teams, err := scanTeams(rows)
 	isErrOrPanic(err)
 	return teams, util.NewErrorFrom(err)
+}
+
+func (u *User) GetVerificationToken(ctx context.Context) (t *Token, err error) {
+	t = &Token{Id: u.Id, Type: TOKEN_VERIFICATION}
+	err = doTx(ctx, func(tx *sql.Tx) error {
+		r := tx.QueryRow(`SELECT `+selectTokenFields+` FROM "token" WHERE "user" = $1 AND "type" = $2"`, u.Id, TOKEN_VERIFICATION)
+		return t.dbScanRow(r)
+	})
+	if isNotExistsErr(err) {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	return t, nil
+
 }
