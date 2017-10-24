@@ -6,7 +6,7 @@ type Session struct {
 	Id           string    `json:"id"`
 	UserId       string    `json:"user_id"`
 	Agent        string    `json:"agent"`
-	RequiresCSRF bool      `json:"-"`
+	RequiresCSRF bool      `json:"csrf"`
 	LastAccess   time.Time `json:"last_access"`
 }
 

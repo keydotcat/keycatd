@@ -8,6 +8,16 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
+func init() {
+	rs, err := NewRedisSessionManager("localhost:6379")
+	if err != nil {
+		panic(err)
+	}
+	if err = rs.(redisSessionManager).purgeAllData(); err != nil {
+		panic(err)
+	}
+}
+
 func addSessionForUser(rs SessionManager, u *models.User, agent string) error {
 	s, err := rs.NewSession(u.Id, agent, false)
 	if err != nil {

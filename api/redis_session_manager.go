@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/keydotcat/backend/models"
@@ -10,7 +11,8 @@ import (
 )
 
 type redisSessionManager struct {
-	pool *radix.Pool
+	prefix string
+	pool   *radix.Pool
 }
 
 func NewRedisSessionManager(connUrl string) (SessionManager, error) {
@@ -18,7 +20,15 @@ func NewRedisSessionManager(connUrl string) (SessionManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return redisSessionManager{pool}, nil
+	return redisSessionManager{"kc-", pool}, nil
+}
+
+func (r redisSessionManager) skey(i string) string {
+	return fmt.Sprintf("%ss:%s", r.prefix, i)
+}
+
+func (r redisSessionManager) ukey(i string) string {
+	return fmt.Sprintf("%su:%s", r.prefix, i)
 }
 
 func (r redisSessionManager) NewSession(userId, agent string, csrf bool) (Session, error) {
@@ -29,8 +39,8 @@ func (r redisSessionManager) NewSession(userId, agent string, csrf bool) (Sessio
 		return s, err
 	}
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SET", "s:"+s.Id, b.String()),
-		radix.FlatCmd(nil, "SADD", "u:"+s.UserId, s.Id),
+		radix.FlatCmd(nil, "SET", r.skey(s.Id), b.String()),
+		radix.FlatCmd(nil, "SADD", r.ukey(s.UserId), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return s, err
@@ -38,10 +48,21 @@ func (r redisSessionManager) NewSession(userId, agent string, csrf bool) (Sessio
 	return s, nil
 }
 
+func (r redisSessionManager) purgeAllData() error {
+	s := radix.NewScanner(r.pool, radix.ScanOpts{Command: "SCAN", Pattern: r.prefix + "*"})
+	var key string
+	for s.Next(&key) {
+		if err := r.pool.Do(radix.FlatCmd(nil, "DEL", key)); err != nil {
+			return err
+		}
+	}
+	return s.Close()
+}
+
 func (r redisSessionManager) getSession(id string) (*Session, error) {
 	b := bufPool.Get()
 	defer bufPool.Put(b)
-	if err := r.pool.Do(radix.Cmd(b, "GET", "s:"+id)); err != nil {
+	if err := r.pool.Do(radix.Cmd(b, "GET", r.skey(id))); err != nil {
 		return nil, err
 	}
 	if b.Len() == 0 {
@@ -62,8 +83,8 @@ func (r redisSessionManager) storeSession(s *Session) error {
 		return err
 	}
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SET", "s:"+s.Id, b.String()),
-		radix.FlatCmd(nil, "SADD", "u:"+s.UserId, s.Id),
+		radix.FlatCmd(nil, "SET", r.skey(s.Id), b.String()),
+		radix.FlatCmd(nil, "SADD", r.ukey(s.UserId), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err
@@ -90,8 +111,8 @@ func (r redisSessionManager) DeleteSession(id string) error {
 
 func (r redisSessionManager) delete(s *Session) error {
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "DEL", "s:"+s.Id, nil),
-		radix.FlatCmd(nil, "SREM", "u:"+s.UserId, s.Id),
+		radix.FlatCmd(nil, "DEL", r.skey(s.Id), nil),
+		radix.FlatCmd(nil, "SREM", r.ukey(s.UserId), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err
@@ -101,20 +122,20 @@ func (r redisSessionManager) delete(s *Session) error {
 
 func (r redisSessionManager) DeleteAllSessions(userId string) error {
 	sids := []string{}
-	if err := r.pool.Do(radix.Cmd(&sids, "GET", "u:"+userId)); err != nil {
+	if err := r.pool.Do(radix.Cmd(&sids, "GET", r.ukey(userId))); err != nil {
 		return err
 	}
 	as := make([]radix.CmdAction, len(sids)+1)
 	for i, sid := range sids {
-		as[i] = radix.FlatCmd(nil, "DEL", "s:"+sid)
+		as[i] = radix.FlatCmd(nil, "DEL", r.skey(sid))
 	}
-	as[len(as)-1] = radix.FlatCmd(nil, "DEL", "u:"+userId)
+	as[len(as)-1] = radix.FlatCmd(nil, "DEL", r.ukey(userId))
 	return r.pool.Do(radix.Pipeline(as...))
 }
 
 func (r redisSessionManager) GetAllSessions(userId string) ([]Session, error) {
 	sids := []string{}
-	if err := r.pool.Do(radix.Cmd(&sids, "SMEMBERS", "u:"+userId)); err != nil {
+	if err := r.pool.Do(radix.Cmd(&sids, "SMEMBERS", r.ukey(userId))); err != nil {
 		return nil, err
 	}
 	ses := make([]Session, len(sids))
@@ -122,7 +143,7 @@ func (r redisSessionManager) GetAllSessions(userId string) ([]Session, error) {
 	defer bufPool.Put(b)
 	for i, sid := range sids {
 		b.Reset()
-		if err := r.pool.Do(radix.Cmd(b, "GET", "s:"+sid)); err != nil {
+		if err := r.pool.Do(radix.Cmd(b, "GET", r.skey(sid))); err != nil {
 			return nil, err
 		}
 		if err := json.NewDecoder(b).Decode(&(ses[i])); err != nil {
