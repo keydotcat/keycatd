@@ -32,3 +32,8 @@
 [[constraint]]
   branch = "master"
   name = "github.com/mediocregopher/radix.v3"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gorilla/securecookie"
+

@@ -7,7 +7,7 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-type apiAuthRegisterRequest struct {
+type authRegisterRequest struct {
 	Id             string `json:"id"`
 	Email          string `json:"email"`
 	Fullname       string `json:"fullname"`
@@ -18,17 +18,19 @@ type apiAuthRegisterRequest struct {
 	VaultKey       []byte `json:"vault_key"`
 }
 
-func apiAuth(w http.ResponseWriter, r *http.Request) {
+func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) {
 	var head string
 	var err error
 	head, r.URL.Path = shiftPath(r.URL.Path)
 	switch head {
 	case "register":
-		err = apiAuthRegister(w, r)
+		err = ah.authRegister(w, r)
 	case "confirm_email":
-		err = apiAuthConfirmEmail(w, r)
+		err = ah.authConfirmEmail(w, r)
 	case "request_confirmation_token":
-		err = apiAuthRequestConfirmationToken(w, r)
+		err = ah.authRequestConfirmationToken(w, r)
+	case "login":
+		err = ah.authLogin(w, r)
 	default:
 		err = models.ErrDoesntExist
 	}
@@ -38,8 +40,8 @@ func apiAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 // /auth/register
-func apiAuthRegister(w http.ResponseWriter, r *http.Request) error {
-	apr := &apiAuthRegisterRequest{}
+func (ah apiHandler) authRegister(w http.ResponseWriter, r *http.Request) error {
+	apr := &authRegisterRequest{}
 	if err := jsonDecode(w, r, 1024*5, apr); err != nil {
 		return err
 	}
@@ -64,7 +66,7 @@ func apiAuthRegister(w http.ResponseWriter, r *http.Request) error {
 }
 
 // /auth/confirm_email/:token
-func apiAuthConfirmEmail(w http.ResponseWriter, r *http.Request) error {
+func (ah apiHandler) authConfirmEmail(w http.ResponseWriter, r *http.Request) error {
 	token, _ := shiftPath(r.URL.Path)
 	if len(token) == 0 {
 		return util.NewErrorFrom(models.ErrDoesntExist)
@@ -80,13 +82,16 @@ func apiAuthConfirmEmail(w http.ResponseWriter, r *http.Request) error {
 	return jsonResponse(w, u)
 }
 
-type authEmailRequest struct {
-	Email string `json:"email"`
+type authRequest struct {
+	Id          string `json:"id"`
+	Password    string `json:"password"`
+	RequireCSRF bool   `json:"want_csrf"`
+	Email       string `json:"email"`
 }
 
 // /auth/request_confirmation_token
-func apiAuthRequestConfirmationToken(w http.ResponseWriter, r *http.Request) error {
-	aer := &authEmailRequest{}
+func (ah apiHandler) authRequestConfirmationToken(w http.ResponseWriter, r *http.Request) error {
+	aer := &authRequest{}
 	if err := jsonDecode(w, r, 1024, aer); err != nil {
 		return err
 	}
@@ -100,4 +105,24 @@ func apiAuthRequestConfirmationToken(w http.ResponseWriter, r *http.Request) err
 	}
 	//TODO: Send email
 	return jsonResponse(w, t)
+}
+
+// /auth/login
+func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
+	aer := &authRequest{}
+	if err := jsonDecode(w, r, 1024, aer); err != nil {
+		return err
+	}
+	u, err := models.FindUser(r.Context(), aer.Id)
+	if err != nil {
+		return err
+	}
+	if err := u.CheckPassword(aer.Password); err != nil {
+		return err
+	}
+	s, err := ah.sm.NewSession(u.Id, r.UserAgent(), aer.RequireCSRF)
+	if err != nil {
+		panic(err)
+	}
+	return jsonResponse(w, s)
 }

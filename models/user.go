@@ -155,7 +155,11 @@ func (u *User) SetPassword(pass string) error {
 }
 
 func (u *User) CheckPassword(pass string) error {
-	return bcrypt.CompareHashAndPassword(u.HashPass, []byte(pass))
+	err := bcrypt.CompareHashAndPassword(u.HashPass, []byte(pass))
+	if err != nil {
+		return util.NewErrorFrom(ErrUnauthorized)
+	}
+	return nil
 }
 
 func (u *User) GetTeams(ctx context.Context) ([]*Team, error) {

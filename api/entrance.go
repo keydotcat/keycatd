@@ -8,19 +8,25 @@ import (
 	"github.com/keydotcat/backend/models"
 )
 
-func MainHandler(db *sql.DB) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r.Method, "-", r.RequestURI)
-		apiRootHandler(w, r.WithContext(models.AddDBToContext(r.Context(), db)))
-	})
+type apiHandler struct {
+	db   *sql.DB
+	sm   SessionManager
+	csrf CSRF
 }
 
-func apiRootHandler(w http.ResponseWriter, r *http.Request) {
+func NewAPIHander(db *sql.DB, sm SessionManager, c CSRF) http.Handler {
+	ah := apiHandler{db, sm, c}
+	return ah
+}
+
+func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, "-", r.RequestURI)
+	r = r.WithContext(models.AddDBToContext(r.Context(), ah.db))
 	head := ""
 	head, r.URL.Path = shiftPath(r.URL.Path)
 	switch head {
 	case "auth":
-		apiAuth(w, r)
+		ah.authRoot(w, r)
 	default:
 		http.NotFound(w, r)
 	}
