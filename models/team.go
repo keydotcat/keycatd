@@ -156,7 +156,7 @@ func (t *Team) filterTeamUsers(tx *sql.Tx, uids ...string) ([]*teamUser, error) 
 	return teamUsers, nil
 }
 
-func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, vaultKeys VaultKeyPair) error {
+func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, signedVaultKeys VaultKeyPair) error {
 	return doTx(ctx, func(tx *sql.Tx) error {
 		teamUsers, err := t.filterTeamUsers(tx, promoter.Id, promotee.Id)
 		if err != nil {
@@ -176,11 +176,15 @@ func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, 
 		for i, v := range missingVaults {
 			vaultIds[i] = v.Id
 		}
-		if err := vaultKeys.checkKeyIdsMatch(vaultIds); err != nil {
+		if err := signedVaultKeys.checkKeyIdsMatch(vaultIds); err != nil {
 			return err
 		}
 		for _, v := range missingVaults {
-			if err := v.addUser(tx, promotee.Id, vaultKeys.Keys[v.Id]); err != nil {
+			key, err := verifyAndUnpack(v.PublicKey, signedVaultKeys.Keys[v.Id])
+			if err != nil {
+				return err
+			}
+			if err := v.addUser(tx, promotee.Id, key); err != nil {
 				return err
 			}
 		}

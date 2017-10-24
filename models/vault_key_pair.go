@@ -70,7 +70,7 @@ func (vkp VaultKeyPair) verifyAndUnpack(pubkey []byte) (VaultKeyPair, error) {
 		unpacked.PublicKey = data
 	}
 	for k, v := range vkp.Keys {
-		if data, err := verifyAndUnpack(pubkey, v); err != nil {
+		if data, err := verifyAndUnpack(unpacked.PublicKey, v); err != nil {
 			return unpacked, err
 		} else {
 			unpacked.Keys[k] = data
