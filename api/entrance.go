@@ -11,12 +11,13 @@ import (
 func MainHandler(db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.Method, "-", r.RequestURI)
-		apiRootHandler(w, r.WithContext(models.AddDBToContext(ctx, db)))
+		apiRootHandler(w, r.WithContext(models.AddDBToContext(r.Context(), db)))
 	})
 }
 
-func apiRootHandler(w ResponseWriter, r *Request) {
-	head, req.URL.Path = ShiftPath(req.URL.Path)
+func apiRootHandler(w http.ResponseWriter, r *http.Request) {
+	head := ""
+	head, r.URL.Path = shiftPath(r.URL.Path)
 	switch head {
 	case "auth":
 		apiAuth(w, r)

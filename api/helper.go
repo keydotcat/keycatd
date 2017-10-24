@@ -20,22 +20,22 @@ func shiftPath(p string) (head, tail string) {
 	return p[1:i], p[i:]
 }
 
-func jsonErr(w ResponseWriter) {
+func jsonErr(w http.ResponseWriter) {
 	http.Error(w, "Could not decode JSON data", http.StatusBadRequest)
 }
 
-func httpErr(w ResponseWriter, err error) bool {
+func httpErr(w http.ResponseWriter, err error) bool {
 	if util.CheckErr(err, models.ErrDoesntExist) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return true
-	} else {
+	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return true
 	}
 	return false
 }
 
-func jsonResponse(w ResponseWriter, obj interface{}) error {
+func jsonResponse(w http.ResponseWriter, obj interface{}) error {
 	b := bufPool.Get()
 	defer bufPool.Put(b)
 	if err := json.NewEncoder(b).Encode(obj); err != nil {
@@ -48,8 +48,6 @@ func jsonResponse(w ResponseWriter, obj interface{}) error {
 	return nil
 }
 
-func jsonDecode(w http.ResponseWrite, r *http.Request, max int64, obj interface{}) error {
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, max)).Decode(obj); err != nil {
-		return err
-	}
+func jsonDecode(w http.ResponseWriter, r *http.Request, max int64, obj interface{}) error {
+	return json.NewDecoder(http.MaxBytesReader(w, r.Body, max)).Decode(obj)
 }

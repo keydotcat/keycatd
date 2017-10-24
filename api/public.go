@@ -7,35 +7,39 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-type apiRegisterRequest struct {
+type apiAuthRegisterRequest struct {
 	Id             string `json:"id"`
 	Email          string `json:"email"`
 	Fullname       string `json:"fullname"`
-	PublicKey      string `json:"public_key"`
 	Password       string `json:"password"`
-	Key            string `json:"key"`
-	VaultPublicKey string `json:"vault_public_key"`
-	VaultKey       string `json:"vault_key"`
+	PublicKey      []byte `json:"public_key"`
+	Key            []byte `json:"key"`
+	VaultPublicKey []byte `json:"vault_public_key"`
+	VaultKey       []byte `json:"vault_key"`
 }
 
-func apiAuth(w htt.ResponseWriter, r *http.Request) {
-	head, req.URL.Path = ShiftPath(req.URL.Path)
+func apiAuth(w http.ResponseWriter, r *http.Request) {
+	var head string
+	var err error
+	head, r.URL.Path = shiftPath(r.URL.Path)
 	switch head {
 	case "register":
-		apiAuthRegister(w, r)
+		err = apiAuthRegister(w, r)
 	case "confirm_email":
-		apiAuthConfirmEmail(w, r)
+		err = apiAuthConfirmEmail(w, r)
 	case "request_confirmation_token":
-		apiAuthRequestConfirmationToken(w, r)
+		err = apiAuthRequestConfirmationToken(w, r)
 	default:
-		http.NotFound(w, r)
+		err = models.ErrDoesntExist
 	}
-
+	if err != nil {
+		httpErr(w, err)
+	}
 }
 
 // /auth/register
 func apiAuthRegister(w http.ResponseWriter, r *http.Request) error {
-	apr := &apiRegisterRequest
+	apr := &apiAuthRegisterRequest{}
 	if err := jsonDecode(w, r, 1024*5, apr); err != nil {
 		return err
 	}
@@ -61,19 +65,19 @@ func apiAuthRegister(w http.ResponseWriter, r *http.Request) error {
 
 // /auth/confirm_email/:token
 func apiAuthConfirmEmail(w http.ResponseWriter, r *http.Request) error {
-	token, _ := splitPath(r.URL.Path)
+	token, _ := shiftPath(r.URL.Path)
 	if len(token) == 0 {
 		return util.NewErrorFrom(models.ErrDoesntExist)
 	}
-	tok, err := models.FindToken(r.GetContext(), token)
+	tok, err := models.FindToken(r.Context(), token)
 	if err != nil {
 		return err
 	}
-	u, err := tok.ConfirmEmail(r.GetContext())
+	u, err := tok.ConfirmEmail(r.Context())
 	if err != nil {
 		return err
 	}
-	return jsonResponse(w, t)
+	return jsonResponse(w, u)
 }
 
 type authEmailRequest struct {
@@ -81,16 +85,16 @@ type authEmailRequest struct {
 }
 
 // /auth/request_confirmation_token
-func apiAuthConfirmEmail(w http.ResponseWriter, r *http.Request) {
-	aer := &apiEmailRequest{}
+func apiAuthRequestConfirmationToken(w http.ResponseWriter, r *http.Request) error {
+	aer := &authEmailRequest{}
 	if err := jsonDecode(w, r, 1024, aer); err != nil {
 		return err
 	}
-	u, err := models.FindUserByEmail(r.GetContext(), aer.Email)
+	u, err := models.FindUserByEmail(r.Context(), aer.Email)
 	if err != nil {
 		return err
 	}
-	t, err := u.GetVerificationToken(r.GetContext())
+	t, err := u.GetVerificationToken(r.Context())
 	if err != nil {
 		return err
 	}

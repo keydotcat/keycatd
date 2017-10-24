@@ -1,0 +1,16 @@
+---
+language: go
+go:
+  - 1.8
+
+services:
+  - redis-server
+
+env:
+  - REDIS_VERSION=stable
+
+script:
+  - go test -v -race ./...
+
+after_failure:
+  - tail -n100 ./*.log

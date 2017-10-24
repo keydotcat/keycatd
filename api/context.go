@@ -1,4 +1,4 @@
-package models
+package api
 
 import (
 	"context"
@@ -7,10 +7,23 @@ import (
 )
 
 const (
-	contextUserKey  = 0
-	contextTeamKey  = 1
-	contextVaultKey = 2
+	contextSessionKey = 0
+	contextUserKey    = iota
+	contextTeamKey    = iota
+	contextVaultKey   = iota
 )
+
+func ctxAddSessionManager(ctx context.Context, s SessionManager) context.Context {
+	return context.WithValue(ctx, contextSessionKey, s)
+}
+
+func ctxGetSessionManager(ctx context.Context) SessionManager {
+	d, ok := ctx.Value(contextSessionKey).(SessionManager)
+	if !ok {
+		panic("No session manager defined in context")
+	}
+	return d
+}
 
 func ctxAddUser(ctx context.Context, u *models.User) context.Context {
 	return context.WithValue(ctx, contextUserKey, u)
