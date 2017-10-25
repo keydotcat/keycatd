@@ -34,19 +34,20 @@ type User struct {
 	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
-func NewUser(ctx context.Context, id, fullname, email, password string, pubkey, key []byte, signedVaultKeys VaultKeyPair) (*User, *Token, error) {
+func NewUser(ctx context.Context, id, fullname, email, password string, keyPack []byte, signedVaultKeys VaultKeyPair) (*User, *Token, error) {
+	pub, priv, err := expandUserKeyPack(keyPack)
+	if err != nil {
+		return nil, nil, err
+	}
 	u := &User{
 		Id:               id,
 		Email:            email,
 		UnconfirmedEmail: email,
 		FullName:         fullname,
-		PublicKey:        pubkey,
+		PublicKey:        pub,
+		Key:              priv,
 	}
 	vaultKeys, err := signedVaultKeys.verifyAndUnpack(u.PublicKey)
-	if err != nil {
-		return nil, nil, err
-	}
-	u.Key, err = verifyAndUnpack(u.PublicKey, key)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -147,10 +148,10 @@ func (u *User) validate() error {
 	if !reValidEmail.MatchString(u.Email) {
 		errs.SetFieldError("email", "invalid")
 	}
-	if len(u.PublicKey) != PublicKeySize {
+	if len(u.PublicKey) != publicKeyPackSize {
 		errs.SetFieldError("public_key", "invalid")
 	}
-	if len(u.Key) < PublicKeySize {
+	if len(u.Key) < privateKeyPackMinSize {
 		errs.SetFieldError("private_key", "invalid")
 	}
 	return errs.Camo()

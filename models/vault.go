@@ -63,7 +63,7 @@ func (v Vault) validate() error {
 	if len(v.Team) == 0 {
 		errs.SetFieldError("team", "missing")
 	}
-	if len(v.PublicKey) != 32 {
+	if len(v.PublicKey) != publicKeyPackSize {
 		errs.SetFieldError("public_key", "invalid")
 	}
 	return errs.Camo()

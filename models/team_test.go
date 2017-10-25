@@ -23,7 +23,7 @@ func getDummyOwnerWithTeam() (*User, *Team) {
 func TestCreateTeam(t *testing.T) {
 	ctx := getCtx()
 	owner := getDummyUser()
-	vkp := VaultKeyPair{make([]byte, 32), map[string][]byte{owner.Id: []byte("crap")}}
+	vkp := getDummyVaultKeyPair(owner.Key, owner.Id)
 	tName := owner.Id + " other team"
 	team1, err := owner.CreateTeam(ctx, tName, vkp)
 	if err != nil {
@@ -82,22 +82,19 @@ func TestCreateVault(t *testing.T) {
 	}
 	vkp := getDummyVaultKeyPair(owner.Key, owner.Id)
 	vname := util.GenerateRandomToken(5)
-	vaults, err := team.GetVaultsForUser(ctx, owner)
+	vaultsFull, err := team.GetVaultsFullForUser(ctx, owner)
 	if err != nil {
 		t.Fatal(err)
 	}
 	keys := []string{}
-	for _, v := range vaults {
+	for _, v := range vaultsFull {
 		keys = append(keys, v.Id)
 	}
-	vkp = getDummyVaultKeyPair(owner.Key, keys...)
+	vkp = expandVaultKeysOnce(vaultsFull)
 	err = team.PromoteUser(ctx, owner, invitee, vkp)
 	if err != nil {
+		fmt.Println(util.GetStack(err))
 		t.Fatalf("Unexpected when promoting a user: %s", err)
-	}
-	_, err = team.CreateVault(ctx, owner, vname, vkp)
-	if !util.CheckErr(err, ErrInvalidKeys) {
-		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
 	}
 	vkp = getDummyVaultKeyPair(owner.Key, owner.Id)
 	_, err = team.CreateVault(ctx, owner, vname, vkp)
@@ -109,7 +106,7 @@ func TestCreateVault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
 	}
-	vaults, err = team.GetVaultsForUser(ctx, invitee)
+	vaults, err := team.GetVaultsForUser(ctx, invitee)
 	if len(vaults) != 2 {
 		t.Fatalf("Invalid number of vaults")
 	}
@@ -128,15 +125,15 @@ func TestPromoteUser(t *testing.T) {
 	if !util.CheckErr(err, ErrInvalidKeys) {
 		t.Fatalf("Unexpected error: %s vs %s", ErrInvalidKeys, err)
 	}
-	vaults, err := team.GetVaultsForUser(ctx, owner)
+	vaultsFull, err := team.GetVaultsFullForUser(ctx, owner)
 	if err != nil {
 		t.Fatal(err)
 	}
 	keys := []string{}
-	for _, v := range vaults {
+	for _, v := range vaultsFull {
 		keys = append(keys, v.Id)
 	}
-	vkp = getDummyVaultKeyPair(owner.Key, keys...)
+	vkp = expandVaultKeysOnce(vaultsFull)
 	err = team.PromoteUser(ctx, owner, invitee, vkp)
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)
@@ -152,7 +149,7 @@ func TestPromoteUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(iVaults) != len(vaults) {
+	if len(iVaults) != len(vaultsFull) {
 		t.Errorf("Expected to have the same vaults for both admins!")
 	}
 	err = team.DemoteUser(ctx, invitee, owner)

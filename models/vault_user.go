@@ -44,7 +44,7 @@ func (v vaultUser) validate() error {
 	if len(v.User) == 0 {
 		errs.SetFieldError("user", "missing")
 	}
-	if len(v.Key) == 0 {
+	if len(v.Key) < privateKeyPackMinSize {
 		errs.SetFieldError("key", "missing")
 	}
 	return errs.Camo()
