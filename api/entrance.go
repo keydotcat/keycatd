@@ -5,17 +5,19 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 )
 
 type apiHandler struct {
 	db   *sql.DB
-	sm   SessionManager
+	sm   managers.SessionMgr
+	mail managers.MailMgr
 	csrf CSRF
 }
 
-func NewAPIHander(db *sql.DB, sm SessionManager, c CSRF) http.Handler {
-	ah := apiHandler{db, sm, c}
+func NewAPIHander(db *sql.DB, sm managers.SessionMgr, m managers.MailMgr, c CSRF) http.Handler {
+	ah := apiHandler{db, sm, m, c}
 	return ah
 }
 

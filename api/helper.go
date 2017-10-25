@@ -36,8 +36,8 @@ func httpErr(w http.ResponseWriter, err error) bool {
 }
 
 func jsonResponse(w http.ResponseWriter, obj interface{}) error {
-	b := bufPool.Get()
-	defer bufPool.Put(b)
+	b := util.BufPool.Get()
+	defer util.BufPool.Put(b)
 	if err := json.NewEncoder(b).Encode(obj); err != nil {
 		panic(err)
 	}

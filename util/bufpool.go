@@ -1,4 +1,4 @@
-package api
+package util
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ func (bp bufferPool) Put(b *bytes.Buffer) {
 	bp.p.Put(b)
 }
 
-var bufPool = bufferPool{
+var BufPool = bufferPool{
 	sync.Pool{
 		New: func() interface{} {
 			return bytes.NewBuffer(nil)

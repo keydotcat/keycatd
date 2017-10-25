@@ -1,4 +1,4 @@
-package api
+package managers
 
 import "time"
 
@@ -10,7 +10,7 @@ type Session struct {
 	LastAccess   time.Time `json:"last_access"`
 }
 
-type SessionManager interface {
+type SessionMgr interface {
 	NewSession(userId string, agent string, csrf bool) (Session, error)
 	UpdateSession(id, agent string) (Session, error)
 	DeleteSession(id string) error

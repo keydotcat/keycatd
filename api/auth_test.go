@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
 )
@@ -53,7 +54,7 @@ func TestLogin(t *testing.T) {
 	ar := authRequest{Id: u.Id, Password: u.Id, RequireCSRF: true}
 	r, err := PostRequest("/auth/login", ar)
 	CheckErrorAndResponse(t, r, err, 200)
-	s := &Session{}
+	s := &managers.Session{}
 	if err := json.NewDecoder(r.Body).Decode(s); err != nil {
 		t.Fatal(err)
 	}

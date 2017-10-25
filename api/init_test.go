@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/keydotcat/backend/db"
+	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
 )
@@ -30,13 +31,14 @@ func initSRV() {
 	if err != nil {
 		panic(err)
 	}
-	rs, err := NewRedisSessionManager("localhost:6379")
+	rs, err := managers.NewSessionMgrRedis("localhost:6379")
 	if err != nil {
 		panic(err)
 	}
 	apiH = NewAPIHander(
 		mdb,
 		rs,
+		managers.NewMailMgrSMTP("localhost:1025", "", "", "blackhole@key.cat"),
 		NewCSRF([]byte("4d018d7e070ca9d5da7e767001bdaf90"), []byte("4e3797182c94f05b384c81ed0246f6b4")),
 	).(apiHandler)
 	srv = httptest.Server{

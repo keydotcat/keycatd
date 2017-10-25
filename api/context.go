@@ -7,41 +7,10 @@ import (
 )
 
 const (
-	contextSessionKey = 0
-	contextCsrfKey    = iota
-	contextUserKey    = iota
-	contextTeamKey    = iota
-	contextVaultKey   = iota
+	contextUserKey  = 0
+	contextTeamKey  = iota
+	contextVaultKey = iota
 )
-
-func ctxAddSessionManager(ctx context.Context, s SessionManager) context.Context {
-	return context.WithValue(ctx, contextSessionKey, s)
-}
-
-func ctxGetSessionManager(ctx context.Context) SessionManager {
-	d, ok := ctx.Value(contextSessionKey).(SessionManager)
-	if !ok {
-		panic("No session manager defined in context")
-	}
-	return d
-}
-
-func ctxAddCsrf(ctx context.Context, hKey, bKey []byte) context.Context {
-	csrf := NewCSRF(hKey, bKey)
-	return context.WithValue(
-		ctx,
-		contextCsrfKey,
-		&csrf,
-	)
-}
-
-func ctxGetCSRF(ctx context.Context) *CSRF {
-	csrf, ok := ctx.Value(contextCsrfKey).(*CSRF)
-	if !ok {
-		panic("No csrf in context")
-	}
-	return csrf
-}
 
 func ctxAddUser(ctx context.Context, u *models.User) context.Context {
 	return context.WithValue(ctx, contextUserKey, u)

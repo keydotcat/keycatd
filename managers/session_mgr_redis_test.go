@@ -1,4 +1,4 @@
-package api
+package managers
 
 import (
 	"fmt"
@@ -9,47 +9,47 @@ import (
 )
 
 func init() {
-	rs, err := NewRedisSessionManager("localhost:6379")
+	rs, err := NewSessionMgrRedis("localhost:6379")
 	if err != nil {
 		panic(err)
 	}
-	if err = rs.(redisSessionManager).purgeAllData(); err != nil {
+	if err = rs.(sessionMgrRedis).purgeAllData(); err != nil {
 		panic(err)
 	}
 }
 
-func addSessionForUser(rs SessionManager, u *models.User, agent string) error {
-	s, err := rs.NewSession(u.Id, agent, false)
+func addSessionForUser(rs SessionMgr, uid, agent string) error {
+	s, err := rs.NewSession(uid, agent, false)
 	if err != nil {
 		return err
 	}
-	if s.UserId != u.Id {
-		return fmt.Errorf("Mismatch in the user id: %s vs %s", s.UserId, u.Id)
+	if s.UserId != uid {
+		return fmt.Errorf("Mismatch in the user id: %s vs %s", s.UserId, uid)
 	}
 	return nil
 }
 
 func TestRedisSessionManager(t *testing.T) {
-	rs, err := NewRedisSessionManager("localhost:6379")
+	rs, err := NewSessionMgrRedis("localhost:6379")
 	if err != nil {
 		t.Fatal(err)
 	}
-	u := getDummyUser()
-	u2 := getDummyUser()
-	if err := addSessionForUser(rs, u, u.Id+":s1"); err != nil {
+	uid1 := util.GenerateRandomToken(4)
+	uid2 := util.GenerateRandomToken(4)
+	if err := addSessionForUser(rs, uid1, uid1+":s1"); err != nil {
 		t.Fatal(err)
 	}
-	if err := addSessionForUser(rs, u, u.Id+":s2"); err != nil {
+	if err := addSessionForUser(rs, uid1, uid1+":s2"); err != nil {
 		t.Fatal(err)
 	}
-	if err := addSessionForUser(rs, u2, u2.Id+":s1"); err != nil {
+	if err := addSessionForUser(rs, uid2, uid2+":s1"); err != nil {
 		t.Fatal(err)
 	}
-	sess, err := rs.GetAllSessions(u.Id)
+	sess, err := rs.GetAllSessions(uid1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	sids := map[string]bool{u.Id + ":s1": false, u.Id + ":s2": false}
+	sids := map[string]bool{uid1 + ":s1": false, uid1 + ":s2": false}
 	for _, ses := range sess {
 		sids[ses.Agent] = true
 	}
