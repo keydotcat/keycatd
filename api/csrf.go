@@ -9,15 +9,15 @@ import (
 
 const CSRF_COOKIE_NAME = "4d018d7e07"
 
-type CSRF struct {
+type csrf struct {
 	sc *securecookie.SecureCookie
 }
 
-func NewCSRF(hKey, bKey []byte) CSRF {
-	return CSRF{securecookie.New(hKey, bKey)}
+func newCsrf(hKey, bKey []byte) csrf {
+	return csrf{securecookie.New(hKey, bKey)}
 }
 
-func (c CSRF) checkToken(w http.ResponseWriter, r *http.Request) bool {
+func (c csrf) checkToken(w http.ResponseWriter, r *http.Request) bool {
 	val, ok := r.Header["X-Csrf-Token"]
 	if !ok {
 		return false
@@ -28,7 +28,7 @@ func (c CSRF) checkToken(w http.ResponseWriter, r *http.Request) bool {
 	return c.getToken(w, r) == val[0]
 }
 
-func (c CSRF) getToken(w http.ResponseWriter, r *http.Request) string {
+func (c csrf) getToken(w http.ResponseWriter, r *http.Request) string {
 	csrfToken := ""
 	if cookie, err := r.Cookie(CSRF_COOKIE_NAME); err == nil {
 		if err = c.sc.Decode(CSRF_COOKIE_NAME, cookie.Value, &csrfToken); err == nil {

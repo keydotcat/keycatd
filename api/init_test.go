@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"net"
 	"net/http"
@@ -16,14 +15,13 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-var mdb *sql.DB
-var a32b = make([]byte, 32)
 var srv httptest.Server
 var apiH apiHandler
 
 func init() {
-	initDB()
+	TEST_MODE = false
 	initSRV()
+	initDB()
 }
 
 func initSRV() {
@@ -35,12 +33,27 @@ func initSRV() {
 	if err != nil {
 		panic(err)
 	}
-	apiH = NewAPIHander(
-		mdb,
-		rs,
-		managers.NewMailMgrSMTP("localhost:1025", "", "", "blackhole@key.cat"),
-		NewCSRF([]byte("4d018d7e070ca9d5da7e767001bdaf90"), []byte("4e3797182c94f05b384c81ed0246f6b4")),
-	).(apiHandler)
+	c := Conf{
+		URL:      "http://localhost:" + ln.Port,
+		DB:       "user=root dbname=test sslmode=disable port=26257",
+		MailFrom: "blackhole@key.cat",
+		MailSMTP: &ConfMailSMTP{
+			Server: "localhost:1025",
+		},
+		SessionRedis: ConfSessionRedis{
+			Server: "localhost:6379",
+			DbId:   10,
+		},
+		Csrf: ConfCsrf{
+			HashKey: "4d018d7e070ca9d5da7e767001bdaf90",
+			BlobKey: "4e3797182c94f05b384c81ed0246f6b4",
+		},
+	}
+	handler, err = NewAPIHander(c)
+	if err != nil {
+		panic(err)
+	}
+	apiH = handler.(apiHandler)
 	srv = httptest.Server{
 		Listener: ln,
 		Config:   &http.Server{Handler: apiH},
@@ -52,12 +65,8 @@ func initSRV() {
 func initDB() {
 	models.HASH_PASSWD_COST = bcrypt.MinCost
 	var err error
-	mdb, err = sql.Open("postgres", "user=root dbname=test sslmode=disable port=26257")
-	if err != nil {
-		panic(err)
-	}
 	tables := []string{}
-	rows, err := mdb.Query("SHOW TABLES")
+	rows, err := apiH.db.Query("SHOW TABLES")
 	if err != nil {
 		panic(err)
 	}
@@ -71,11 +80,11 @@ func initDB() {
 	}
 	for _, tname := range tables {
 		log.Printf("Dropping %s", tname)
-		if _, err = mdb.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
+		if _, err = apiH.db.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
 			panic(err)
 		}
 	}
-	m := db.NewMigrateMgr(mdb)
+	m := db.NewMigrateMgr(apiH.db)
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}
@@ -87,7 +96,7 @@ func initDB() {
 }
 
 func getCtx() context.Context {
-	return models.AddDBToContext(context.Background(), mdb)
+	return models.AddDBToContext(context.Background(), apiH.db)
 }
 
 func getDummyUser() *models.User {

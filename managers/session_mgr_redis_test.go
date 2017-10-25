@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	rs, err := NewSessionMgrRedis("localhost:6379")
+	rs, err := NewSessionMgrRedis("localhost:6379", 10)
 	if err != nil {
 		panic(err)
 	}
@@ -30,7 +30,7 @@ func addSessionForUser(rs SessionMgr, uid, agent string) error {
 }
 
 func TestRedisSessionManager(t *testing.T) {
-	rs, err := NewSessionMgrRedis("localhost:6379")
+	rs, err := NewSessionMgrRedis("localhost:6379", 10)
 	if err != nil {
 		t.Fatal(err)
 	}

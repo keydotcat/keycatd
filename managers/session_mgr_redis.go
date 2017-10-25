@@ -15,8 +15,8 @@ type sessionMgrRedis struct {
 	pool   *radix.Pool
 }
 
-func NewSessionMgrRedis(connUrl string) (SessionMgr, error) {
-	pool, err := radix.NewPool("tcp", connUrl, 10, nil)
+func NewSessionMgrRedis(connUrl string, dbId int) (SessionMgr, error) {
+	pool, err := radix.NewPool("tcp", connUrl, dbId, nil)
 	if err != nil {
 		return nil, err
 	}
