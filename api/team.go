@@ -32,7 +32,7 @@ func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 type teamListResponse struct {
-	Teams []*Team `json:"teams"`
+	Teams []*models.Team `json:"teams"`
 }
 
 // GET /team

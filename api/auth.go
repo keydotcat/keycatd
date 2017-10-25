@@ -41,8 +41,7 @@ type authRegisterRequest struct {
 	Email          string `json:"email"`
 	Fullname       string `json:"fullname"`
 	Password       string `json:"password"`
-	PublicKey      []byte `json:"public_key"`
-	Key            []byte `json:"key"`
+	KeyPack        []byte `json:"user_key_pack"`
 	VaultPublicKey []byte `json:"vault_public_key"`
 	VaultKey       []byte `json:"vault_key"`
 }
@@ -80,8 +79,7 @@ func (ah apiHandler) authRegister(w http.ResponseWriter, r *http.Request) error 
 		apr.Fullname,
 		apr.Email,
 		apr.Password,
-		apr.PublicKey,
-		apr.Key,
+		apr.KeyPack,
 		models.VaultKeyPair{
 			PublicKey: apr.VaultPublicKey,
 			Keys:      map[string][]byte{apr.Id: apr.VaultKey},

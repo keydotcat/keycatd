@@ -90,19 +90,12 @@ func getCtx() context.Context {
 
 func getDummyUser() *models.User {
 	ctx := getCtx()
-	uid := "u_" + util.GenerateRandomToken(10)
-	vkp := getDummyVaultKeyPair(uid)
-	u, _, err := models.NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, a32b, a32b, vkp)
+	uid := util.GenerateRandomToken(5)
+	_, priv, fullpack := generateNewKeys()
+	vkp := getDummyVaultKeyPair(priv, uid)
+	u, _, err := models.NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, fullpack, vkp)
 	if err != nil {
 		panic(err)
 	}
 	return u
-}
-
-func getDummyVaultKeyPair(ids ...string) models.VaultKeyPair {
-	vkp := models.VaultKeyPair{a32b, map[string][]byte{}}
-	for _, id := range ids {
-		vkp.Keys[id] = a32b
-	}
-	return vkp
 }

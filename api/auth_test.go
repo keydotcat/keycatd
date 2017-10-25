@@ -19,15 +19,17 @@ func loginDummyUser() {
 
 func TestRegister(t *testing.T) {
 	activeSessionToken = ""
+	uid := util.GenerateRandomToken(5)
+	_, priv, fullpack := generateNewKeys()
+	vkp := getDummyVaultKeyPair(priv, uid)
 	arp := authRegisterRequest{
-		util.GenerateRandomToken(5),
+		uid,
 		util.GenerateRandomToken(10) + "@me.not",
 		"Random name",
 		"pass",
-		a32b,
-		a32b,
-		a32b,
-		a32b,
+		fullpack,
+		vkp.PublicKey,
+		vkp.Keys[uid],
 	}
 	r, err := PostRequest("/auth/register", arp)
 	CheckErrorAndResponse(t, r, err, 200)
