@@ -76,4 +76,9 @@ func TestRedisSessionManager(t *testing.T) {
 	if !util.CheckErr(err, models.ErrDoesntExist) {
 		t.Fatalf("Unexpected error: %s vs %s", models.ErrDoesntExist, err)
 	}
+	for _, uid := range []string{uid1, uid2} {
+		if err = rs.DeleteAllSessions(uid1); err != nil {
+			t.Fatalf("Could not delete all sessions for user %s: %s", uid, err)
+		}
+	}
 }

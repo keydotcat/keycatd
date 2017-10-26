@@ -12,10 +12,10 @@ git-static: models/autogen.go
 	echo ${GIT_VERSION} > data/version/current
 
 static: git-static
-	go-bindata -o static/data.go -pkg static data/**
+	go-bindata -prefix data/ -o static/data.go -pkg static data/...
 
 dev-static: git-static
-	go-bindata -debug -o static/data.go -pkg static data/**
+	go-bindata -debug -prefix data/ -o static/data.go -pkg static data/...
 
 models/autogen.go: models/user.go models/team.go models/vault.go models/team_user.go models/vault_user.go models/invite.go models/token.go models/secret.go
 	 scaneo -p models -u -o $@ $^

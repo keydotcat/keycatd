@@ -1,0 +1,12 @@
+port = 23764
+url = "http://localhost:23764"
+db = "user=root dbname=test sslmode=disable port=26257"
+[mail]
+	from = "test@nowhere.net"
+	[mail.smtp]
+		server = "localhost:1025"
+[session.redis]
+	server = "localhost:6379"
+[csrf]
+	hash_key = "4d018d7e070ca9d5da7e767001bdaf90"
+	block_key	= "4e3797182c94f05b384c81ed0246f6b4"

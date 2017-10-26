@@ -23,7 +23,7 @@ func NewMigrateMgr(db *sql.DB) *MigrateMgr {
 }
 
 func (m *MigrateMgr) LoadMigrations() error {
-	return static.Walk("data/migrations", func(path string, fi os.FileInfo, err error) error {
+	return static.Walk("migrations", func(path string, fi os.FileInfo, err error) error {
 		log.Println("Found migration", path)
 		if !strings.HasSuffix(path, ".sql") {
 			return nil

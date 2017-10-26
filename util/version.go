@@ -21,7 +21,7 @@ var (
 
 func init() {
 	vs := []*VersionEntry{}
-	data, err := static.Asset("data/version/history")
+	data, err := static.Asset("version/history")
 	if err != nil {
 		panic(fmt.Sprintf("Cannot retrieve version_history: %s", err))
 	}

@@ -10,7 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/keydotcat/backend/db"
-	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
 )
@@ -29,12 +28,9 @@ func initSRV() {
 	if err != nil {
 		panic(err)
 	}
-	rs, err := managers.NewSessionMgrRedis("localhost:6379")
-	if err != nil {
-		panic(err)
-	}
 	c := Conf{
-		URL:      "http://localhost:" + ln.Port,
+		Port:     1, //Not used
+		Url:      "http://" + ln.Addr().String(),
 		DB:       "user=root dbname=test sslmode=disable port=26257",
 		MailFrom: "blackhole@key.cat",
 		MailSMTP: &ConfMailSMTP{
@@ -42,14 +38,14 @@ func initSRV() {
 		},
 		SessionRedis: ConfSessionRedis{
 			Server: "localhost:6379",
-			DbId:   10,
+			DBId:   10,
 		},
 		Csrf: ConfCsrf{
-			HashKey: "4d018d7e070ca9d5da7e767001bdaf90",
-			BlobKey: "4e3797182c94f05b384c81ed0246f6b4",
+			HashKey:  "4d018d7e070ca9d5da7e767001bdaf90",
+			BlockKey: "4e3797182c94f05b384c81ed0246f6b4",
 		},
 	}
-	handler, err = NewAPIHander(c)
+	handler, err := NewAPIHandler(c)
 	if err != nil {
 		panic(err)
 	}

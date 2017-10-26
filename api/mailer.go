@@ -3,14 +3,14 @@ package api
 import (
 	"fmt"
 	"html/template"
-	"models"
 	"os"
 	"path/filepath"
-	"static"
 	"sync"
-	"util"
 
 	"github.com/keydotcat/backend/managers"
+	"github.com/keydotcat/backend/models"
+	"github.com/keydotcat/backend/static"
+	"github.com/keydotcat/backend/util"
 )
 
 type mailer struct {
@@ -19,18 +19,19 @@ type mailer struct {
 	lock         *sync.Mutex
 	TestMode     bool
 	t            *template.Template
-	mailer       managers.MailMgr
+	mailMgr      managers.MailMgr
 }
 
 func newMailer(rootUrl string, testMode bool, mm managers.MailMgr) (*mailer, error) {
-	mm := &Mailer{}
-	mm.templatesDir = "mail"
-	mm.rootUrl = conf.RootURL
-	mm.lock = &sync.Mutex{}
-	if err := mm.compile(); err != nil {
+	m := &mailer{}
+	m.templatesDir = "mail"
+	m.rootUrl = rootUrl
+	m.lock = &sync.Mutex{}
+	m.mailMgr = mm
+	if err := m.compile(); err != nil {
 		return nil, err
 	}
-	return mm, nil
+	return m, nil
 }
 
 func (mm *mailer) compile() error {
@@ -54,7 +55,7 @@ func (mm *mailer) compile() error {
 }
 
 type mailUserTeamTokenData struct {
-	Fullname string
+	FullName string
 	HostUrl  string
 	Team     string
 	Token    string
@@ -75,21 +76,16 @@ func (mm *mailer) send(muttd mailUserTeamTokenData, templateName, subject string
 	return mm.mailMgr.SendMail(muttd.Email, subject, buf.String())
 }
 
-func (mm *mailer) sendConfirmationMail(u *models.User) error {
+func (mm *mailer) sendConfirmationMail(u *models.User, token *models.Token) error {
 	email := u.Email
-	if u.UncheckedEmail != "" {
-		email = u.UncheckedEmail
+	if u.UnconfirmedEmail != "" {
+		email = u.UnconfirmedEmail
 	}
-	muttd := mailUserTeamTokenData{Fullname: u.Fullname, HostUrl: mm.rootUrl, Token: u.ConfirmToken, Username: u.Username, Email: email}
+	muttd := mailUserTeamTokenData{FullName: u.FullName, HostUrl: mm.rootUrl, Token: token.Id, Username: u.Id, Email: email}
 	return mm.send(muttd, "confirm_account", "Confirm your email")
 }
 
-func (mm *mailer) sendForgottenPasswordMail(u *models.User) error {
-	muttd := mailUserTeamTokenData{Fullname: u.Fullname, Username: u.Username, HostUrl: mm.rootUrl, Token: u.ForgottenToken, Email: u.Email}
-	return mm.send(muttd, "forgotten_password", "Reset your password")
-}
-
 func (mm *mailer) sendInvitationMail(t *models.Team, u *models.User, i *models.Invite) error {
-	muttd := mailUserTeamTokenData{Fullname: u.Fullname, HostUrl: mm.rootUrl, Token: i.Token, Email: i.Email, Team: t.Name}
-	return mm.send(muttd, "invite_user", fmt.Sprintf("%s has invited you to join key.cat", u.Fullname))
+	muttd := mailUserTeamTokenData{FullName: u.FullName, HostUrl: mm.rootUrl, Email: i.Email, Team: t.Name}
+	return mm.send(muttd, "invite_user", fmt.Sprintf("%s has invited you to join key.cat", u.FullName))
 }
