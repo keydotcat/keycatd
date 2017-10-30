@@ -61,10 +61,10 @@ func (t *Team) insert(tx *sql.Tx) error {
 func (t *Team) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if !reValidUsername.MatchString(t.Owner) {
-		errs.SetFieldError("username", "invalid")
+		errs.SetFieldError("team_owner", "invalid")
 	}
 	if len(t.Name) == 0 {
-		errs.SetFieldError("name", "invalid")
+		errs.SetFieldError("team_name", "invalid")
 	}
 	return errs.Camo()
 }
@@ -180,11 +180,12 @@ func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, 
 			return err
 		}
 		for _, v := range missingVaults {
-			key, err := verifyAndUnpack(v.PublicKey, signedVaultKeys.Keys[v.Id])
+			vaultKey := signedVaultKeys.Keys[v.Id]
+			_, err := verifyAndUnpack(v.PublicKey, vaultKey)
 			if err != nil {
 				return err
 			}
-			if err := v.addUser(tx, promotee.Id, key); err != nil {
+			if err := v.addUser(tx, promotee.Id, vaultKey); err != nil {
 				return err
 			}
 		}

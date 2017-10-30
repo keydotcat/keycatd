@@ -137,22 +137,22 @@ func (u *User) update(tx *sql.Tx) error {
 func (u *User) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if !reValidUsername.MatchString(u.Id) {
-		errs.SetFieldError("username", "invalid")
+		errs.SetFieldError("user_username", "invalid")
 	}
 	if len(u.FullName) == 0 {
-		errs.SetFieldError("fullname", "invalid")
+		errs.SetFieldError("user_fullname", "invalid")
 	}
 	if len(u.HashPass) < 6 {
-		errs.SetFieldError("password", "too short")
+		errs.SetFieldError("user_password", "too short")
 	}
 	if !reValidEmail.MatchString(u.Email) {
-		errs.SetFieldError("email", "invalid")
+		errs.SetFieldError("user_email", "invalid")
 	}
 	if len(u.PublicKey) != publicKeyPackSize {
-		errs.SetFieldError("public_key", "invalid")
+		errs.SetFieldError("user_public_key", "invalid")
 	}
-	if len(u.Key) < privateKeyPackMinSize {
-		errs.SetFieldError("private_key", "invalid")
+	if len(u.Key) != privateKeyPackSize {
+		errs.SetFieldError("user_private_key", "invalid")
 	}
 	return errs.Camo()
 }

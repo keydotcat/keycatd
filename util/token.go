@@ -15,6 +15,15 @@ func GenerateRandomToken(length int) string {
 	return base64.RawURLEncoding.EncodeToString(data)[:length]
 }
 
+func GenerateRandomByteArray(length int) []byte {
+	data := make([]byte, length)
+	_, err := rand.Read(data)
+	if err != nil {
+		panic(err)
+	}
+	return data
+}
+
 func WriteStringToWriter(w io.Writer, s string) error {
 	n := 0
 	d := []byte(s)

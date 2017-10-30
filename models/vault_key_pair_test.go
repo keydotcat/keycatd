@@ -5,8 +5,11 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/keydotcat/backend/util"
+
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"
+	"golang.org/x/crypto/nacl/secretbox"
 )
 
 func generateNewKeys() ([]byte, []byte, []byte) {
@@ -18,9 +21,49 @@ func generateNewKeys() ([]byte, []byte, []byte) {
 	if err != nil {
 		panic(err)
 	}
-	pub := append([]byte(spub), (*epub)[:]...)
+	pubPack := append([]byte(spub), signAndPack(spriv, (*epub)[:])...)
 	priv := append([]byte(spriv), (*epriv)[:]...)
-	return pub, priv, append([]byte(spub), signAndPack(priv, append((*epub)[:], priv...))...)
+	snonce := util.GenerateRandomByteArray(boxNonceSize)
+	var nonce [24]byte
+	copy(nonce[:], snonce)
+	var spass [32]byte
+	copy(spass[:], spub)
+	privPack := signAndPack(spriv, secretbox.Seal(snonce, priv, &nonce, &spass))
+	return pubPack, priv, append(pubPack, privPack...)
+}
+
+func getUserPrivateKeys(pubPack, privPack []byte) []byte {
+	closed, err := verifyAndUnpack(pubPack, privPack)
+	if err != nil {
+		panic(err)
+	}
+	var nonce [24]byte
+	copy(nonce[:], closed)
+	closed = closed[24:]
+	var spass [32]byte
+	copy(spass[:], pubPack)
+	open, ok := secretbox.Open([]byte{}, closed, &nonce, &spass)
+	if !ok {
+		panic("Could not open secret box")
+	}
+	return open
+}
+
+func getVaultPrivateKeys(pubPack, privPack []byte) []byte {
+	closed, err := verifyAndUnpack(pubPack, privPack)
+	if err != nil {
+		panic(err)
+	}
+	var nonce [24]byte
+	copy(nonce[:], closed)
+	closed = closed[24:]
+	var spass [32]byte
+	copy(spass[:], pubPack)
+	open, ok := box.OpenAfterPrecomputation([]byte{}, closed, &nonce, &spass)
+	if !ok {
+		panic("Could not open  box")
+	}
+	return open
 }
 
 func signAndPack(keyPack []byte, msg []byte) []byte {
@@ -34,10 +77,17 @@ func signAndPack(keyPack []byte, msg []byte) []byte {
 
 func getDummyVaultKeyPair(signerPack []byte, ids ...string) VaultKeyPair {
 	pubPack, privPack, _ := generateNewKeys()
-	signer := signerPack[:ed25519.PrivateKeySize]
-	vkp := VaultKeyPair{signAndPack(signer, pubPack), map[string][]byte{}}
+	adminSigner := signerPack[:ed25519.PrivateKeySize]
+	vaultSigner := privPack[:ed25519.PrivateKeySize]
+	vkp := VaultKeyPair{signAndPack(adminSigner, pubPack), map[string][]byte{}}
+	snonce := util.GenerateRandomByteArray(boxNonceSize)
+	var nonce [24]byte
+	copy(nonce[:], snonce)
+	var sharedK [32]byte
+	copy(sharedK[:], pubPack)
+	signedsealed := signAndPack(vaultSigner, box.SealAfterPrecomputation(snonce, privPack, &nonce, &sharedK))
 	for _, id := range ids {
-		vkp.Keys[id] = signAndPack(privPack[:ed25519.PrivateKeySize], privPack)
+		vkp.Keys[id] = signedsealed
 	}
 	return vkp
 }
@@ -45,7 +95,7 @@ func getDummyVaultKeyPair(signerPack []byte, ids ...string) VaultKeyPair {
 func expandVaultKeysOnce(vs []*VaultFull) VaultKeyPair {
 	vkp := VaultKeyPair{Keys: map[string][]byte{}}
 	for _, v := range vs {
-		vkp.Keys[v.Id] = signAndPack(v.Key[:ed25519.PrivateKeySize], v.Key)
+		vkp.Keys[v.Id] = v.Key
 	}
 	return vkp
 }
@@ -56,7 +106,8 @@ func TestSigningAndVerificationOfVaultKeyPairs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bytes.Compare(pub, epub) != 0 || bytes.Compare(priv, epriv) != 0 {
+	openPrivKeys := getUserPrivateKeys(epub, epriv)
+	if bytes.Compare(pub, epub) != 0 || bytes.Compare(priv, openPrivKeys) != 0 {
 		t.Fatalf("Packed and unpacked keys differ")
 	}
 	vkp := getDummyVaultKeyPair(priv, "random1", "random2")
@@ -64,7 +115,7 @@ func TestSigningAndVerificationOfVaultKeyPairs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vkp = getDummyVaultKeyPair(unpacked.Keys["random1"])
+	vkp = getDummyVaultKeyPair(getVaultPrivateKeys(unpacked.PublicKey, unpacked.Keys["random1"]))
 	if _, err := vkp.verifyAndUnpack(unpacked.PublicKey); err != nil {
 		t.Fatal(err)
 	}

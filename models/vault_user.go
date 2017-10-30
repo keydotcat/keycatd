@@ -36,16 +36,16 @@ func (tu *vaultUser) insert(tx *sql.Tx) error {
 func (v vaultUser) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if len(v.Team) == 0 {
-		errs.SetFieldError("team", "missing")
+		errs.SetFieldError("vaultuser_team", "missing")
 	}
 	if len(v.Vault) == 0 {
-		errs.SetFieldError("vault", "missing")
+		errs.SetFieldError("vaultuser_vault", "missing")
 	}
 	if len(v.User) == 0 {
-		errs.SetFieldError("user", "missing")
+		errs.SetFieldError("vaultuser_user", "missing")
 	}
-	if len(v.Key) < privateKeyPackMinSize {
-		errs.SetFieldError("key", "missing")
+	if len(v.Key) != privateKeyPackSize {
+		errs.SetFieldError("vaultuser_key", "invalid")
 	}
 	return errs.Camo()
 }

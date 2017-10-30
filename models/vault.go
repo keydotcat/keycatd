@@ -58,13 +58,13 @@ func (v *Vault) update(tx *sql.Tx) error {
 func (v Vault) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if len(v.Id) == 0 {
-		errs.SetFieldError("id", "missing")
+		errs.SetFieldError("vault_id", "missing")
 	}
 	if len(v.Team) == 0 {
-		errs.SetFieldError("team", "missing")
+		errs.SetFieldError("vault_team", "missing")
 	}
 	if len(v.PublicKey) != publicKeyPackSize {
-		errs.SetFieldError("public_key", "invalid")
+		errs.SetFieldError("vault_public_key", "invalid")
 	}
 	return errs.Camo()
 }
