@@ -2,7 +2,6 @@ package api
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 
 	"github.com/keydotcat/backend/managers"
@@ -49,11 +48,10 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 		blockKey = []byte(c.Csrf.BlockKey)
 	}
 	ah.csrf = newCsrf([]byte(c.Csrf.HashKey), blockKey)
-	return ah, nil
+	return logHandler(ah), nil
 }
 
 func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, "-", r.RequestURI)
 	r = r.WithContext(models.AddDBToContext(r.Context(), ah.db))
 	head := ""
 	head, r.URL.Path = shiftPath(r.URL.Path)
@@ -63,4 +61,5 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.NotFound(w, r)
 	}
+
 }

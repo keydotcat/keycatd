@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -41,9 +42,9 @@ type authRegisterRequest struct {
 	Email          string `json:"email"`
 	Fullname       string `json:"fullname"`
 	Password       string `json:"password"`
-	KeyPack        []byte `json:"user_key_pack"`
-	VaultPublicKey []byte `json:"vault_public_key"`
-	VaultKey       []byte `json:"vault_key"`
+	KeyPack        []byte `json:"user_keys"`
+	VaultPublicKey []byte `json:"vault_public_keys"`
+	VaultKey       []byte `json:"vault_keys"`
 }
 
 func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +64,7 @@ func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) {
 		err = models.ErrDoesntExist
 	}
 	if err != nil {
+		fmt.Println(util.GetStack(err))
 		httpErr(w, err)
 	}
 }

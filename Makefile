@@ -5,6 +5,7 @@ GIT_VERSION = $(shell git describe --abbrev=8 --dirty --always 2>/dev/null)
 cmds:
 	go get github.com/jteeuwen/go-bindata/...
 	go get github.com/acasajus/scaneo
+	go get github.com/githubnemo/CompileDaemon
 
 git-static: models/autogen.go
 	mkdir -p data/version
