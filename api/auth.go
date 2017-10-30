@@ -37,7 +37,7 @@ func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *h
 }
 
 type authRegisterRequest struct {
-	Id             string `json:"id"`
+	Username       string `json:"username"`
 	Email          string `json:"email"`
 	Fullname       string `json:"fullname"`
 	Password       string `json:"password"`
@@ -75,14 +75,14 @@ func (ah apiHandler) authRegister(w http.ResponseWriter, r *http.Request) error 
 	}
 	_, t, err := models.NewUser(
 		r.Context(),
-		apr.Id,
+		apr.Username,
 		apr.Fullname,
 		apr.Email,
 		apr.Password,
 		apr.KeyPack,
 		models.VaultKeyPair{
 			PublicKey: apr.VaultPublicKey,
-			Keys:      map[string][]byte{apr.Id: apr.VaultKey},
+			Keys:      map[string][]byte{apr.Username: apr.VaultKey},
 		},
 	)
 	if err != nil {

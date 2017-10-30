@@ -44,8 +44,8 @@ func TestRegister(t *testing.T) {
 	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
 		t.Fatal(err)
 	}
-	if u.Id != arp.Id {
-		t.Fatalf("Mismatch in the user id!: %s vs %s", arp.Id, u.Id)
+	if u.Id != arp.Username {
+		t.Fatalf("Mismatch in the user id!: %s vs %s", arp.Username, u.Id)
 	}
 }
 

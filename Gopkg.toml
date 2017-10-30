@@ -41,3 +41,7 @@
 [[constraint]]
   name = "github.com/spf13/viper"
   revision = "25b30aa063fc18e48662b86996252eabdcf2f0c7"
+
+[[constraint]]
+  name = "github.com/rs/cors"
+  version = "1.2.0"

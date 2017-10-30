@@ -56,6 +56,12 @@
   version = "v1.0.1"
 
 [[projects]]
+  name = "github.com/rs/cors"
+  packages = ["."]
+  revision = "7af7a1e09ba336d2ea14b1ce73bf693c6837dbf6"
+  version = "v1.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/spf13/afero"
   packages = [".","mem"]
@@ -111,6 +117,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9ba62c87d016135dd247255a81aeb0b21613ec34966c32b28e25d59351fe6e19"
+  inputs-digest = "f95b1e2de1d1f3cce2f6c8cf8c54566afcadbc0cf939a96fc755780b556376e2"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/keydotcat/backend/api"
+	"github.com/rs/cors"
 	"github.com/spf13/viper"
 )
 
@@ -63,7 +64,7 @@ func main() {
 	}
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", c.Port),
-		Handler:        apiHandler,
+		Handler:        cors.Default().Handler(apiHandler),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
