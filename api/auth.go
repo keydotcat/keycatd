@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -64,7 +63,6 @@ func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) {
 		err = models.ErrDoesntExist
 	}
 	if err != nil {
-		fmt.Println(util.GetStack(err))
 		httpErr(w, err)
 	}
 }

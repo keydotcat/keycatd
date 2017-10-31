@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -49,5 +50,9 @@ func jsonResponse(w http.ResponseWriter, obj interface{}) error {
 }
 
 func jsonDecode(w http.ResponseWriter, r *http.Request, max int64, obj interface{}) error {
-	return json.NewDecoder(http.MaxBytesReader(w, r.Body, max)).Decode(obj)
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, max)).Decode(obj); err != nil {
+		log.Printf("[ERROR] Could not parse json: %s", err)
+		return util.NewErrorf("Could not parse request. Probably malformed")
+	}
+	return nil
 }
