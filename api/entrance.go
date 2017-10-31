@@ -61,5 +61,4 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		httpErr(w, util.NewErrorFrom(ErrNotFound))
 	}
-
 }
