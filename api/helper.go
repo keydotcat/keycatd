@@ -26,14 +26,21 @@ func jsonErr(w http.ResponseWriter) {
 }
 
 func httpErr(w http.ResponseWriter, err error) bool {
-	if util.CheckErr(err, models.ErrDoesntExist) {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return true
-	} else if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return true
+	if err == nil {
+		return false
 	}
-	return false
+	buf := util.BufPool.Get()
+	defer util.BufPool.Put(buf)
+	json.NewEncoder(buf).Encode(err)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Length", strconv.Itoa(len(buf.String())))
+	if util.CheckErr(err, models.ErrDoesntExist) {
+		w.WriteHeader(http.StatusNotFound)
+	} else if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	buf.WriteTo(w)
+	return true
 }
 
 func jsonResponse(w http.ResponseWriter, obj interface{}) error {

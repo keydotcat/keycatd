@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	HASH_PASSWD_COST = bcrypt.MaxCost
+	HASH_PASSWD_COST = 14
 	reValidUsername  = regexp.MustCompile(`^[\w-]{3,}$`)
 	reValidEmail     = regexp.MustCompile(`^([\w-]+\.?)+@([\w-]+\.*)+\.\w+$`)
 )

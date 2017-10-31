@@ -3,6 +3,24 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/codahale/hdrhistogram"
+  packages = ["."]
+  revision = "3a0bb77429bd3a61596f5e8a3172445844342120"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/codahale/http-handlers"
+  packages = ["logging","recovery"]
+  revision = "425cee74d74d457b02d0dd6c4bca0a15656494cd"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/codahale/metrics"
+  packages = ["."]
+  revision = "bc2005d86c7922adc3dd228f42f16015d8132ac8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/facebookgo/stack"
   packages = ["."]
   revision = "751773369052141c013c6e827a71e8f35c07879c"
@@ -117,6 +135,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f95b1e2de1d1f3cce2f6c8cf8c54566afcadbc0cf939a96fc755780b556376e2"
+  inputs-digest = "46820beb3f9f334ce1aa07722c39238ce5220143ef55c152f8cb366c2773130b"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -48,7 +48,7 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 		blockKey = []byte(c.Csrf.BlockKey)
 	}
 	ah.csrf = newCsrf([]byte(c.Csrf.HashKey), blockKey)
-	return logHandler(ah), nil
+	return ah, nil
 }
 
 func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
