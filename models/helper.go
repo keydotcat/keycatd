@@ -2,10 +2,13 @@ package models
 
 import (
 	"database/sql"
+	"regexp"
 
 	"github.com/keydotcat/backend/util"
 	"github.com/lib/pq"
 )
+
+var regUniqueField = regexp.MustCompile(`\Aduplicate key value \((\w+)\).*\z`)
 
 func isDuplicateErr(err error) bool {
 	if err == nil {
@@ -13,6 +16,18 @@ func isDuplicateErr(err error) bool {
 	}
 	pe, ok := err.(*pq.Error)
 	return ok && pe.Code == "23505"
+}
+
+func getDuplicateFieldFromErr(err error) string {
+	pe, ok := err.(*pq.Error)
+	if !ok {
+		panic("Error is not a pq.Error")
+	}
+	f := regUniqueField.FindStringSubmatch(pe.Message)
+	if len(f) > 1 {
+		return f[1]
+	}
+	return ""
 }
 
 func isNotExistsErr(err error) bool {

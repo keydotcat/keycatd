@@ -119,7 +119,13 @@ func (u *User) insert(tx *sql.Tx) error {
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbInsert(tx)
 	if isDuplicateErr(err) {
-		return util.NewErrorFrom(ErrAlreadyExists)
+		dup := getDuplicateFieldFromErr(err)
+		if dup == "" {
+			return util.NewErrorFrom(ErrAlreadyExists)
+		}
+		errs := util.NewErrorFields().(*util.Error)
+		errs.SetFieldError("user_"+dup, "duplicate")
+		return errs.Camo()
 	}
 	isErrOrPanic(err)
 	return util.NewErrorFrom(err)
@@ -137,7 +143,7 @@ func (u *User) update(tx *sql.Tx) error {
 func (u *User) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if !reValidUsername.MatchString(u.Id) {
-		errs.SetFieldError("user_username", "invalid")
+		errs.SetFieldError("user_id", "invalid")
 	}
 	if len(u.FullName) == 0 {
 		errs.SetFieldError("user_fullname", "invalid")

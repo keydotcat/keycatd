@@ -14,6 +14,7 @@ CREATE TABLE "user" (
 	"created_at" TIMESTAMP WITH TIME ZONE,
 	"updated_at" TIMESTAMP WITH TIME ZONE,
 	CONSTRAINT "primary" PRIMARY KEY ("id" ASC),
+	UNIQUE INDEX "idx_email" ( "email" ASC ),
 	FAMILY "primary" ("id", "email", "unconfirmed_email", "hash_pass", "full_name", "confirmed_at", "locked_at", "sign_in_count", "failed_attempts", "public_key", "key", "created_at", "updated_at")
 );
 

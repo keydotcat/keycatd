@@ -37,7 +37,7 @@ func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *h
 }
 
 type authRegisterRequest struct {
-	Username       string `json:"username"`
+	Username       string `json:"id"`
 	Email          string `json:"email"`
 	Fullname       string `json:"fullname"`
 	Password       string `json:"password"`
@@ -60,7 +60,7 @@ func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) {
 	case "login":
 		err = ah.authLogin(w, r)
 	default:
-		err = models.ErrDoesntExist
+		err = util.NewErrorFrom(ErrNotFound)
 	}
 	if err != nil {
 		httpErr(w, err)
@@ -141,11 +141,13 @@ func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	u, err := models.FindUser(r.Context(), aer.Id)
-	if err != nil {
+	if util.CheckErr(err, models.ErrDoesntExist) {
+		return util.NewErrorFrom(models.ErrUnauthorized)
+	} else if err != nil {
 		return err
 	}
 	if err := u.CheckPassword(aer.Password); err != nil {
-		return err
+		return util.NewErrorFrom(models.ErrUnauthorized)
 	}
 	s, err := ah.sm.NewSession(u.Id, r.UserAgent(), aer.RequireCSRF)
 	if err != nil {

@@ -59,7 +59,7 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		ah.authRoot(w, r)
 	default:
-		http.NotFound(w, r)
+		httpErr(w, util.NewErrorFrom(ErrNotFound))
 	}
 
 }
