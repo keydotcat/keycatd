@@ -73,7 +73,7 @@ func (ah apiHandler) authRegister(w http.ResponseWriter, r *http.Request) error 
 	if err := jsonDecode(w, r, 1024*5, apr); err != nil {
 		return err
 	}
-	_, t, err := models.NewUser(
+	u, t, err := models.NewUser(
 		r.Context(),
 		apr.Username,
 		apr.Fullname,
@@ -88,8 +88,11 @@ func (ah apiHandler) authRegister(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
-	//TODO: Send email
-	return jsonResponse(w, t)
+	if err := ah.mail.sendConfirmationMail(u, t, r.Header.Get("X-Locale")); err != nil {
+		panic(err)
+	}
+	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
 // /auth/confirm_email/:token
@@ -130,8 +133,11 @@ func (ah apiHandler) authRequestConfirmationToken(w http.ResponseWriter, r *http
 	if err != nil {
 		return err
 	}
-	//TODO: Send email
-	return jsonResponse(w, t)
+	if err := ah.mail.sendConfirmationMail(u, t, r.Header.Get("X-Locale")); err != nil {
+		panic(err)
+	}
+	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
 // /auth/login
@@ -145,6 +151,9 @@ func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
 		return util.NewErrorFrom(models.ErrUnauthorized)
 	} else if err != nil {
 		return err
+	}
+	if !u.ConfirmedAt.Valid {
+		return util.NewErrorFrom(models.ErrUnauthorized)
 	}
 	if err := u.CheckPassword(aer.Password); err != nil {
 		return util.NewErrorFrom(models.ErrUnauthorized)

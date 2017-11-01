@@ -45,7 +45,7 @@ func (mm *mailer) compile() error {
 			if err != nil {
 				return util.NewErrorFrom(err)
 			}
-			_, err = mm.t.New(filepath.Base(path[0 : len(path)-len(ext)])).Parse(string(buf))
+			_, err = mm.t.New(path[len(mm.templatesDir)+1 : len(path)-len(ext)]).Parse(string(buf))
 			if err != nil {
 				return util.NewErrorFrom(err)
 			}
@@ -63,29 +63,36 @@ type mailUserTeamTokenData struct {
 	Username string
 }
 
-func (mm *mailer) send(muttd mailUserTeamTokenData, templateName, subject string) error {
+func (mm *mailer) send(muttd mailUserTeamTokenData, locale, templateName, subject string) error {
 	if mm.TestMode {
 		return nil
 	}
 	buf := util.BufPool.Get()
 	defer util.BufPool.Put(buf)
-	err := mm.t.ExecuteTemplate(buf, templateName, muttd)
+	tpl := mm.t.Lookup(fmt.Sprint("%s/%s", locale, templateName))
+	if tpl == nil {
+		tpl = mm.t.Lookup("en/" + templateName)
+	}
+	if tpl == nil {
+		panic("No template found with name " + templateName)
+	}
+	err := tpl.Execute(buf, muttd)
 	if err != nil {
 		panic(err)
 	}
 	return mm.mailMgr.SendMail(muttd.Email, subject, buf.String())
 }
 
-func (mm *mailer) sendConfirmationMail(u *models.User, token *models.Token) error {
+func (mm *mailer) sendConfirmationMail(u *models.User, token *models.Token, locale string) error {
 	email := u.Email
 	if u.UnconfirmedEmail != "" {
 		email = u.UnconfirmedEmail
 	}
 	muttd := mailUserTeamTokenData{FullName: u.FullName, HostUrl: mm.rootUrl, Token: token.Id, Username: u.Id, Email: email}
-	return mm.send(muttd, "confirm_account", "Confirm your email")
+	return mm.send(muttd, locale, "confirm_account", "Confirm your email")
 }
 
-func (mm *mailer) sendInvitationMail(t *models.Team, u *models.User, i *models.Invite) error {
+func (mm *mailer) sendInvitationMail(t *models.Team, u *models.User, i *models.Invite, locale string) error {
 	muttd := mailUserTeamTokenData{FullName: u.FullName, HostUrl: mm.rootUrl, Email: i.Email, Team: t.Name}
-	return mm.send(muttd, "invite_user", fmt.Sprintf("%s has invited you to join key.cat", u.FullName))
+	return mm.send(muttd, locale, "invite_user", fmt.Sprintf("%s has invited you to join key.cat", u.FullName))
 }

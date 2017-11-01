@@ -14,9 +14,9 @@ func NewMailMgrSMTP(server, user, pass, from string) MailMgr {
 
 type mailMgrSMTP struct {
 	Server   string
-	From     string
 	User     string
 	Password string
+	From     string
 }
 
 func (s mailMgrSMTP) SendMail(to, subject, data string) error {

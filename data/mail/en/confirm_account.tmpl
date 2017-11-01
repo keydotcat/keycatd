@@ -1,6 +1,6 @@
-<p>Hello {{ .Fullname }}!</p>
+<p>Hello {{ .FullName }}!</p>
 
-<p>Please head to <a href='{{ .HostUrl }}/api/user/confirmation/{{.Username}}/{{ .Token }}'>{{ .HostUrl }}/api/user/confirmation/{{.Username}}/{{.Token}}</a> to confirm your email address</p>
+<p>Please head to <a href='{{ .HostUrl }}/confirm_email/{{ .Token }}'>{{ .HostUrl }}/confirm_email/{{.Token}}</a> to confirm your email address</p>
 
 Sincerely,
 	The minions

@@ -81,7 +81,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not parse configuration: %s", err)
 	}
-	handler := cors.Default().Handler(apiHandler)
+	handler := cors.AllowAll().Handler(apiHandler)
 	logHandler := logging.Wrap(handler, os.Stdout)
 	logHandler.Start()
 	defer logHandler.Stop()
