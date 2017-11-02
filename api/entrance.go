@@ -64,6 +64,8 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch head {
 	case "session":
 		ah.sessionRoot(w, r)
+	case "user":
+		ah.userRoot(w, r)
 	default:
 		httpErr(w, util.NewErrorFrom(ErrNotFound))
 	}

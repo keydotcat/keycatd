@@ -33,7 +33,7 @@ func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) {
 type sessionResponse struct {
 	managers.Session
 	Csrf       string `json:"csrf,omitempty"`
-	StoreToken string `json:"store_token"`
+	StoreToken string `json:"store_token,omitempty"`
 }
 
 // GET /session/:token

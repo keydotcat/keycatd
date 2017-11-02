@@ -7,12 +7,14 @@ import (
 	"github.com/keydotcat/backend/models"
 )
 
+type contextType int
+
 const (
-	contextUserKey    = 0
-	contextTeamKey    = iota
-	contextVaultKey   = iota
-	contextSessionKey = iota
-	contextCsrfKey    = iota
+	contextUserKey    = contextType(0)
+	contextTeamKey    = contextType(iota)
+	contextVaultKey   = contextType(iota)
+	contextSessionKey = contextType(iota)
+	contextCsrfKey    = contextType(iota)
 )
 
 func ctxAddUser(ctx context.Context, u *models.User) context.Context {

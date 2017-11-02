@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -35,6 +36,7 @@ func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *h
 	} else if err != nil {
 		panic(err)
 	}
+	fmt.Println("DB", models.GetDB(r.Context()))
 	return r.WithContext(ctxAddUser(ctxAddSession(r.Context(), s), u))
 }
 

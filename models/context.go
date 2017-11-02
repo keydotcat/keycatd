@@ -7,8 +7,10 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
+type contextType int
+
 const (
-	contextDBKey = 0
+	contextDBKey = contextType(0)
 )
 
 func GetDB(ctx context.Context) *sql.DB {

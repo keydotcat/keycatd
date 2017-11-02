@@ -20,7 +20,7 @@ var (
 
 type User struct {
 	Id               string      `scaneo:"pk" json:"id"`
-	Email            string      `json:"email"`
+	Email            string      `json:"-"`
 	UnconfirmedEmail string      `json:"-"`
 	HashPass         []byte      `json:"-"`
 	FullName         string      `json:"fullname"`

@@ -10,7 +10,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/codahale/http-handlers"
-  packages = ["logging","recovery"]
+  packages = ["debug","logging","recovery"]
   revision = "425cee74d74d457b02d0dd6c4bca0a15656494cd"
 
 [[projects]]
@@ -30,6 +30,12 @@
   packages = ["."]
   revision = "629574ca2a5df945712d3079857300b5e4da0236"
   version = "v1.4.2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  revision = "553a641470496b2327abcac10b36396bd98e45c9"
 
 [[projects]]
   branch = "master"
@@ -135,6 +141,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "46820beb3f9f334ce1aa07722c39238ce5220143ef55c152f8cb366c2773130b"
+  inputs-digest = "ef93419d65285bf42d37bafa14214c8c988f360f79400301c01c4fa72d32b076"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,7 +1,6 @@
 package managers
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -37,7 +36,7 @@ func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (Session, e
 	s := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
-	if err := json.NewEncoder(b).Encode(s); err != nil {
+	if err := encodeSession(b, s); err != nil {
 		return s, err
 	}
 	p := radix.Pipeline(
@@ -80,7 +79,7 @@ func (r sessionMgrRedis) getSession(id string) (*Session, error) {
 		return nil, util.NewErrorFrom(models.ErrDoesntExist)
 	}
 	s := &Session{}
-	if err := json.NewDecoder(b).Decode(s); err != nil {
+	if err := decodeSession(b, s); err != nil {
 		return nil, err
 	}
 	return s, nil
@@ -90,7 +89,7 @@ func (r sessionMgrRedis) storeSession(s *Session) error {
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	s.LastAccess = time.Now()
-	if err := json.NewEncoder(b).Encode(s); err != nil {
+	if err := encodeSession(b, *s); err != nil {
 		return err
 	}
 	p := radix.Pipeline(
@@ -182,7 +181,7 @@ func (r sessionMgrRedis) GetAllSessions(userId string) ([]Session, error) {
 			fmt.Println("HERE ")
 			return nil, err
 		}
-		if err := json.NewDecoder(b).Decode(&(ses[i])); err != nil {
+		if err := decodeSession(b, &(ses[i])); err != nil {
 			return nil, err
 		}
 	}

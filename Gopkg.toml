@@ -49,3 +49,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/codahale/http-handlers"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/golang/snappy"
