@@ -17,22 +17,26 @@ func newCsrf(hKey, bKey []byte) csrf {
 	return csrf{securecookie.New(hKey, bKey)}
 }
 
-func (c csrf) checkToken(w http.ResponseWriter, r *http.Request) bool {
+func (c csrf) checkToken(w http.ResponseWriter, r *http.Request) (string, bool) {
+	token, generated := c.getToken(w, r)
+	if generated {
+		return token, true
+	}
 	val, ok := r.Header["X-Csrf-Token"]
 	if !ok {
-		return false
+		return token, false
 	}
 	if len(val) == 0 {
-		return false
+		return token, false
 	}
-	return c.getToken(w, r) == val[0]
+	return token, token == val[0]
 }
 
-func (c csrf) getToken(w http.ResponseWriter, r *http.Request) string {
+func (c csrf) getToken(w http.ResponseWriter, r *http.Request) (string, bool) {
 	csrfToken := ""
 	if cookie, err := r.Cookie(CSRF_COOKIE_NAME); err == nil {
 		if err = c.sc.Decode(CSRF_COOKIE_NAME, cookie.Value, &csrfToken); err == nil {
-			return csrfToken
+			return csrfToken, false
 		}
 	}
 	csrfToken = util.GenerateRandomToken(32)
@@ -46,5 +50,5 @@ func (c csrf) getToken(w http.ResponseWriter, r *http.Request) string {
 	} else {
 		panic(err)
 	}
-	return csrfToken
+	return csrfToken, true
 }

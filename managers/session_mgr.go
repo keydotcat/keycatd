@@ -8,11 +8,13 @@ type Session struct {
 	Agent        string    `json:"agent"`
 	RequiresCSRF bool      `json:"csrf"`
 	LastAccess   time.Time `json:"last_access"`
+	StoreToken   string    `json:"-"`
 }
 
 type SessionMgr interface {
 	NewSession(userId string, agent string, csrf bool) (Session, error)
 	UpdateSession(id, agent string) (Session, error)
+	GetSession(id string) (Session, error)
 	DeleteSession(id string) error
 	GetAllSessions(userId string) ([]Session, error)
 	DeleteAllSessions(userId string) error

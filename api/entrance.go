@@ -55,9 +55,15 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(models.AddDBToContext(r.Context(), ah.db))
 	head := ""
 	head, r.URL.Path = shiftPath(r.URL.Path)
-	switch head {
-	case "auth":
+	if head == "auth" {
 		ah.authRoot(w, r)
+		return
+	}
+	r = ah.authorizeRequest(w, r)
+	//From here on you need to be authenticated
+	switch head {
+	case "session":
+		ah.sessionRoot(w, r)
 	default:
 		httpErr(w, util.NewErrorFrom(ErrNotFound))
 	}

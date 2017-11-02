@@ -20,9 +20,11 @@ func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *h
 		return nil
 	}
 	if s.RequiresCSRF {
-		if !ah.csrf.checkToken(w, r) {
+		if csrfToken, valid := ah.csrf.checkToken(w, r); !valid {
 			http.Error(w, "Invalid CSRF token", http.StatusUnauthorized)
 			return nil
+		} else {
+			r = r.WithContext(ctxAddCsrf(r.Context(), csrfToken))
 		}
 	}
 	u, err := models.FindUser(r.Context(), s.UserId)
@@ -33,7 +35,7 @@ func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *h
 	} else if err != nil {
 		panic(err)
 	}
-	return r.WithContext(ctxAddUser(r.Context(), u))
+	return r.WithContext(ctxAddUser(ctxAddSession(r.Context(), s), u))
 }
 
 type authRegisterRequest struct {
@@ -107,7 +109,7 @@ func (ah apiHandler) authConfirmEmail(w http.ResponseWriter, r *http.Request) er
 	}
 	u, err := tok.ConfirmEmail(r.Context())
 	if err != nil {
-		return err
+		return util.NewErrorFrom(models.ErrDoesntExist)
 	}
 	return jsonResponse(w, u)
 }
@@ -140,6 +142,14 @@ func (ah apiHandler) authRequestConfirmationToken(w http.ResponseWriter, r *http
 	return nil
 }
 
+type authLoginResponse struct {
+	Username   string `json:"user_id"`
+	Token      string `json:"session_token"`
+	StoreToken string `json:"store_token"`
+	PublicKeys []byte `json:"public_key"`
+	SecretKeys []byte `json:"secret_key"`
+}
+
 // /auth/login
 func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
 	aer := &authRequest{}
@@ -162,5 +172,11 @@ func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		panic(err)
 	}
-	return jsonResponse(w, s)
+	return jsonResponse(w, authLoginResponse{
+		u.Id,
+		s.Id,
+		s.StoreToken,
+		u.PublicKey,
+		u.Key,
+	})
 }

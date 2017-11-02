@@ -3,13 +3,16 @@ package api
 import (
 	"context"
 
+	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 )
 
 const (
-	contextUserKey  = 0
-	contextTeamKey  = iota
-	contextVaultKey = iota
+	contextUserKey    = 0
+	contextTeamKey    = iota
+	contextVaultKey   = iota
+	contextSessionKey = iota
+	contextCsrfKey    = iota
 )
 
 func ctxAddUser(ctx context.Context, u *models.User) context.Context {
@@ -44,6 +47,30 @@ func ctxGetVault(ctx context.Context) *models.Vault {
 	d, ok := ctx.Value(contextVaultKey).(*models.Vault)
 	if !ok {
 		panic("No vault defined in context")
+	}
+	return d
+}
+
+func ctxAddSession(ctx context.Context, u managers.Session) context.Context {
+	return context.WithValue(ctx, contextSessionKey, u)
+}
+
+func ctxGetSession(ctx context.Context) managers.Session {
+	d, ok := ctx.Value(contextSessionKey).(managers.Session)
+	if !ok {
+		panic("No session defined in context")
+	}
+	return d
+}
+
+func ctxAddCsrf(ctx context.Context, u string) context.Context {
+	return context.WithValue(ctx, contextCsrfKey, u)
+}
+
+func ctxGetCsrf(ctx context.Context) string {
+	d, ok := ctx.Value(contextCsrfKey).(string)
+	if !ok {
+		panic("No csrf defined in context")
 	}
 	return d
 }

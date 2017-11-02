@@ -34,7 +34,7 @@ func (r sessionMgrRedis) ukey(i string) string {
 }
 
 func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (Session, error) {
-	s := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC()}
+	s := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	if err := json.NewEncoder(b).Encode(s); err != nil {
@@ -102,6 +102,14 @@ func (r sessionMgrRedis) storeSession(s *Session) error {
 		return err
 	}
 	return nil
+}
+
+func (r sessionMgrRedis) GetSession(id string) (Session, error) {
+	s, err := r.getSession(id)
+	if err != nil {
+		return Session{}, err
+	}
+	return *s, err
 }
 
 func (r sessionMgrRedis) UpdateSession(id, agent string) (Session, error) {
