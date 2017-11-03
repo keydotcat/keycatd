@@ -66,6 +66,8 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ah.sessionRoot(w, r)
 	case "user":
 		ah.userRoot(w, r)
+	case "team":
+		ah.teamRoot(w, r)
 	default:
 		httpErr(w, util.NewErrorFrom(ErrNotFound))
 	}

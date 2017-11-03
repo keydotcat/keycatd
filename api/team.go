@@ -4,12 +4,10 @@ import (
 	"net/http"
 
 	"github.com/keydotcat/backend/models"
+	"github.com/keydotcat/backend/util"
 )
 
 func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) {
-	if r = ah.authorizeRequest(w, r); r == nil {
-		return
-	}
 	var head string
 	var err error
 	head, r.URL.Path = shiftPath(r.URL.Path)
@@ -17,46 +15,53 @@ func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) {
 	case "":
 		switch r.Method {
 		case "GET":
-			err = ah.teamList(w, r)
+			err = ah.teamGetInfo(w, r)
 		case "POST":
 			err = ah.teamCreate(w, r)
 		default:
-			err = models.ErrDoesntExist
+			err = util.NewErrorFrom(ErrNotFound)
 		}
-	default:
-		err = models.ErrDoesntExist
 	}
 	if err != nil {
 		httpErr(w, err)
 	}
 }
 
-type teamListResponse struct {
+type teamGetInfoResponse struct {
 	Teams []*models.Team `json:"teams"`
 }
 
 // GET /team
-func (ah apiHandler) teamList(w http.ResponseWriter, r *http.Request) error {
-	u := ctxGetUser(r.Context())
-	teams, err := u.GetTeams(r.Context())
+func (ah apiHandler) teamGetInfo(w http.ResponseWriter, r *http.Request) error {
+	ctx := r.Context()
+	currentUser := ctxGetUser(ctx)
+	teams, err := currentUser.GetTeams(ctx)
 	if err != nil {
 		return err
 	}
-	return jsonResponse(w, teamListResponse{teams})
+	return jsonResponse(w, teamGetInfoResponse{teams})
 }
 
 type teamCreateRequest struct {
-	Name      string `json:"name"`
-	PublicKey []byte `json:"public_key"`
-	Key       []byte `json:"key"`
+	Name      string              `json:"name"`
+	VaultKeys models.VaultKeyPair `json:"vault_keys"`
 }
 
 // POST /team
 func (ah apiHandler) teamCreate(w http.ResponseWriter, r *http.Request) error {
-	u := ctxGetUser(r.Context())
-	teams, err := u.GetTeams(r.Context())
+	tcr := &teamCreateRequest{}
+	if err := jsonDecode(w, r, 4096, tcr); err != nil {
+		return err
+	}
+	ctx := r.Context()
+	currentUser := ctxGetUser(ctx)
+	team, err := currentUser.CreateTeam(ctx, tcr.Name, tcr.VaultKeys)
 	if err != nil {
 		return err
 	}
-	return jsonResponse(w, teamListResponse{teams})
+	tf, err := team.GetTeamFull(ctx, currentUser)
+	if err != nil {
+		return err
+	}
+	return jsonResponse(w, tf)
 }

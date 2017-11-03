@@ -21,6 +21,8 @@ func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			err = ah.sessionGetToken(w, r, head)
+		case "DELETE":
+			err = ah.sessionDeleteToken(w, r, head)
 		default:
 			err = util.NewErrorFrom(ErrNotFound)
 		}
@@ -51,4 +53,14 @@ func (ah apiHandler) sessionGetToken(w http.ResponseWriter, r *http.Request, tid
 		return util.NewErrorFrom(models.ErrDoesntExist)
 	}
 	return jsonResponse(w, s)
+}
+
+// DELETE /session/:token
+func (ah apiHandler) sessionDeleteToken(w http.ResponseWriter, r *http.Request, tid string) error {
+	currentSession := ctxGetSession(r.Context())
+	if err := ah.sm.DeleteSession(currentSession.Id); err != nil {
+		return err
+	}
+	w.WriteHeader(http.StatusOK)
+	return nil
 }
