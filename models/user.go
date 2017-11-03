@@ -201,5 +201,15 @@ func (u *User) GetVerificationToken(ctx context.Context) (t *Token, err error) {
 		return nil, util.NewErrorFrom(ErrDoesntExist)
 	}
 	return t, nil
+}
 
+func (u *User) getTeam(tx *sql.Tx, tid string) (*Team, error) {
+	t := &Team{}
+	r := tx.QueryRow(`SELECT `+selectTeamFullFields+` FROM "team", "team_user" WHERE "team_user"."user" = $1 AND "team_user"."team" = "team"."id" AND "team"."id" = $2`, u.Id, tid)
+	err := t.dbScanRow(r)
+	if isNotExistsErr(err) {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	isErrOrPanic(err)
+	return t, err
 }

@@ -7,10 +7,10 @@ import (
 )
 
 type teamUser struct {
-	Team           string `scaneo:"pk"`
-	User           string `scaneo:"pk"`
-	Admin          bool
-	AccessRequired bool
+	Team           string `scaneo:"pk" json:"-"`
+	User           string `scaneo:"pk" json:"user"`
+	Admin          bool   `json:"admin"`
+	AccessRequired bool   `json:"-"`
 }
 
 func (tu *teamUser) insert(tx *sql.Tx) error {

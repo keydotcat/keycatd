@@ -298,9 +298,15 @@ func (t *Team) DemoteUser(ctx context.Context, demoter *User, demotee *User) err
 	})
 }
 
-func (t *Team) GetVaultsForUser(ctx context.Context, u *User) ([]*Vault, error) {
-	db := GetDB(ctx)
-	rows, err := db.Query(`SELECT `+selectVaultFullFields+` FROM "vault", "vault_user" WHERE  "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
+func (t *Team) GetVaultsForUser(ctx context.Context, u *User) (vs []*Vault, err error) {
+	return vs, doTx(ctx, func(tx *sql.Tx) error {
+		vs, err = t.getVaultsForUser(tx, u)
+		return err
+	})
+}
+
+func (t *Team) getVaultsForUser(tx *sql.Tx, u *User) ([]*Vault, error) {
+	rows, err := tx.Query(`SELECT `+selectVaultFullFields+` FROM "vault", "vault_user" WHERE  "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}

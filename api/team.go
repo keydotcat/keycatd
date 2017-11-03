@@ -11,15 +11,19 @@ func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) {
 	var head string
 	var err error
 	head, r.URL.Path = shiftPath(r.URL.Path)
-	switch head {
-	case "":
+	if len(head) == 0 {
 		switch r.Method {
 		case "GET":
-			err = ah.teamGetInfo(w, r)
+			err = ah.teamGetAll(w, r)
 		case "POST":
 			err = ah.teamCreate(w, r)
 		default:
 			err = util.NewErrorFrom(ErrNotFound)
+		}
+	} else {
+		switch r.Method {
+		case "GET":
+			err = ah.teamGetInfo(w, r, head)
 		}
 	}
 	if err != nil {
@@ -27,19 +31,19 @@ func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type teamGetInfoResponse struct {
+type teamGetAllResponse struct {
 	Teams []*models.Team `json:"teams"`
 }
 
 // GET /team
-func (ah apiHandler) teamGetInfo(w http.ResponseWriter, r *http.Request) error {
+func (ah apiHandler) teamGetAll(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	currentUser := ctxGetUser(ctx)
 	teams, err := currentUser.GetTeams(ctx)
 	if err != nil {
 		return err
 	}
-	return jsonResponse(w, teamGetInfoResponse{teams})
+	return jsonResponse(w, teamGetAllResponse{teams})
 }
 
 type teamCreateRequest struct {
@@ -60,6 +64,17 @@ func (ah apiHandler) teamCreate(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	tf, err := team.GetTeamFull(ctx, currentUser)
+	if err != nil {
+		return err
+	}
+	return jsonResponse(w, tf)
+}
+
+// GET /team/:tid
+func (ah apiHandler) teamGetInfo(w http.ResponseWriter, r *http.Request, tid string) error {
+	ctx := r.Context()
+	currentUser := ctxGetUser(ctx)
+	tf, err := currentUser.GetTeamFull(ctx, tid)
 	if err != nil {
 		return err
 	}

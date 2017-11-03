@@ -35,9 +35,15 @@ func scanVaultsFull(rs *sql.Rows) ([]*VaultFull, error) {
 	return structs, nil
 }
 
-func (t *Team) GetVaultsFullForUser(ctx context.Context, u *User) ([]*VaultFull, error) {
-	db := GetDB(ctx)
-	rows, err := db.Query(`SELECT `+selectVaultFullFields+`, "vault_user"."key" FROM "vault", "vault_user" WHERE  "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
+func (t *Team) GetVaultsFullForUser(ctx context.Context, u *User) (vf []*VaultFull, err error) {
+	return vf, doTx(ctx, func(tx *sql.Tx) error {
+		vf, err = t.getVaultsFullForUser(tx, u)
+		return err
+	})
+}
+
+func (t *Team) getVaultsFullForUser(tx *sql.Tx, u *User) ([]*VaultFull, error) {
+	rows, err := tx.Query(`SELECT `+selectVaultFullFields+`, "vault_user"."key" FROM "vault", "vault_user" WHERE  "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}
