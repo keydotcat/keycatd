@@ -9,7 +9,8 @@ import (
 
 type VaultFull struct {
 	Vault
-	Key []byte `json:"key"`
+	Key   []byte   `json:"key"`
+	Users []string `json:"users"`
 }
 
 func scanVaultsFull(rs *sql.Rows) ([]*VaultFull, error) {
@@ -50,6 +51,23 @@ func (t *Team) getVaultsFullForUser(tx *sql.Tx, u *User) ([]*VaultFull, error) {
 	vaults, err := scanVaultsFull(rows)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
+	}
+	for _, v := range vaults {
+		rows, err := tx.Query(`SELECT "user" FROM "vault_user" WHERE "vault_user"."vault" = $1 AND "vault_user"."team" = $2`, v.Id, t.Id)
+		if isErrOrPanic(err) {
+			return nil, util.NewErrorFrom(err)
+		}
+		var uid string
+		for rows.Next() {
+			err = rows.Scan(&uid)
+			if isErrOrPanic(err) {
+				return nil, util.NewErrorFrom(err)
+			}
+			v.Users = append(v.Users, uid)
+		}
+		if err = rows.Err(); isErrOrPanic(err) {
+			return nil, util.NewErrorFrom(err)
+		}
 	}
 	return vaults, nil
 }

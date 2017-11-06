@@ -43,15 +43,15 @@ func TestCreateTeam(t *testing.T) {
 func TestInviteUserToTeam(t *testing.T) {
 	ctx := getCtx()
 	owner, team := getDummyOwnerWithTeam()
-	added, err := team.AddOrInviteUserByEmail(ctx, owner, "a@a.com")
+	i, err := team.AddOrInviteUserByEmail(ctx, owner, "a@a.com")
 	if err != nil {
 		fmt.Println(util.GetStack(err))
 		t.Fatal(err)
 	}
-	if added {
+	if i == nil {
 		t.Fatalf("Added user when it had to be invited")
 	}
-	added, err = team.AddOrInviteUserByEmail(ctx, owner, "a@a.com")
+	i, err = team.AddOrInviteUserByEmail(ctx, owner, "a@a.com")
 	if !util.CheckErr(err, ErrAlreadyInvited) {
 		t.Fatalf("Expected error %s and got %s", ErrAlreadyInvited, err)
 	}
@@ -61,14 +61,14 @@ func TestAddExistingUserToTeam(t *testing.T) {
 	ctx := getCtx()
 	owner, team := getDummyOwnerWithTeam()
 	invitee := getDummyUser()
-	added, err := team.AddOrInviteUserByEmail(ctx, owner, invitee.Email)
+	i, err := team.AddOrInviteUserByEmail(ctx, owner, invitee.Email)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !added {
+	if i != nil {
 		t.Fatalf("Added user when it had to be invited")
 	}
-	added, err = team.AddOrInviteUserByEmail(ctx, owner, invitee.Email)
+	i, err = team.AddOrInviteUserByEmail(ctx, owner, invitee.Email)
 	if !util.CheckErr(err, ErrAlreadyInTeam) {
 		t.Fatalf("Expected error %s and got %s", ErrAlreadyInTeam, err)
 	}

@@ -8,28 +8,21 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) {
+func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) error {
 	var head string
-	var err error
 	head, r.URL.Path = shiftPath(r.URL.Path)
-	switch head {
-	case "":
+	if len(head) == 0 {
 		//TODO: list all sessions
-		err = util.NewErrorFrom(ErrNotFound)
-	default:
-		//Actions over a token
+		return util.NewErrorFrom(ErrNotFound)
+	} else {
 		switch r.Method {
 		case "GET":
-			err = ah.sessionGetToken(w, r, head)
+			return ah.sessionGetToken(w, r, head)
 		case "DELETE":
-			err = ah.sessionDeleteToken(w, r, head)
-		default:
-			err = util.NewErrorFrom(ErrNotFound)
+			return ah.sessionDeleteToken(w, r, head)
 		}
 	}
-	if err != nil {
-		httpErr(w, err)
-	}
+	return util.NewErrorFrom(ErrNotFound)
 }
 
 type sessionResponse struct {

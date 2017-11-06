@@ -6,22 +6,16 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-func (ah apiHandler) userRoot(w http.ResponseWriter, r *http.Request) {
+func (ah apiHandler) userRoot(w http.ResponseWriter, r *http.Request) error {
 	var head string
-	var err error
 	head, r.URL.Path = shiftPath(r.URL.Path)
-	switch head {
-	case "":
+	if len(head) == 0 {
 		switch r.Method {
 		case "GET":
-			err = ah.userGetInfo(w, r)
-		default:
-			err = util.NewErrorFrom(ErrNotFound)
+			return ah.userGetInfo(w, r)
 		}
 	}
-	if err != nil {
-		httpErr(w, err)
-	}
+	return util.NewErrorFrom(ErrNotFound)
 }
 
 // GET /user

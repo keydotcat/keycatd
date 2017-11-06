@@ -8,9 +8,20 @@ import (
 )
 
 type Invite struct {
-	Team      string `scaneo:"pk"`
-	Email     string `scaneo:"pk"`
-	CreatedAt time.Time
+	Team      string    `scaneo:"pk" json:"-"`
+	Email     string    `scaneo:"pk" json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func findInvitesForUser(tx *sql.Tx, email string) ([]*Invite, error) {
+	rows, err := tx.Query(`SELECT `+selectInviteFields+` FROM "invite" WHERE "email" = $1`, email)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	invites, err := scanInvites(rows)
+	isErrOrPanic(err)
+	return invites, util.NewErrorFrom(err)
+
 }
 
 func (i Invite) validate() error {
@@ -37,4 +48,15 @@ func (u *Invite) insert(tx *sql.Tx) error {
 		return err
 	}
 	return nil
+}
+
+func (i *Invite) getTeam(tx *sql.Tx) (*Team, error) {
+	t := &Team{}
+	r := tx.QueryRow(`SELECT `+selectTeamFullFields+` FROM "team" WHERE "team"."id" = $1`, i.Team)
+	err := t.dbScanRow(r)
+	if isNotExistsErr(err) {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	isErrOrPanic(err)
+	return t, err
 }

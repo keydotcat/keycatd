@@ -56,19 +56,23 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	head := ""
 	head, r.URL.Path = shiftPath(r.URL.Path)
 	if head == "auth" {
-		ah.authRoot(w, r)
+		if err := ah.authRoot(w, r); err != nil {
+			httpErr(w, err)
+		}
 		return
 	}
+	err := util.NewErrorFrom(ErrNotFound)
 	r = ah.authorizeRequest(w, r)
 	//From here on you need to be authenticated
 	switch head {
 	case "session":
-		ah.sessionRoot(w, r)
+		err = ah.sessionRoot(w, r)
 	case "user":
-		ah.userRoot(w, r)
+		err = ah.userRoot(w, r)
 	case "team":
-		ah.teamRoot(w, r)
-	default:
-		httpErr(w, util.NewErrorFrom(ErrNotFound))
+		err = ah.teamRoot(w, r)
+	}
+	if err != nil {
+		httpErr(w, err)
 	}
 }

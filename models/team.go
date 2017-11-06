@@ -195,17 +195,16 @@ func (t *Team) PromoteUser(ctx context.Context, promoter *User, promotee *User, 
 	})
 }
 
-func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomerEmail string) (bool, error) {
-	add := false
-	return add, doTx(ctx, func(tx *sql.Tx) error {
+func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomerEmail string) (i *Invite, err error) {
+	return i, doTx(ctx, func(tx *sql.Tx) error {
 		nu, err := findUserByEmail(tx, newcomerEmail)
 		switch {
 		case util.CheckErr(err, ErrDoesntExist):
-			return t.generateInvite(tx, admin, newcomerEmail)
+			i, err = t.generateInvite(tx, admin, newcomerEmail)
+			return err
 		case err != nil:
 			return err
 		default:
-			add = true
 			return t.addUser(tx, admin, nu)
 		}
 	})
@@ -224,15 +223,27 @@ func (t *Team) getUserAffiliation(tx *sql.Tx, u *User) (*teamUser, error) {
 	}
 }
 
-func (t *Team) generateInvite(tx *sql.Tx, admin *User, email string) error {
+func (t *Team) generateInvite(tx *sql.Tx, admin *User, email string) (*Invite, error) {
 	if !reValidEmail.MatchString(email) {
-		return util.NewErrorFrom(ErrInvalidEmail)
+		return nil, util.NewErrorFrom(ErrInvalidEmail)
 	}
 	if err := t.checkAdmin(tx, admin); err != nil {
-		return err
+		return nil, err
 	}
 	i := &Invite{Team: t.Id, Email: email}
-	return i.insert(tx)
+	return i, i.insert(tx)
+}
+
+func (t *Team) getInvites(tx *sql.Tx) ([]*Invite, error) {
+	rows, err := tx.Query(`SELECT `+selectInviteFields+` FROM "invite" WHERE "invite"."team" = $1`, t.Id)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	invites, err := scanInvites(rows)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	return invites, nil
 }
 
 func (t *Team) CheckAdmin(ctx context.Context, u *User) (isAdmin bool, err error) {
@@ -266,6 +277,10 @@ func (t *Team) addUser(tx *sql.Tx, admin *User, newUser *User) error {
 	if err := t.checkAdmin(tx, admin); err != nil {
 		return err
 	}
+	return t.addUserNoAdminCheck(tx, newUser)
+}
+
+func (t *Team) addUserNoAdminCheck(tx *sql.Tx, newUser *User) error {
 	tu, err := t.getUserAffiliation(tx, newUser)
 	if err != nil {
 		return err

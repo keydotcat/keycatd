@@ -7,8 +7,9 @@ import (
 
 type TeamFull struct {
 	*Team
-	Vaults []*VaultFull `json:"vaults"`
-	Users  []*teamUser  `json:"users"`
+	Vaults  []*VaultFull    `json:"vaults"`
+	Users   []*teamUserFull `json:"users"`
+	Invites []*Invite       `json:"invites"`
 }
 
 func (u *User) GetTeamFull(ctx context.Context, tid string) (tf *TeamFull, err error) {
@@ -35,6 +36,13 @@ func (t *Team) getTeamFull(tx *sql.Tx, u *User) (*TeamFull, error) {
 	if err != nil {
 		return nil, err
 	}
-	tu, err := t.getUsersAfiliation(tx)
-	return &TeamFull{t, vf, tu}, nil
+	tu, err := t.getUsersAfiliationFull(tx)
+	if err != nil {
+		return nil, err
+	}
+	invs, err := t.getInvites(tx)
+	if err != nil {
+		return nil, err
+	}
+	return &TeamFull{t, vf, tu, invs}, nil
 }

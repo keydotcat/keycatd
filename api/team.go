@@ -1,34 +1,34 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
 )
 
-func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) {
-	var head string
-	var err error
-	head, r.URL.Path = shiftPath(r.URL.Path)
-	if len(head) == 0 {
+func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) error {
+	var tid string
+	tid, r.URL.Path = shiftPath(r.URL.Path)
+	if len(tid) == 0 {
 		switch r.Method {
 		case "GET":
-			err = ah.teamGetAll(w, r)
+			return ah.teamGetAll(w, r)
 		case "POST":
-			err = ah.teamCreate(w, r)
+			return ah.teamCreate(w, r)
 		default:
-			err = util.NewErrorFrom(ErrNotFound)
+			return util.NewErrorFrom(ErrNotFound)
 		}
 	} else {
-		switch r.Method {
-		case "GET":
-			err = ah.teamGetInfo(w, r, head)
+		u := ctxGetUser(r.Context())
+		t, err := u.GetTeam(r.Context(), tid)
+		if err != nil {
+			return err
 		}
+		return ah.validTeamRoot(w, r, t)
 	}
-	if err != nil {
-		httpErr(w, err)
-	}
+	return util.NewErrorFrom(ErrNotFound)
 }
 
 type teamGetAllResponse struct {
@@ -70,11 +70,108 @@ func (ah apiHandler) teamCreate(w http.ResponseWriter, r *http.Request) error {
 	return jsonResponse(w, tf)
 }
 
+func (ah apiHandler) validTeamRoot(w http.ResponseWriter, r *http.Request, t *models.Team) error {
+	var head string
+	head, r.URL.Path = shiftPath(r.URL.Path)
+	if len(head) == 0 {
+		switch r.Method {
+		case "GET":
+			return ah.teamGetInfo(w, r, t)
+		default:
+			return util.NewErrorFrom(ErrNotFound)
+		}
+	} else {
+		switch head {
+		case "user":
+			return ah.validTeamUserRoot(w, r, t)
+		}
+	}
+	return util.NewErrorFrom(ErrNotFound)
+}
+
 // GET /team/:tid
-func (ah apiHandler) teamGetInfo(w http.ResponseWriter, r *http.Request, tid string) error {
+func (ah apiHandler) teamGetInfo(w http.ResponseWriter, r *http.Request, t *models.Team) error {
 	ctx := r.Context()
 	currentUser := ctxGetUser(ctx)
-	tf, err := currentUser.GetTeamFull(ctx, tid)
+	tf, err := t.GetTeamFull(ctx, currentUser)
+	if err != nil {
+		return err
+	}
+	return jsonResponse(w, tf)
+}
+
+func (ah apiHandler) validTeamUserRoot(w http.ResponseWriter, r *http.Request, t *models.Team) error {
+	var head string
+	head, r.URL.Path = shiftPath(r.URL.Path)
+	if len(head) == 0 {
+		switch r.Method {
+		case "POST":
+			return ah.teamInviteUser(w, r, t)
+		}
+	} else {
+		switch r.Method {
+		case "PATCH":
+			return ah.teamModifyUser(w, r, t, head)
+		}
+	}
+	return util.NewErrorFrom(ErrNotFound)
+}
+
+type teamInviteUserRequest struct {
+	Invite string `json:"invite"`
+}
+
+// POST /team/:tid/user
+func (ah apiHandler) teamInviteUser(w http.ResponseWriter, r *http.Request, t *models.Team) error {
+	ctx := r.Context()
+	u := ctxGetUser(ctx)
+	tcr := &teamInviteUserRequest{}
+	if err := jsonDecode(w, r, 1024, tcr); err != nil {
+		return err
+	}
+	invite, err := t.AddOrInviteUserByEmail(ctx, u, tcr.Invite)
+	if err != nil && !util.CheckErr(err, models.ErrAlreadyInvited) {
+		return err
+	}
+	if invite != nil {
+		if err := ah.mail.sendInvitationMail(t, u, invite, r.Header.Get("X-Locale")); err != nil {
+			panic(err)
+		}
+	}
+	tf, err := t.GetTeamFull(ctx, u)
+	if err != nil {
+		return err
+	}
+	return jsonResponse(w, tf)
+}
+
+type teamModifyUserRequest struct {
+	Admin bool              `json:"admin"`
+	Keys  map[string][]byte `json:"keys"`
+}
+
+// PATCH /team/:tid/user/:uid
+func (ah apiHandler) teamModifyUser(w http.ResponseWriter, r *http.Request, t *models.Team, uid string) error {
+	tiur := &teamModifyUserRequest{}
+	if err := jsonDecode(w, r, 1024, tiur); err != nil {
+		return err
+	}
+	ctx := r.Context()
+	admin := ctxGetUser(ctx)
+	fmt.Println(" FIND", uid)
+	u, err := models.FindUser(ctx, uid)
+	if err != nil {
+		return err
+	}
+	if tiur.Admin {
+		err = t.PromoteUser(ctx, admin, u, models.VaultKeyPair{Keys: tiur.Keys})
+	} else {
+		err = t.DemoteUser(ctx, admin, u)
+	}
+	if err != nil {
+		return err
+	}
+	tf, err := t.GetTeamFull(ctx, admin)
 	if err != nil {
 		return err
 	}

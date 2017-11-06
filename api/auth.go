@@ -48,25 +48,20 @@ type authRegisterRequest struct {
 	VaultKey       []byte `json:"vault_keys"`
 }
 
-func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) {
+func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) error {
 	var head string
-	var err error
 	head, r.URL.Path = shiftPath(r.URL.Path)
 	switch head {
 	case "register":
-		err = ah.authRegister(w, r)
+		return ah.authRegister(w, r)
 	case "confirm_email":
-		err = ah.authConfirmEmail(w, r)
+		return ah.authConfirmEmail(w, r)
 	case "request_confirmation_token":
-		err = ah.authRequestConfirmationToken(w, r)
+		return ah.authRequestConfirmationToken(w, r)
 	case "login":
-		err = ah.authLogin(w, r)
-	default:
-		err = util.NewErrorFrom(ErrNotFound)
+		return ah.authLogin(w, r)
 	}
-	if err != nil {
-		httpErr(w, err)
-	}
+	return util.NewErrorFrom(ErrNotFound)
 }
 
 // /auth/register

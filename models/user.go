@@ -63,6 +63,25 @@ func NewUser(ctx context.Context, id, fullname, email, password string, keyPack 
 			return err
 		}
 		_, err := createTeam(tx, u, true, u.FullName, vaultKeys)
+		if err != nil {
+			return err
+		}
+		invites, err := findInvitesForUser(tx, u.Email)
+		if err != nil {
+			return err
+		}
+		for _, i := range invites {
+			team, err := i.getTeam(tx)
+			if err != nil {
+				return err
+			}
+			if err := team.addUserNoAdminCheck(tx, u); err != nil {
+				return err
+			}
+			if _, err := i.dbDelete(tx); err != nil {
+				return err
+			}
+		}
 		return err
 	})
 }
@@ -201,6 +220,13 @@ func (u *User) GetVerificationToken(ctx context.Context) (t *Token, err error) {
 		return nil, util.NewErrorFrom(ErrDoesntExist)
 	}
 	return t, nil
+}
+
+func (u *User) GetTeam(ctx context.Context, tid string) (t *Team, err error) {
+	return t, doTx(ctx, func(tx *sql.Tx) error {
+		t, err = u.getTeam(tx, tid)
+		return err
+	})
 }
 
 func (u *User) getTeam(tx *sql.Tx, tid string) (*Team, error) {
