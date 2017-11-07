@@ -13,6 +13,10 @@ type VaultFull struct {
 	Users []string `json:"users"`
 }
 
+func (s *VaultFull) dbScanRow(r *sql.Row) error {
+	return r.Scan(&s.Id, &s.Team, &s.PublicKey, &s.CreatedAt, &s.UpdatedAt, &s.Key)
+}
+
 func scanVaultsFull(rs *sql.Rows) ([]*VaultFull, error) {
 	structs := make([]*VaultFull, 0, 16)
 	var err error
@@ -53,21 +57,31 @@ func (t *Team) getVaultsFullForUser(tx *sql.Tx, u *User) ([]*VaultFull, error) {
 		return nil, util.NewErrorFrom(err)
 	}
 	for _, v := range vaults {
-		rows, err := tx.Query(`SELECT "user" FROM "vault_user" WHERE "vault_user"."vault" = $1 AND "vault_user"."team" = $2`, v.Id, t.Id)
-		if isErrOrPanic(err) {
-			return nil, util.NewErrorFrom(err)
+		uids, err := v.Vault.getUserIds(tx)
+		if err != nil {
+			return nil, err
 		}
-		var uid string
-		for rows.Next() {
-			err = rows.Scan(&uid)
-			if isErrOrPanic(err) {
-				return nil, util.NewErrorFrom(err)
-			}
-			v.Users = append(v.Users, uid)
-		}
-		if err = rows.Err(); isErrOrPanic(err) {
-			return nil, util.NewErrorFrom(err)
-		}
+		v.Users = uids
 	}
 	return vaults, nil
+}
+
+func (v *Vault) GetVaultFullForUser(ctx context.Context, u *User) (vf *VaultFull, err error) {
+	vf = &VaultFull{}
+	return vf, doTx(ctx, func(tx *sql.Tx) error {
+		r := tx.QueryRow(`SELECT `+selectVaultFullFields+`, "vault_user"."key" FROM "vault", "vault_user" WHERE  "vault"."team" = $1 AND "vault"."team" = "vault_user"."team" AND "vault"."id" = "vault_user"."vault" AND "vault"."id" = $2 AND "vault_user"."user" = $3`, v.Team, v.Id, u.Id)
+		err := vf.dbScanRow(r)
+		if isErrOrPanic(err) {
+			if isNotExistsErr(err) {
+				return util.NewErrorFrom(ErrDoesntExist)
+			}
+			return util.NewErrorFrom(err)
+		}
+		uids, err := v.getUserIds(tx)
+		if err != nil {
+			return err
+		}
+		vf.Users = uids
+		return nil
+	})
 }

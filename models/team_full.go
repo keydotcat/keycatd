@@ -8,7 +8,7 @@ import (
 type TeamFull struct {
 	*Team
 	Vaults  []*VaultFull    `json:"vaults"`
-	Users   []*teamUserFull `json:"users"`
+	Users   []*TeamUserFull `json:"users"`
 	Invites []*Invite       `json:"invites"`
 }
 

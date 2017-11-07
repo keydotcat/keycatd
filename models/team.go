@@ -210,8 +210,8 @@ func (t *Team) AddOrInviteUserByEmail(ctx context.Context, admin *User, newcomer
 	})
 }
 
-func (t *Team) getUserAffiliation(tx *sql.Tx, u *User) (*teamUser, error) {
-	tu := &teamUser{Team: t.Id, User: u.Id}
+func (t *Team) getUserAffiliation(tx *sql.Tx, username string) (*teamUser, error) {
+	tu := &teamUser{Team: t.Id, User: username}
 	err := tu.dbFind(tx)
 	switch {
 	case err == sql.ErrNoRows:
@@ -261,7 +261,7 @@ func (t *Team) CheckAdmin(ctx context.Context, u *User) (isAdmin bool, err error
 }
 
 func (t *Team) checkAdmin(tx *sql.Tx, u *User) error {
-	tu, err := t.getUserAffiliation(tx, u)
+	tu, err := t.getUserAffiliation(tx, u.Id)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func (t *Team) addUser(tx *sql.Tx, admin *User, newUser *User) error {
 }
 
 func (t *Team) addUserNoAdminCheck(tx *sql.Tx, newUser *User) error {
-	tu, err := t.getUserAffiliation(tx, newUser)
+	tu, err := t.getUserAffiliation(tx, newUser.Id)
 	if err != nil {
 		return err
 	}
@@ -318,6 +318,20 @@ func (t *Team) GetVaultsForUser(ctx context.Context, u *User) (vs []*Vault, err 
 		vs, err = t.getVaultsForUser(tx, u)
 		return err
 	})
+}
+
+func (t *Team) GetVaultForUser(ctx context.Context, vid string, u *User) (*Vault, error) {
+	db := GetDB(ctx)
+	r := db.QueryRow(`SELECT `+selectVaultFullFields+` FROM "vault", "vault_user" WHERE "vault"."team" = $1 AND "vault"."id" = $2 AND "vault_user"."team" = "vault"."team" AND "vault_user"."user" = $3 AND "vault_user"."vault" = "vault"."id"`, t.Id, vid, u.Id)
+	v := &Vault{}
+	err := v.dbScanRow(r)
+	if isNotExistsErr(err) {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	return v, nil
 }
 
 func (t *Team) getVaultsForUser(tx *sql.Tx, u *User) ([]*Vault, error) {

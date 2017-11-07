@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/keydotcat/backend/models"
@@ -84,6 +83,8 @@ func (ah apiHandler) validTeamRoot(w http.ResponseWriter, r *http.Request, t *mo
 		switch head {
 		case "user":
 			return ah.validTeamUserRoot(w, r, t)
+		case "vault":
+			return ah.vaultRoot(w, r, t)
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
@@ -150,15 +151,19 @@ type teamModifyUserRequest struct {
 	Keys  map[string][]byte `json:"keys"`
 }
 
+type teamModifyUserResponse struct {
+	Team  string                 `json:"team"`
+	Users []*models.TeamUserFull `json:"users"`
+}
+
 // PATCH /team/:tid/user/:uid
 func (ah apiHandler) teamModifyUser(w http.ResponseWriter, r *http.Request, t *models.Team, uid string) error {
 	tiur := &teamModifyUserRequest{}
-	if err := jsonDecode(w, r, 1024, tiur); err != nil {
+	if err := jsonDecode(w, r, 2048, tiur); err != nil {
 		return err
 	}
 	ctx := r.Context()
 	admin := ctxGetUser(ctx)
-	fmt.Println(" FIND", uid)
 	u, err := models.FindUser(ctx, uid)
 	if err != nil {
 		return err
@@ -171,9 +176,9 @@ func (ah apiHandler) teamModifyUser(w http.ResponseWriter, r *http.Request, t *m
 	if err != nil {
 		return err
 	}
-	tf, err := t.GetTeamFull(ctx, admin)
+	tuf, err := t.GetUsersAfiliationFull(ctx)
 	if err != nil {
 		return err
 	}
-	return jsonResponse(w, tf)
+	return jsonResponse(w, teamModifyUserResponse{t.Id, tuf})
 }
