@@ -28,6 +28,18 @@ func CheckErr(err error, check error) bool {
 	return err == check
 }
 
+func CheckFieldErr(err error, field, val string) bool {
+	if Er, ok := err.(*Error); ok {
+		if tmp, ok := Er.fields[field]; !ok {
+			return false
+		} else if tmp != val {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
 func GetStack(err error) string {
 	me, ok := err.(*Error)
 	if !ok {

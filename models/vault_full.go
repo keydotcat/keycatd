@@ -14,7 +14,7 @@ type VaultFull struct {
 }
 
 func (s *VaultFull) dbScanRow(r *sql.Row) error {
-	return r.Scan(&s.Id, &s.Team, &s.PublicKey, &s.CreatedAt, &s.UpdatedAt, &s.Key)
+	return r.Scan(&s.Id, &s.Team, &s.Version, &s.PublicKey, &s.CreatedAt, &s.UpdatedAt, &s.Key)
 }
 
 func scanVaultsFull(rs *sql.Rows) ([]*VaultFull, error) {
@@ -25,6 +25,7 @@ func scanVaultsFull(rs *sql.Rows) ([]*VaultFull, error) {
 		if err = rs.Scan(
 			&s.Id,
 			&s.Team,
+			&s.Version,
 			&s.PublicKey,
 			&s.CreatedAt,
 			&s.UpdatedAt,

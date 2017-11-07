@@ -41,7 +41,7 @@ func TestCreateUser(t *testing.T) {
 	_, priv, fullpack = generateNewKeys()
 	vkp = getDummyVaultKeyPair(priv, uid)
 	u, tok, err = NewUser(ctx, uid, uid+" name", uid+"@asdas.com", uid, fullpack, vkp)
-	if err != nil && !util.CheckErr(err, ErrAlreadyExists) {
+	if err != nil && !util.CheckFieldErr(err, "user_id", "duplicate") {
 		fmt.Println(util.GetStack(err))
 		t.Fatal(err)
 	}

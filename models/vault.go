@@ -11,13 +11,14 @@ import (
 type Vault struct {
 	Id        string    `scaneo:"pk" json:"id"`
 	Team      string    `scaneo:"pk" json:"-"`
+	Version   uint32    `json:"version"`
 	PublicKey []byte    `json:"public_key"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func createVault(tx *sql.Tx, id, team string, vkp VaultKeyPair) (*Vault, error) {
-	v := &Vault{Id: id, Team: team, PublicKey: vkp.PublicKey}
+	v := &Vault{Id: id, Team: team, Version: 1, PublicKey: vkp.PublicKey}
 	if err := v.insert(tx); err != nil {
 		return nil, err
 	}
@@ -65,6 +66,9 @@ func (v Vault) validate() error {
 	}
 	if len(v.PublicKey) != publicKeyPackSize {
 		errs.SetFieldError("vault_public_key", "invalid")
+	}
+	if v.Version == 0 {
+		errs.SetFieldError("version", "invalid")
 	}
 	return errs.Camo()
 }

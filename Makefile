@@ -21,5 +21,5 @@ dev-static: git-static
 models/autogen.go: models/user.go models/team.go models/vault.go models/team_user.go models/vault_user.go models/invite.go models/token.go models/secret.go
 	 scaneo -p models -u -o $@ $^
 
-autoreload: models/autogen.go dev-static
+dev: models/autogen.go dev-static
 	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/backend/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git

@@ -69,11 +69,12 @@ DROP TABLE IF EXISTS "vault";
 CREATE TABLE "vault" (
 	"id" STRING NOT NULL,
 	"team" STRING NOT NULL REFERENCES "team" ("id"),
+	"version" INT NOT NULL,
  	"public_key" BLOB NOT NULL,
 	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("team", "id" ASC),
-	FAMILY "primary" ("id", "team", "public_key", "created_at", "updated_at")
+	FAMILY "primary" ("id", "team", "version", "public_key", "created_at", "updated_at")
 ) INTERLEAVE IN PARENT "team" ("team");
 
 DROP TABLE IF EXISTS "vault_user";
