@@ -18,9 +18,13 @@ func TestAddModifyAndDeleteSecret(t *testing.T) {
 	ctx := getCtx()
 	o, team := getDummyOwnerWithTeam()
 	v := getFirstVault(o, team)
-	s := &Secret{Data: a32b}
+	s := &Secret{Data: a32b, Meta: a32b}
+	version := v.Version
 	if err := v.AddSecret(ctx, s); err != nil {
 		t.Fatal(err)
+	}
+	if v.Version != version+1 {
+		t.Fatal("Vault version didn't increase")
 	}
 	if len(s.Id) < 10 {
 		t.Errorf("Missing required secret id")
@@ -31,11 +35,20 @@ func TestAddModifyAndDeleteSecret(t *testing.T) {
 	if s.Vault != v.Id {
 		t.Errorf("Mismatch in the secret vault")
 	}
+	if s.VaultVersion != v.Version {
+		t.Fatalf("Mismatch in the vault (%d) and secret vault (%d) version", v.Version, s.VaultVersion)
+	}
 	if err := v.UpdateSecret(ctx, s); err != nil {
 		t.Fatal(err)
 	}
+	if v.Version != version+2 {
+		t.Fatal("Vault version didn't increase")
+	}
 	if s.CreatedAt.Equal(s.UpdatedAt) {
 		t.Fatal("Didn't update the updated at time")
+	}
+	if s.VaultVersion != v.Version {
+		t.Fatalf("Mismatch in the vault (%d) and secret vault (%d) version", v.Version, s.VaultVersion)
 	}
 	secrets, err := v.GetSecrets(ctx)
 	if err != nil {

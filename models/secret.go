@@ -8,12 +8,14 @@ import (
 )
 
 type Secret struct {
-	Team      string    `scaneo:"pk" json:"-"`
-	Vault     string    `scaneo:"pk" json:"-"`
-	Id        string    `scaneo:"pk" json:"id"`
-	Data      []byte    `json:"data"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Team         string    `scaneo:"pk" json:"-"`
+	Vault        string    `scaneo:"pk" json:"-"`
+	Id           string    `scaneo:"pk" json:"id"`
+	Meta         []byte    `json:"meta"`
+	Data         []byte    `json:"data"`
+	VaultVersion uint32    `json:"vault_version"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (v *Secret) insert(tx *sql.Tx) error {
@@ -54,8 +56,14 @@ func (v Secret) validate() error {
 	if len(v.Id) < 10 {
 		errs.SetFieldError("id", "invalid")
 	}
+	if len(v.Meta) < 32 {
+		errs.SetFieldError("meta", "invalid")
+	}
 	if len(v.Data) < 32 {
 		errs.SetFieldError("data", "invalid")
+	}
+	if v.VaultVersion == 0 {
+		errs.SetFieldError("vault_version", "invalid")
 	}
 	return errs.Camo()
 }

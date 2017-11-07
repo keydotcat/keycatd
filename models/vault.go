@@ -52,8 +52,19 @@ func (v *Vault) update(tx *sql.Tx) error {
 		return err
 	}
 	v.UpdatedAt = time.Now().UTC()
-	res, err := v.dbUpdate(tx)
-	return treatUpdateErr(res, err)
+	res, err := tx.Exec(`UPDATE "vault" SET "version" = "version" + 1, "updated_at" = $1 WHERE "team" = $2 AND "id" = $3`, v.UpdatedAt, v.Team, v.Id)
+	if err := treatUpdateErr(res, err); err != nil {
+		return err
+	}
+	r := tx.QueryRow(`SELECT "version" FROM "vault" WHERE "team" = $1 AND "id" = $2`, v.Team, v.Id)
+	err = r.Scan(&v.Version)
+	if isNotExistsErr(err) {
+		return util.NewErrorFrom(ErrDoesntExist)
+	}
+	if isErrOrPanic(err) {
+		return err
+	}
+	return nil
 }
 
 func (v Vault) validate() error {
@@ -163,7 +174,7 @@ func (v Vault) removeUser(tx *sql.Tx, username string) error {
 	return treatUpdateErr(vu.dbDelete(tx))
 }
 
-func (v Vault) AddSecret(ctx context.Context, s *Secret) error {
+func (v *Vault) AddSecret(ctx context.Context, s *Secret) error {
 	s.Team = v.Team
 	s.Vault = v.Id
 	var err error
@@ -173,6 +184,7 @@ func (v Vault) AddSecret(ctx context.Context, s *Secret) error {
 			if err := v.update(tx); err != nil {
 				return err
 			}
+			s.VaultVersion = v.Version
 			return s.insert(tx)
 		})
 		if err == ErrAlreadyExists {
@@ -183,18 +195,19 @@ func (v Vault) AddSecret(ctx context.Context, s *Secret) error {
 	return err
 }
 
-func (v Vault) UpdateSecret(ctx context.Context, s *Secret) error {
+func (v *Vault) UpdateSecret(ctx context.Context, s *Secret) error {
 	s.Team = v.Team
 	s.Vault = v.Id
 	return doTx(ctx, func(tx *sql.Tx) error {
 		if err := v.update(tx); err != nil {
 			return err
 		}
+		s.VaultVersion = v.Version
 		return s.update(tx)
 	})
 }
 
-func (v Vault) DeleteSecret(ctx context.Context, sid string) error {
+func (v *Vault) DeleteSecret(ctx context.Context, sid string) error {
 	return doTx(ctx, func(tx *sql.Tx) error {
 		if err := v.update(tx); err != nil {
 			return err
