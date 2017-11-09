@@ -1,0 +1,3 @@
+ervices:
+  - redis-server
+  - cockroachdb
