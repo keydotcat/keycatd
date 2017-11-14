@@ -18,7 +18,7 @@ var srv httptest.Server
 var apiH apiHandler
 
 func init() {
-	TEST_MODE = false
+	TEST_MODE = true
 	initSRV()
 	initDB()
 }
@@ -33,9 +33,6 @@ func initSRV() {
 		Url:      "http://" + ln.Addr().String(),
 		DB:       "user=root dbname=test sslmode=disable port=26257",
 		MailFrom: "blackhole@key.cat",
-		MailSMTP: &ConfMailSMTP{
-			Server: "localhost:1025",
-		},
 		SessionRedis: ConfSessionRedis{
 			Server: "localhost:6379",
 			DBId:   10,

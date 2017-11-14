@@ -57,16 +57,18 @@ func (c Conf) validate() error {
 	if bl != 0 && bl != 16 && bl != 24 && bl != 32 {
 		return util.NewErrorf("Invalid csrf.block_key. It has to be 16, 24 or 32 characters long, or 0 to disable encryption")
 	}
-	smtp := c.MailSMTP != nil
-	spark := c.MailSparkpost != nil
-	if (!smtp && !spark) || (smtp && spark) {
-		return util.NewErrorf("Either configure mail.smtp (%t) or mail.sparkpost (%t)", smtp, spark)
-	}
-	if smtp && len(c.MailSMTP.Server) == 0 {
-		return util.NewErrorf("Invalid mail.smtp.server")
-	}
-	if spark && len(c.MailSparkpost.Key) == 0 {
-		return util.NewErrorf("Invalid mail.sparkpost.key")
+	if !TEST_MODE {
+		smtp := c.MailSMTP != nil
+		spark := c.MailSparkpost != nil
+		if (!smtp && !spark) || (smtp && spark) {
+			return util.NewErrorf("Either configure mail.smtp (%t) or mail.sparkpost (%t)", smtp, spark)
+		}
+		if smtp && len(c.MailSMTP.Server) == 0 {
+			return util.NewErrorf("Invalid mail.smtp.server")
+		}
+		if spark && len(c.MailSparkpost.Key) == 0 {
+			return util.NewErrorf("Invalid mail.sparkpost.key")
+		}
 	}
 	if len(c.SessionRedis.Server) == 0 {
 		return util.NewErrorf("Invalid session.redis.server")

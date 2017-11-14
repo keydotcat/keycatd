@@ -29,12 +29,13 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 		return nil, util.NewErrorf("Could not connect to db '%s': %s", c.DB, err)
 	}
 	switch {
+	case TEST_MODE:
+		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrNULL())
 	case c.MailSMTP != nil:
 		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSMTP(c.MailSMTP.Server, c.MailSMTP.User, c.MailSMTP.Password, c.MailFrom))
 	case c.MailSparkpost != nil:
 		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSparkpost(c.MailSparkpost.Key, c.MailFrom))
 	default:
-		return nil, util.NewErrorf("No mail manager defined in the configuration")
 	}
 	if err != nil {
 		return nil, util.NewErrorf("Could not create mailer: %s", err)
