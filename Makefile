@@ -9,7 +9,7 @@ cmds:
 
 git-static: models/autogen.go
 	mkdir -p data/version
-	git log --pretty=format:'{ "commit": "%H", "date": "%aI"},' | perl -pe 'BEGIN{print "["}; END{print "]\n"}' | perl -pe 's/},]/}]/' > data/version/history
+	git log --date=iso  --pretty=format:'{ "commit": "%H", "date": "%ad"},' | perl -pe 'BEGIN{print "["}; END{print "]\n"}' | perl -pe 's/},]/}]/' > data/version/history
 	echo ${GIT_VERSION} > data/version/current
 
 static: git-static

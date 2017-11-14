@@ -3,15 +3,29 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/keydotcat/backend/static"
 )
 
+type VersionTime time.Time
+
+const isotime = "2006-01-02 15:04:05 -0700"
+
+func (vt *VersionTime) UnmarshalJSON(data []byte) error {
+	t, err := time.Parse(isotime, strings.Trim(string(data), `"`))
+	if err != nil {
+		return err
+	}
+	*vt = (VersionTime)(t)
+	return nil
+}
+
 type VersionEntry struct {
-	Commit string    `json:"commit"`
-	Date   time.Time `json:"date"`
-	Behind int       `json:"-"`
+	Commit string       `json:"commit"`
+	Date   *VersionTime `json:"date"`
+	Behind int          `json:"-"`
 }
 
 var (
