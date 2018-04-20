@@ -35,7 +35,7 @@ func processConf() api.Conf {
 	viper.AddConfigPath(".")
 	viper.SetDefault("port", 27623)
 	viper.SetDefault("url", "http://localhost:26257")
-	viper.SetDefault("db", "")
+	viper.SetDefault("db", "keycat")
 	viper.SetDefault("csrf.hash_key", "")
 	viper.SetDefault("csrf.block_key", "")
 	viper.SetDefault("session.redis.server", "")

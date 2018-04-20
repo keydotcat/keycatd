@@ -2,8 +2,10 @@ package api
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
+	"github.com/keydotcat/backend/db"
 	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
@@ -28,6 +30,15 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 	if err != nil {
 		return nil, util.NewErrorf("Could not connect to db '%s': %s", c.DB, err)
 	}
+	m := db.NewMigrateMgr(ah.db)
+	if err := m.LoadMigrations(); err != nil {
+		panic(err)
+	}
+	lid, err := m.ApplyRequiredMigrations()
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Executed migrations until %d", lid)
 	switch {
 	case TEST_MODE:
 		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrNULL())
