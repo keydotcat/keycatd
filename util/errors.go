@@ -85,14 +85,11 @@ func NewErrorFrom(err error) error {
 	}
 }
 
-func NewErrorFields(s ...string) error {
+func NewErrorFields() error {
 	e := &Error{
 		nil,
 		make(map[string]string),
 		stack.CallersMulti(1),
-	}
-	for i := 0; i+1 < len(s); i++ {
-		e.fields[s[i]] = s[i+1]
 	}
 	e.multiStack = stack.CallersMulti(1)
 	return e
@@ -123,6 +120,14 @@ func (e *Error) Camo() error {
 		return nil
 	}
 	return e
+}
+
+func (e *Error) SetErrorOrCamo(err error) error {
+	if !e.Empty() {
+		e.inner = err
+		return e
+	}
+	return nil
 }
 
 func (e Error) Empty() bool {

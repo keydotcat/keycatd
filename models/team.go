@@ -66,7 +66,7 @@ func (t *Team) validate() error {
 	if len(t.Name) == 0 {
 		errs.SetFieldError("team_name", "invalid")
 	}
-	return errs.Camo()
+	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }
 
 func (t *Team) getAdminUsers(tx *sql.Tx) ([]*User, error) {

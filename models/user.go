@@ -144,7 +144,7 @@ func (u *User) insert(tx *sql.Tx) error {
 		}
 		errs := util.NewErrorFields().(*util.Error)
 		errs.SetFieldError("user_"+dup, "duplicate")
-		return errs.Camo()
+		return errs.SetErrorOrCamo(ErrAlreadyExists)
 	}
 	isErrOrPanic(err)
 	return util.NewErrorFrom(err)
@@ -179,7 +179,7 @@ func (u *User) validate() error {
 	if len(u.Key) != privateKeyPackSize {
 		errs.SetFieldError("user_private_key", "invalid")
 	}
-	return errs.Camo()
+	return errs.SetErrorOrCamo(ErrAlreadyExists)
 }
 
 func (u *User) SetPassword(pass string) error {

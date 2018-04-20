@@ -81,7 +81,7 @@ func (v Vault) validate() error {
 	if v.Version == 0 {
 		errs.SetFieldError("version", "invalid")
 	}
-	return errs.Camo()
+	return errs.SetErrorOrCamo(ErrAlreadyExists)
 }
 
 func (v Vault) AddUsers(ctx context.Context, userKeys map[string][]byte) error {

@@ -47,5 +47,5 @@ func (v vaultUser) validate() error {
 	if len(v.Key) != privateKeyPackSize {
 		errs.SetFieldError("vaultuser_key", "invalid")
 	}
-	return errs.Camo()
+	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }

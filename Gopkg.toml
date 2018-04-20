@@ -37,7 +37,6 @@
   branch = "master"
   name = "github.com/gorilla/securecookie"
 
-
 [[constraint]]
   name = "github.com/spf13/viper"
   revision = "25b30aa063fc18e48662b86996252eabdcf2f0c7"

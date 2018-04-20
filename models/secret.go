@@ -65,5 +65,5 @@ func (v Secret) validate() error {
 	if v.VaultVersion == 0 {
 		errs.SetFieldError("vault_version", "invalid")
 	}
-	return errs.Camo()
+	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }

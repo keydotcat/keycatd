@@ -41,7 +41,7 @@ func (u *Token) validate() error {
 	if u.Type != TOKEN_VERIFICATION {
 		errs.SetFieldError("type", "invalid")
 	}
-	return errs.Camo()
+	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }
 
 func (u *Token) insert(tx *sql.Tx) error {
