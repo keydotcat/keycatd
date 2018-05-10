@@ -1,6 +1,6 @@
 port = 23764
 url = "http://localhost:23764"
-db = "user=root dbname=test sslmode=disable port=26257"
+db = "user=root dbname=keycat sslmode=disable port=26257"
 [mail]
 	from = "test@nowhere.net"
 	[mail.smtp]

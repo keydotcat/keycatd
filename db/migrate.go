@@ -55,7 +55,7 @@ func (m *MigrateMgr) GetLastMigrationInstalled() (int, error) {
 		}
 	}
 	var mid int
-	err := m.db.QueryRow("SELECT \"Id\" FROM \"DBMigrations\" ORDER BY \"Id\" DESC LIMIT 1").Scan(&mid)
+	err := m.db.QueryRow("SELECT \"Id\" FROM \"db_migrations\" ORDER BY \"Id\" DESC LIMIT 1").Scan(&mid)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	} else if err != nil {
@@ -113,7 +113,7 @@ func (m *MigrateMgr) applyMigration(mid int) error {
 	if err != nil {
 		return util.NewErrorf("Could not process migration %d: %s", mid, err)
 	}
-	_, err = tx.Exec(`INSERT INTO "DBMigrations" ("Id","CreatedAt") VALUES ($1,$2)`, mid, time.Now().UTC())
+	_, err = tx.Exec(`INSERT INTO "db_migrations" ("Id","CreatedAt") VALUES ($1,$2)`, mid, time.Now().UTC())
 	if err != nil {
 		return util.NewErrorf("Could not write executed migration to table: %s", err)
 	}
@@ -131,7 +131,7 @@ func (m *MigrateMgr) checkIfMigrationsTableExists() (bool, error) {
 		if err := rows.Scan(&name); err != nil {
 			return false, util.NewErrorf("Could not retrieve table name: %s", err)
 		}
-		if name == "DBMigrations" {
+		if name == "db_migrations" {
 			return true, nil
 		}
 	}
@@ -139,7 +139,7 @@ func (m *MigrateMgr) checkIfMigrationsTableExists() (bool, error) {
 }
 
 func (m *MigrateMgr) createMigrationsTable() error {
-	_, err := m.db.Exec("CREATE TABLE \"DBMigrations\" (\"Id\" INT NOT NULL, \"CreatedAt\" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT \"primary\" PRIMARY KEY (\"Id\" DESC), FAMILY \"primary\" (\"Id\", \"CreatedAt\") )")
+	_, err := m.db.Exec("CREATE TABLE \"db_migrations\" (\"Id\" INT NOT NULL, \"CreatedAt\" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT \"primary\" PRIMARY KEY (\"Id\" DESC), FAMILY \"primary\" (\"Id\", \"CreatedAt\") )")
 	if err != nil {
 		return util.NewErrorf("Could not create migrations table: %s", err)
 	}
