@@ -9,13 +9,14 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-func loginDummyUser() {
+func loginDummyUser() *models.User {
 	u := getDummyUser()
 	s, err := apiH.sm.NewSession(u.Id, "none", true)
 	if err != nil {
 		panic(err)
 	}
 	activeSessionToken = s.Id
+	return u
 }
 
 func TestRegister(t *testing.T) {
@@ -53,6 +54,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
+	activeSessionToken = ""
 	u := getDummyUser()
 	ar := authRequest{Id: u.Id, Password: u.Id, RequireCSRF: true}
 	r, err := PostRequest("/auth/login", ar)
