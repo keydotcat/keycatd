@@ -34,7 +34,7 @@ func httpErr(w http.ResponseWriter, err error) bool {
 	json.NewEncoder(buf).Encode(err)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Content-Length", strconv.Itoa(len(buf.String())))
-	if util.CheckErr(err, ErrNotFound) {
+	if util.CheckErr(err, ErrNotFound) || util.CheckErr(err, models.ErrDoesntExist) {
 		w.WriteHeader(http.StatusNotFound)
 	} else if util.CheckErr(err, models.ErrUnauthorized) {
 		w.WriteHeader(http.StatusUnauthorized)

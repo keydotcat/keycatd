@@ -14,7 +14,7 @@ type Session struct {
 	Id           string    `json:"id"`
 	UserId       string    `json:"user_id"`
 	Agent        string    `json:"agent"`
-	RequiresCSRF bool      `json:"csrf"`
+	RequiresCSRF bool      `json:"csrf_required"`
 	LastAccess   time.Time `json:"last_access"`
 	StoreToken   string    `json:"-"`
 }

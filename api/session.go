@@ -50,8 +50,11 @@ func (ah apiHandler) sessionGetToken(w http.ResponseWriter, r *http.Request, tid
 
 // DELETE /session/:token
 func (ah apiHandler) sessionDeleteToken(w http.ResponseWriter, r *http.Request, tid string) error {
-	currentSession := ctxGetSession(r.Context())
-	if err := ah.sm.DeleteSession(currentSession.Id); err != nil {
+	if len(tid) == 0 {
+		currentSession := ctxGetSession(r.Context())
+		tid = currentSession.Id
+	}
+	if err := ah.sm.DeleteSession(tid); err != nil {
 		return err
 	}
 	w.WriteHeader(http.StatusOK)
