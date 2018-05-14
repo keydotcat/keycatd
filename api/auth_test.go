@@ -34,11 +34,14 @@ func TestRegister(t *testing.T) {
 	}
 	r, err := PostRequest("/auth/register", arp)
 	CheckErrorAndResponse(t, r, err, 200)
-	tok := &models.Token{}
-	if err := json.NewDecoder(r.Body).Decode(tok); err != nil {
-		t.Fatal(err)
+	ar := authRequest{Id: arp.Username, Password: arp.Password, RequireCSRF: true}
+	r, err = PostRequest("/auth/login", ar)
+	CheckErrorAndResponse(t, r, err, 401)
+	tokens := models.FindTokensForUser(getCtx(), arp.Username)
+	if len(tokens) != 1 {
+		t.Fatalf("Expected to find one token and found %d", len(tokens))
 	}
-	r, err = GetRequest("/auth/confirm_email/" + tok.Id)
+	r, err = GetRequest("/auth/confirm_email/" + tokens[0].Id)
 	CheckErrorAndResponse(t, r, err, 200)
 	u := &models.User{}
 	if err := json.NewDecoder(r.Body).Decode(u); err != nil {

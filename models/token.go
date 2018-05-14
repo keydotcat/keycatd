@@ -30,6 +30,18 @@ func FindToken(ctx context.Context, id string) (*Token, error) {
 	return t, nil
 }
 
+func FindTokensForUser(ctx context.Context, user string) []*Token {
+	rows, err := GetDB(ctx).Query("SELECT "+selectTokenFields+" FROM \"token\" WHERE \"user\"=$1", user)
+	if err != nil {
+		panic(err)
+	}
+	ts, err := scanTokens(rows)
+	if err != nil {
+		panic(err)
+	}
+	return ts
+}
+
 func (u *Token) validate() error {
 	errs := util.NewErrorFields().(*util.Error)
 	if !reValidUsername.MatchString(u.User) {

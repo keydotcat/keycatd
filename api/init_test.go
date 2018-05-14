@@ -97,8 +97,11 @@ func getDummyUser() *models.User {
 	uid := util.GenerateRandomToken(5)
 	_, priv, fullpack := generateNewKeys()
 	vkp := getDummyVaultKeyPair(priv, uid)
-	u, _, err := models.NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, fullpack, vkp)
+	u, t, err := models.NewUser(ctx, uid, "uid fullname", uid+"@nowhere.net", uid, fullpack, vkp)
 	if err != nil {
+		panic(err)
+	}
+	if _, err = t.ConfirmEmail(getCtx()); err != nil {
 		panic(err)
 	}
 	return u
