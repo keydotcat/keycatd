@@ -10,7 +10,7 @@ import (
 
 var regUniqueField = regexp.MustCompile(`\Aduplicate key value \((\w+)\).*\z`)
 
-func isDuplicateErr(err error) bool {
+func IsDuplicateErr(err error) bool {
 	if err == nil {
 		return false
 	}

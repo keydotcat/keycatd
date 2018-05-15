@@ -32,12 +32,12 @@ func (r sessionMgrRedis) ukey(i string) string {
 	return fmt.Sprintf("%su:%s", r.prefix, i)
 }
 
-func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (Session, error) {
-	s := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
+func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (*Session, error) {
+	s := &Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	if err := encodeSession(b, s); err != nil {
-		return s, err
+		return nil, err
 	}
 	p := radix.Pipeline(
 		radix.FlatCmd(nil, "SELECT", r.dbId),
@@ -45,7 +45,7 @@ func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (Session, e
 		radix.FlatCmd(nil, "SADD", r.ukey(s.UserId), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
-		return s, err
+		return nil, err
 	}
 	return s, nil
 }
@@ -89,7 +89,7 @@ func (r sessionMgrRedis) storeSession(s *Session) error {
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	s.LastAccess = time.Now()
-	if err := encodeSession(b, *s); err != nil {
+	if err := encodeSession(b, s); err != nil {
 		return err
 	}
 	p := radix.Pipeline(
@@ -103,22 +103,22 @@ func (r sessionMgrRedis) storeSession(s *Session) error {
 	return nil
 }
 
-func (r sessionMgrRedis) GetSession(id string) (Session, error) {
+func (r sessionMgrRedis) GetSession(id string) (*Session, error) {
 	s, err := r.getSession(id)
 	if err != nil {
-		return Session{}, err
+		return nil, err
 	}
-	return *s, err
+	return s, err
 }
 
-func (r sessionMgrRedis) UpdateSession(id, agent string) (Session, error) {
+func (r sessionMgrRedis) UpdateSession(id, agent string) (*Session, error) {
 	s, err := r.getSession(id)
 	if err != nil {
-		return Session{}, err
+		return nil, err
 	}
 	s.Agent = agent
 	s.LastAccess = time.Now().UTC()
-	return *s, r.storeSession(s)
+	return s, r.storeSession(s)
 }
 
 func (r sessionMgrRedis) DeleteSession(id string) error {
@@ -159,7 +159,7 @@ func (r sessionMgrRedis) DeleteAllSessions(userId string) error {
 	return r.pool.Do(radix.Pipeline(as...))
 }
 
-func (r sessionMgrRedis) GetAllSessions(userId string) ([]Session, error) {
+func (r sessionMgrRedis) GetAllSessions(userId string) ([]*Session, error) {
 	sids := []string{}
 	p := radix.Pipeline(
 		radix.FlatCmd(nil, "SELECT", r.dbId),
@@ -168,7 +168,7 @@ func (r sessionMgrRedis) GetAllSessions(userId string) ([]Session, error) {
 	if err := r.pool.Do(p); err != nil {
 		return nil, err
 	}
-	ses := make([]Session, len(sids))
+	ses := make([]*Session, len(sids))
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	for i, sid := range sids {
@@ -178,10 +178,10 @@ func (r sessionMgrRedis) GetAllSessions(userId string) ([]Session, error) {
 			radix.Cmd(b, "GET", r.skey(sid)),
 		)
 		if err := r.pool.Do(p); err != nil {
-			fmt.Println("HERE ")
 			return nil, err
 		}
-		if err := decodeSession(b, &(ses[i])); err != nil {
+		ses[i] = &Session{}
+		if err := decodeSession(b, ses[i]); err != nil {
 			return nil, err
 		}
 	}

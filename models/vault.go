@@ -39,7 +39,7 @@ func (v *Vault) insert(tx *sql.Tx) error {
 	v.UpdatedAt = now
 	_, err := v.dbInsert(tx)
 	switch {
-	case isDuplicateErr(err):
+	case IsDuplicateErr(err):
 		return util.NewErrorFrom(ErrAlreadyExists)
 	case isErrOrPanic(err):
 		return err
@@ -110,7 +110,7 @@ func (v Vault) AddUsers(ctx context.Context, userKeys map[string][]byte) error {
 		}
 		for u, k := range userKeys {
 			if err := v.addUser(tx, u, k); err != nil {
-				if isDuplicateErr(err) {
+				if IsDuplicateErr(err) {
 					return util.NewErrorFrom(ErrAlreadyExists)
 				}
 				return err

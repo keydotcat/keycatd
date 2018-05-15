@@ -137,7 +137,7 @@ func (u *User) insert(tx *sql.Tx) error {
 	u.CreatedAt = time.Now().UTC()
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbInsert(tx)
-	if isDuplicateErr(err) {
+	if IsDuplicateErr(err) {
 		dup := getDuplicateFieldFromErr(err)
 		if dup == "" {
 			return util.NewErrorFrom(ErrAlreadyExists)

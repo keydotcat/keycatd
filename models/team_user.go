@@ -15,7 +15,7 @@ type teamUser struct {
 
 func (tu *teamUser) insert(tx *sql.Tx) error {
 	_, err := tu.dbInsert(tx)
-	if isDuplicateErr(err) {
+	if IsDuplicateErr(err) {
 		return util.NewErrorFrom(ErrAlreadyInTeam)
 	}
 	if isErrOrPanic(err) {

@@ -11,7 +11,7 @@ import (
 )
 
 type Session struct {
-	Id           string    `json:"id"`
+	Id           string    `json:"id" scaneo:"pk"`
 	UserId       string    `json:"user_id"`
 	Agent        string    `json:"agent"`
 	RequiresCSRF bool      `json:"csrf_required"`
@@ -19,7 +19,7 @@ type Session struct {
 	StoreToken   string    `json:"-"`
 }
 
-func encodeSession(buf *bytes.Buffer, s Session) error {
+func encodeSession(buf *bytes.Buffer, s *Session) error {
 	b64Sink := base64.NewEncoder(base64.RawStdEncoding, buf)
 	snappySink := snappy.NewBufferedWriter(b64Sink)
 	if err := gob.NewEncoder(snappySink).Encode(s); err != nil {
@@ -38,10 +38,10 @@ func decodeSession(buf *bytes.Buffer, s *Session) error {
 }
 
 type SessionMgr interface {
-	NewSession(userId string, agent string, csrf bool) (Session, error)
-	UpdateSession(id, agent string) (Session, error)
-	GetSession(id string) (Session, error)
+	NewSession(userId string, agent string, csrf bool) (*Session, error)
+	UpdateSession(id, agent string) (*Session, error)
+	GetSession(id string) (*Session, error)
 	DeleteSession(id string) error
-	GetAllSessions(userId string) ([]Session, error)
+	GetAllSessions(userId string) ([]*Session, error)
 	DeleteAllSessions(userId string) error
 }

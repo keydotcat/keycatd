@@ -27,6 +27,7 @@ data/version/current
 data/version/history
 static/data.go
 models/autogen.go
+managers/autogen.go
 bin/
 tags
 

@@ -64,7 +64,7 @@ func (u *Token) insert(tx *sql.Tx) error {
 	u.CreatedAt = time.Now().UTC()
 	u.UpdatedAt = u.CreatedAt
 	_, err := u.dbInsert(tx)
-	if isDuplicateErr(err) {
+	if IsDuplicateErr(err) {
 		return util.NewErrorFrom(ErrAlreadyExists)
 	}
 	isErrOrPanic(err)

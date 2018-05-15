@@ -7,7 +7,7 @@ cmds:
 	go get github.com/acasajus/scaneo
 	go get github.com/githubnemo/CompileDaemon
 
-git-static: models/autogen.go
+git-static: autogen
 	mkdir -p data/version
 	git log --date=iso  --pretty=format:'{ "commit": "%H", "date": "%ad"},' | perl -pe 'BEGIN{print "["}; END{print "]\n"}' | perl -pe 's/},]/}]/' > data/version/history
 	echo ${GIT_VERSION} > data/version/current
@@ -21,5 +21,10 @@ dev-static: git-static
 models/autogen.go: models/user.go models/team.go models/vault.go models/team_user.go models/vault_user.go models/invite.go models/token.go models/secret.go
 	 scaneo -p models -u -o $@ $^
 
-dev: models/autogen.go dev-static
+managers/autogen.go: managers/session_mgr.go
+	 scaneo -p managers -u -o $@ $^
+
+autogen: models/autogen.go managers/autogen.go
+
+dev: autogen dev-static
 	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/backend/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git

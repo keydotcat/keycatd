@@ -28,7 +28,7 @@ func (v *Secret) insert(tx *sql.Tx) error {
 	v.UpdatedAt = now
 	_, err := v.dbInsert(tx)
 	switch {
-	case isDuplicateErr(err):
+	case IsDuplicateErr(err):
 		return util.NewErrorFrom(ErrAlreadyExists)
 	case isErrOrPanic(err):
 		return err

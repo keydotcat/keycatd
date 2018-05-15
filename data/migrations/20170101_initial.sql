@@ -112,3 +112,18 @@ CREATE TABLE "secret" (
 	CONSTRAINT "fk_Team" FOREIGN KEY ("team", "vault" ) REFERENCES "vault" ON DELETE CASCADE
 ) INTERLEAVE IN PARENT "vault" ("team","vault");
 
+DROP TABLE IF EXISTS "session";
+CREATE TABLE "session" (
+	"id" STRING NOT NULL,
+	"user_id" STRING NOT NULL,
+	"agent" STRING NOT NULL,
+	"requires_csrf" BOOL NOT NULL,
+	"last_access" TIMESTAMP WITH TIME ZONE NOT NULL,
+	"store_token" STRING NOT NULL,
+	CONSTRAINT "primary" PRIMARY KEY ("id" ASC),
+	INDEX "idx_user" ("user_id"),
+	FAMILY "primary" ("id", "user_id", "agent", "requires_csrf", "last_access", "store_token"),
+	CONSTRAINT "fk_User" FOREIGN KEY ("user_id") REFERENCES "user" ON DELETE CASCADE
+)
+
+
