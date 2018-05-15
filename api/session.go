@@ -26,7 +26,7 @@ func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) error {
 }
 
 type sessionResponse struct {
-	managers.Session
+	*managers.Session
 	Csrf       string `json:"csrf,omitempty"`
 	StoreToken string `json:"store_token,omitempty"`
 }

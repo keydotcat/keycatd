@@ -53,12 +53,12 @@ func ctxGetVault(ctx context.Context) *models.Vault {
 	return d
 }
 
-func ctxAddSession(ctx context.Context, u managers.Session) context.Context {
+func ctxAddSession(ctx context.Context, u *managers.Session) context.Context {
 	return context.WithValue(ctx, contextSessionKey, u)
 }
 
-func ctxGetSession(ctx context.Context) managers.Session {
-	d, ok := ctx.Value(contextSessionKey).(managers.Session)
+func ctxGetSession(ctx context.Context) *managers.Session {
+	d, ok := ctx.Value(contextSessionKey).(*managers.Session)
 	if !ok {
 		panic("No session defined in context")
 	}
