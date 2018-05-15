@@ -313,11 +313,23 @@ func (t *Team) DemoteUser(ctx context.Context, demoter *User, demotee *User) err
 	})
 }
 
-func (t *Team) GetVaultsForUser(ctx context.Context, u *User) (vs []*Vault, err error) {
-	return vs, doTx(ctx, func(tx *sql.Tx) error {
-		vs, err = t.getVaultsForUser(tx, u)
+func (t *Team) GetSecretsForUser(ctx context.Context, u *User) (s []*Secret, err error) {
+	return s, doTx(ctx, func(tx *sql.Tx) error {
+		s, err = t.getSecretsForUser(tx, u)
 		return err
 	})
+}
+
+func (t *Team) getSecretsForUser(tx *sql.Tx, u *User) (s []*Secret, err error) {
+	rows, err := tx.Query(`SELECT `+selectSecretFullFields+` FROM "secret", "vault_user" WHERE  "secret"."team" = $1 AND "secret"."team" = "vault_user"."team" AND "secret"."vault" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	vaults, err := scanSecrets(rows)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	return vaults, nil
 }
 
 func (t *Team) GetVaultForUser(ctx context.Context, vid string, u *User) (*Vault, error) {
@@ -332,6 +344,13 @@ func (t *Team) GetVaultForUser(ctx context.Context, vid string, u *User) (*Vault
 		return nil, util.NewErrorFrom(err)
 	}
 	return v, nil
+}
+
+func (t *Team) GetVaultsForUser(ctx context.Context, u *User) (vs []*Vault, err error) {
+	return vs, doTx(ctx, func(tx *sql.Tx) error {
+		vs, err = t.getVaultsForUser(tx, u)
+		return err
+	})
 }
 
 func (t *Team) getVaultsForUser(tx *sql.Tx, u *User) ([]*Vault, error) {

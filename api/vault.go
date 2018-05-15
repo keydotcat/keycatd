@@ -60,6 +60,8 @@ func (ah apiHandler) validVaultRoot(w http.ResponseWriter, r *http.Request, t *m
 		switch head {
 		case "user":
 			return ah.validVaultUserRoot(w, r, t, v)
+		case "secret":
+			return ah.validVaultSecretRoot(w, r, t, v)
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)

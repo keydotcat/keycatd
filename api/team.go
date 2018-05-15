@@ -85,6 +85,8 @@ func (ah apiHandler) validTeamRoot(w http.ResponseWriter, r *http.Request, t *mo
 			return ah.validTeamUserRoot(w, r, t)
 		case "vault":
 			return ah.vaultRoot(w, r, t)
+		case "secret":
+			return ah.teamSecretRoot(w, r, t)
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
