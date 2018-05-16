@@ -12,6 +12,8 @@ import (
 
 var mdb *sql.DB
 
+var DUMP_BEFORE_TEST = false
+
 func init() {
 	HASH_PASSWD_COST = bcrypt.MinCost
 	var err error
@@ -19,23 +21,25 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	tables := []string{}
-	rows, err := mdb.Query("SHOW TABLES")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	var name string
-	for rows.Next() {
-		if err := rows.Scan(&name); err != nil {
+	if DUMP_BEFORE_TEST {
+		tables := []string{}
+		rows, err := mdb.Query("SHOW TABLES")
+		if err != nil {
 			panic(err)
 		}
-		tables = append(tables, name)
-	}
-	for _, tname := range tables {
-		log.Printf("Dropping %s", tname)
-		if _, err = mdb.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
-			panic(err)
+		defer rows.Close()
+		var name string
+		for rows.Next() {
+			if err := rows.Scan(&name); err != nil {
+				panic(err)
+			}
+			tables = append(tables, name)
+		}
+		for _, tname := range tables {
+			log.Printf("Dropping %s", tname)
+			if _, err = mdb.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
+				panic(err)
+			}
 		}
 	}
 	m := db.NewMigrateMgr(mdb)

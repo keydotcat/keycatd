@@ -92,6 +92,22 @@ func getDummyVaultKeyPair(signerPack []byte, ids ...string) VaultKeyPair {
 	return vkp
 }
 
+func unsealVaultKey(v *Vault, signedsealed []byte) []byte {
+	var sharedK [32]byte
+	copy(sharedK[:], v.PublicKey)
+	sealed, err := verifyAndUnpack(v.PublicKey, signedsealed)
+	if err != nil {
+		panic(err)
+	}
+	var nonce [24]byte
+	copy(nonce[:], sealed[:24])
+	unsealed, ok := box.OpenAfterPrecomputation(nil, sealed[24:], &nonce, &sharedK)
+	if !ok {
+		panic("Could not unseal box")
+	}
+	return unsealed
+}
+
 func expandVaultKeysOnce(vs []*VaultFull) VaultKeyPair {
 	vkp := VaultKeyPair{Keys: map[string][]byte{}}
 	for _, v := range vs {

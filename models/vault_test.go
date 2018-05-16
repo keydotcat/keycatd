@@ -6,8 +6,8 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-func getFirstVault(o *User, t *Team) *Vault {
-	vs, err := t.GetVaultsForUser(getCtx(), o)
+func getFirstVault(o *User, t *Team) *VaultFull {
+	vs, err := t.GetVaultsFullForUser(getCtx(), o)
 	if err != nil {
 		panic(err)
 	}
@@ -18,7 +18,8 @@ func TestAddModifyAndDeleteSecret(t *testing.T) {
 	ctx := getCtx()
 	o, team := getDummyOwnerWithTeam()
 	v := getFirstVault(o, team)
-	s := &Secret{Data: a32b, Meta: a32b}
+	vPriv := unsealVaultKey(&v.Vault, v.Key)
+	s := &Secret{Data: signAndPack(vPriv, a32b), Meta: signAndPack(vPriv, a32b)}
 	version := v.Version
 	if err := v.AddSecret(ctx, s); err != nil {
 		t.Fatal(err)

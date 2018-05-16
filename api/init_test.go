@@ -55,26 +55,30 @@ func initSRV() {
 	log.Printf("Starting test server %s", srv.URL)
 }
 
+var DUMP_BEFORE_TEST = false
+
 func initDB() {
 	models.HASH_PASSWD_COST = bcrypt.MinCost
 	var err error
-	tables := []string{}
-	rows, err := apiH.db.Query("SHOW TABLES")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	var name string
-	for rows.Next() {
-		if err := rows.Scan(&name); err != nil {
+	if DUMP_BEFORE_TEST {
+		tables := []string{}
+		rows, err := apiH.db.Query("SHOW TABLES")
+		if err != nil {
 			panic(err)
 		}
-		tables = append(tables, name)
-	}
-	for _, tname := range tables {
-		log.Printf("Dropping %s", tname)
-		if _, err = apiH.db.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
-			panic(err)
+		defer rows.Close()
+		var name string
+		for rows.Next() {
+			if err := rows.Scan(&name); err != nil {
+				panic(err)
+			}
+			tables = append(tables, name)
+		}
+		for _, tname := range tables {
+			log.Printf("Dropping %s", tname)
+			if _, err = apiH.db.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
+				panic(err)
+			}
 		}
 	}
 	m := db.NewMigrateMgr(apiH.db)

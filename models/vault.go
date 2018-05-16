@@ -177,6 +177,12 @@ func (v Vault) removeUser(tx *sql.Tx, username string) error {
 func (v *Vault) AddSecret(ctx context.Context, s *Secret) error {
 	s.Team = v.Team
 	s.Vault = v.Id
+	if _, err := verifyAndUnpack(v.PublicKey, s.Meta); err != nil {
+		return err
+	}
+	if _, err := verifyAndUnpack(v.PublicKey, s.Data); err != nil {
+		return err
+	}
 	var err error
 	for retry := 0; retry < 3; retry++ {
 		s.Id = util.GenerateRandomToken(10)
