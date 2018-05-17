@@ -12,6 +12,7 @@ import (
 )
 
 var boxNonceSize = 24
+var a32b = make([]byte, 32)
 
 func generateNewKeys() ([]byte, []byte, []byte) {
 	epub, epriv, err := box.GenerateKey(rand.Reader)
@@ -57,6 +58,22 @@ func getDummyVaultKeyPair(signerPack []byte, ids ...string) models.VaultKeyPair 
 		vkp.Keys[id] = signedsealed
 	}
 	return vkp
+}
+
+func unsealVaultKey(v *models.Vault, signedsealed []byte) []byte {
+	var sharedK [32]byte
+	copy(sharedK[:], v.PublicKey)
+	sealed, err := verifyAndUnpack(v.PublicKey, signedsealed)
+	if err != nil {
+		panic(err)
+	}
+	var nonce [24]byte
+	copy(nonce[:], sealed[:24])
+	unsealed, ok := box.OpenAfterPrecomputation(nil, sealed[24:], &nonce, &sharedK)
+	if !ok {
+		panic("Could not unseal box")
+	}
+	return unsealed
 }
 
 func expandVaultKeysOnce(vs []*models.VaultFull) models.VaultKeyPair {

@@ -43,7 +43,27 @@ func (ah apiHandler) validVaultSecretRoot(w http.ResponseWriter, r *http.Request
 		switch r.Method {
 		case "GET":
 			//TODO: Get all secrets for vault
+		case "POST":
+			return ah.vaultCreateSecret(w, r, t, v)
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
+}
+
+type vaultCreateSecretRequest struct {
+	Meta []byte `json:"meta"`
+	Data []byte `json:"data"`
+}
+
+func (ah apiHandler) vaultCreateSecret(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault) error {
+	ctx := r.Context()
+	vscr := &vaultCreateSecretRequest{}
+	if err := jsonDecode(w, r, 16*1024, vscr); err != nil {
+		return err
+	}
+	s := &models.Secret{Meta: vscr.Meta, Data: vscr.Data}
+	if err := v.AddSecret(ctx, s); err != nil {
+		return err
+	}
+	return jsonResponse(w, s)
 }

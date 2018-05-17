@@ -13,6 +13,8 @@ func (ah apiHandler) vaultRoot(w http.ResponseWriter, r *http.Request, t *models
 	vid, r.URL.Path = shiftPath(r.URL.Path)
 	if len(vid) == 0 {
 		switch r.Method {
+		case "GET":
+			return ah.vaultList(w, r, t)
 		case "POST":
 			return ah.vaultCreate(w, r, t)
 		}
@@ -25,6 +27,20 @@ func (ah apiHandler) vaultRoot(w http.ResponseWriter, r *http.Request, t *models
 		return ah.validVaultRoot(w, r, t, v)
 	}
 	return util.NewErrorFrom(ErrNotFound)
+}
+
+type vaultListResponse struct {
+	Vaults []*models.VaultFull `json:"vaults"`
+}
+
+func (ah apiHandler) vaultList(w http.ResponseWriter, r *http.Request, t *models.Team) error {
+	ctx := r.Context()
+	u := ctxGetUser(ctx)
+	vs, err := t.GetVaultsFullForUser(ctx, u)
+	if err != nil {
+		return err
+	}
+	return jsonResponse(w, vaultListResponse{vs})
 }
 
 type vaultCreateRequest struct {
