@@ -27,7 +27,6 @@ func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) error {
 		}
 		return ah.validTeamRoot(w, r, t)
 	}
-	return util.NewErrorFrom(ErrNotFound)
 }
 
 type teamGetAllResponse struct {

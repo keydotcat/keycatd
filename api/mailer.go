@@ -69,7 +69,7 @@ func (mm *mailer) send(muttd mailUserTeamTokenData, locale, templateName, subjec
 	}
 	buf := util.BufPool.Get()
 	defer util.BufPool.Put(buf)
-	tpl := mm.t.Lookup(fmt.Sprint("%s/%s", locale, templateName))
+	tpl := mm.t.Lookup(fmt.Sprintf("%s/%s", locale, templateName))
 	if tpl == nil {
 		tpl = mm.t.Lookup("en/" + templateName)
 	}

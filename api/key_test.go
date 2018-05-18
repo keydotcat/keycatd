@@ -47,7 +47,10 @@ func getDummyVaultKeyPair(signerPack []byte, ids ...string) models.VaultKeyPair 
 	pubPack, privPack, _ := generateNewKeys()
 	adminSigner := signerPack[:ed25519.PrivateKeySize]
 	vaultSigner := privPack[:ed25519.PrivateKeySize]
-	vkp := models.VaultKeyPair{signAndPack(adminSigner, pubPack), map[string][]byte{}}
+	vkp := models.VaultKeyPair{
+		PublicKey: signAndPack(adminSigner, pubPack),
+		Keys:      map[string][]byte{},
+	}
 	snonce := util.GenerateRandomByteArray(boxNonceSize)
 	var nonce [24]byte
 	copy(nonce[:], snonce)
