@@ -34,11 +34,11 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}
-	lid, err := m.ApplyRequiredMigrations()
+	lid, ap, err := m.ApplyRequiredMigrations()
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Executed migrations until %d", lid)
+	log.Printf("Executed migrations until %d (%d applied)", lid, ap)
 	switch {
 	case TEST_MODE:
 		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrNULL())

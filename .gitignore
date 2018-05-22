@@ -30,4 +30,5 @@ models/autogen.go
 managers/autogen.go
 bin/
 tags
+cover.out
 

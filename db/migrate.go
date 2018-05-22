@@ -78,26 +78,28 @@ func (m *MigrateMgr) CheckIfMigrationIsRequired() (int, error) {
 	return required, nil
 }
 
-func (m *MigrateMgr) ApplyRequiredMigrations() (int, error) {
+func (m *MigrateMgr) ApplyRequiredMigrations() (int, int, error) {
 	lid, err := m.GetLastMigrationInstalled()
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 	ids := make([]int, 0, len(m.migrations))
 	for kid := range m.migrations {
 		ids = append(ids, kid)
 	}
 	sort.Ints(ids)
+	applied := 0
 	for _, mid := range ids {
 		if mid <= lid {
 			continue
 		}
 		if err = m.applyMigration(mid); err != nil {
-			return 0, err
+			return 0, 0, err
 		}
 		lid = mid
+		applied += 1
 	}
-	return lid, nil
+	return lid, applied, nil
 }
 
 func (m *MigrateMgr) applyMigration(mid int) error {

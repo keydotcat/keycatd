@@ -46,11 +46,11 @@ func init() {
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}
-	lid, err := m.ApplyRequiredMigrations()
+	lid, ap, err := m.ApplyRequiredMigrations()
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Executed migrations until %d", lid)
+	log.Printf("Executed migrations until %d (%d applied)", lid, ap)
 }
 
 func getCtx() context.Context {

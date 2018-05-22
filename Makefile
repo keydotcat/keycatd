@@ -30,6 +30,10 @@ dev: autogen dev-static
 	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/backend/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git
 
 test:
-	go test -v github.com/keydotcat/backend/managers
-	go test -v github.com/keydotcat/backend/models
-	go test -v github.com/keydotcat/backend/api
+	go test -v github.com/keydotcat/backend/db github.com/keydotcat/backend/managers github.com/keydotcat/backend/models github.com/keydotcat/backend/api
+
+test_coverage:
+	go test -v -coverprofile db/cover.out -covermode atomic github.com/keydotcat/backend/db
+	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/backend/managers 
+	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/backend/models 
+	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/backend/api

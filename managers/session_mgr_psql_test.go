@@ -25,34 +25,15 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	tables := []string{}
-	rows, err := mdb.Query("SHOW TABLES")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	var name string
-	for rows.Next() {
-		if err := rows.Scan(&name); err != nil {
-			panic(err)
-		}
-		tables = append(tables, name)
-	}
-	for _, tname := range tables {
-		log.Printf("Dropping %s", tname)
-		if _, err = mdb.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
-			panic(err)
-		}
-	}
 	m := db.NewMigrateMgr(mdb)
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}
-	lid, err := m.ApplyRequiredMigrations()
+	lid, ap, err := m.ApplyRequiredMigrations()
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Executed migrations until %d", lid)
+	log.Printf("Executed migrations until %d (%d applied)", lid, ap)
 }
 
 func getCtx() context.Context {
