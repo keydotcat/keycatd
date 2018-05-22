@@ -6,9 +6,11 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/codahale/http-handlers/logging"
 	"github.com/keydotcat/backend/db"
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
@@ -47,9 +49,11 @@ func initSRV() {
 		panic(err)
 	}
 	apiH = handler.(apiHandler)
+	logHandler := logging.Wrap(apiH, os.Stdout)
+	logHandler.Start()
 	srv = httptest.Server{
 		Listener: ln,
-		Config:   &http.Server{Handler: apiH},
+		Config:   &http.Server{Handler: logHandler},
 	}
 	srv.Start()
 	log.Printf("Starting test server %s", srv.URL)
