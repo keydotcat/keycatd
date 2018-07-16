@@ -105,13 +105,18 @@ func (t *Team) CreateVault(ctx context.Context, u *User, name string, signedVaul
 		return nil, err
 	}
 	return v, doTx(ctx, func(tx *sql.Tx) error {
-		users, err := t.getAdminUsers(tx)
+		admins, err := t.getAdminUsers(tx)
 		if err != nil {
 			return err
 		}
-		uids := make([]string, len(users))
-		for i, u := range users {
-			uids[i] = u.Id
+		isAdmin := false
+		uids := make([]string, len(admins))
+		for i, admin := range admins {
+			uids[i] = admin.Id
+			isAdmin = isAdmin || (admin.Id == u.Id)
+		}
+		if !isAdmin {
+			return util.NewErrorFrom(ErrUnauthorized)
 		}
 		if err = vaultKeys.checkKeyIdsMatch(uids); err != nil {
 			return err

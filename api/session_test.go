@@ -27,7 +27,7 @@ func TestGetAndDeleteSessions(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(sr.Csrf) > 0 || len(sr.StoreToken) > 0 {
-		t.Errorf("Expected NOT to get the Csrf and store tokens %s", sr)
+		t.Errorf("Expected NOT to get the Csrf and store tokens %#v", sr)
 	}
 	r, err = DeleteRequest("/session/" + s.Id)
 	CheckErrorAndResponse(t, r, err, 200)

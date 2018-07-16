@@ -89,6 +89,12 @@ func TestCreateVault(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	inviteePrivKeys := getUserPrivateKeys(invitee.PublicKey, invitee.Key)
+	vkp = getDummyVaultKeyPair(inviteePrivKeys, owner.Id)
+	_, err = team.CreateVault(ctx, invitee, vname, vkp)
+	if !util.CheckErr(err, ErrUnauthorized) {
+		t.Fatalf("Unexpected error: %s vs %s", ErrUnauthorized, err)
+	}
 	keys := []string{}
 	for _, v := range vaultsFull {
 		keys = append(keys, v.Id)
