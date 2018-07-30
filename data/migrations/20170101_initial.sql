@@ -102,13 +102,12 @@ CREATE TABLE "secret" (
 	"team" STRING NOT NULL,
 	"vault" STRING NOT NULL,
 	"id"  STRING NOT NULL,
-	"meta" BLOB NOT NULL,
 	"data" BLOB NOT NULL,
 	"vault_version" INT NOT NULL,
 	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "primary" PRIMARY KEY ("team", "vault", "id" ASC),
-	FAMILY "primary" ("team", "vault", "id", "meta", "data", "vault_version", "created_at", "updated_at"),
+	FAMILY "primary" ("team", "vault", "id", "data", "vault_version", "created_at", "updated_at"),
 	CONSTRAINT "fk_Team" FOREIGN KEY ("team", "vault" ) REFERENCES "vault" ON DELETE CASCADE
 ) INTERLEAVE IN PARENT "vault" ("team","vault");
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/keydotcat/backend/models"
@@ -46,12 +47,17 @@ func (ah apiHandler) validVaultSecretRoot(w http.ResponseWriter, r *http.Request
 		case "POST":
 			return ah.vaultCreateSecret(w, r, t, v)
 		}
+	} else {
+		fmt.Println("Got to root", head)
+		switch r.Method {
+		case "DELETE":
+			return ah.vaultDeleteSecret(w, r, t, v, head)
+		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
 }
 
 type vaultCreateSecretRequest struct {
-	Meta []byte `json:"meta"`
 	Data []byte `json:"data"`
 }
 
@@ -61,9 +67,18 @@ func (ah apiHandler) vaultCreateSecret(w http.ResponseWriter, r *http.Request, t
 	if err := jsonDecode(w, r, 16*1024, vscr); err != nil {
 		return err
 	}
-	s := &models.Secret{Meta: vscr.Meta, Data: vscr.Data}
+	s := &models.Secret{Data: vscr.Data}
 	if err := v.AddSecret(ctx, s); err != nil {
 		return err
 	}
 	return jsonResponse(w, s)
+}
+
+func (ah apiHandler) vaultDeleteSecret(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault, sid string) error {
+	ctx := r.Context()
+	fmt.Println("Got to func", sid)
+	if err := v.DeleteSecret(ctx, sid); err != nil {
+		return err
+	}
+	return jsonResponse(w, v)
 }

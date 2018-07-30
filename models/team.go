@@ -330,11 +330,11 @@ func (t *Team) getSecretsForUser(tx *sql.Tx, u *User) (s []*Secret, err error) {
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}
-	vaults, err := scanSecrets(rows)
+	secrets, err := scanSecrets(rows)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}
-	return vaults, nil
+	return secrets, nil
 }
 
 func (t *Team) GetVaultForUser(ctx context.Context, vid string, u *User) (*Vault, error) {

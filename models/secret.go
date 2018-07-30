@@ -9,9 +9,8 @@ import (
 
 type Secret struct {
 	Team         string    `scaneo:"pk" json:"-"`
-	Vault        string    `scaneo:"pk" json:"-"`
+	Vault        string    `scaneo:"pk" json:"vault"`
 	Id           string    `scaneo:"pk" json:"id"`
-	Meta         []byte    `json:"meta"`
 	Data         []byte    `json:"data"`
 	VaultVersion uint32    `json:"vault_version"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -55,9 +54,6 @@ func (v Secret) validate() error {
 	}
 	if len(v.Id) < 10 {
 		errs.SetFieldError("id", "invalid")
-	}
-	if len(v.Meta) < 32 {
-		errs.SetFieldError("meta", "invalid")
 	}
 	if len(v.Data) < 32 {
 		errs.SetFieldError("data", "invalid")

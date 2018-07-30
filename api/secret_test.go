@@ -36,7 +36,7 @@ func TestGetAllSecrets(t *testing.T) {
 	}
 	v := vs.Vaults[0]
 	vPriv := unsealVaultKey(&v.Vault, v.Key)
-	vcsr := &vaultCreateSecretRequest{Data: signAndPack(vPriv, a32b), Meta: signAndPack(vPriv, a32b)}
+	vcsr := &vaultCreateSecretRequest{Data: signAndPack(vPriv, a32b)}
 	r, err = PostRequest(fmt.Sprintf("/team/%s/vault/%s/secret", team.Id, v.Vault.Id), vcsr)
 	CheckErrorAndResponse(t, r, err, 200)
 	s := &models.Secret{}
