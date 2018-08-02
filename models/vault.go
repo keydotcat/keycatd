@@ -199,12 +199,17 @@ func (v *Vault) AddSecret(ctx context.Context, s *Secret) error {
 }
 
 func (v *Vault) UpdateSecret(ctx context.Context, s *Secret) error {
-	s.Team = v.Team
-	s.Vault = v.Id
 	return doTx(ctx, func(tx *sql.Tx) error {
+		os, err := v.getSecret(tx, s.Id)
+		if err != nil {
+			return err
+		}
 		if err := v.update(tx); err != nil {
 			return err
 		}
+		s.Team = os.Team
+		s.Vault = os.Vault
+		s.CreatedAt = os.CreatedAt
 		s.VaultVersion = v.Version
 		return s.update(tx)
 	})
@@ -231,4 +236,24 @@ func (v Vault) GetSecrets(ctx context.Context) ([]*Secret, error) {
 		return nil, util.NewErrorFrom(err)
 	}
 	return secrets, nil
+}
+
+func (v Vault) GetSecret(ctx context.Context, sid string) (s *Secret, err error) {
+	return s, doTx(ctx, func(tx *sql.Tx) error {
+		s, err = v.getSecret(tx, sid)
+		return err
+	})
+}
+
+func (v Vault) getSecret(tx *sql.Tx, sid string) (*Secret, error) {
+	s := &Secret{Id: sid}
+	r := tx.QueryRow(`SELECT `+selectSecretFields+` FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2 AND "secret"."id" = $3`, v.Team, v.Id, sid)
+	err := s.dbScanRow(r)
+	if isNotExistsErr(err) {
+		return nil, util.NewErrorFrom(ErrDoesntExist)
+	}
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	return s, nil
 }

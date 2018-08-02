@@ -52,6 +52,8 @@ func (ah apiHandler) validVaultSecretRoot(w http.ResponseWriter, r *http.Request
 		switch r.Method {
 		case "DELETE":
 			return ah.vaultDeleteSecret(w, r, t, v, head)
+		case "PATCH", "PUT":
+			return ah.vaultUpdateSecret(w, r, t, v, head)
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
@@ -76,9 +78,21 @@ func (ah apiHandler) vaultCreateSecret(w http.ResponseWriter, r *http.Request, t
 
 func (ah apiHandler) vaultDeleteSecret(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault, sid string) error {
 	ctx := r.Context()
-	fmt.Println("Got to func", sid)
 	if err := v.DeleteSecret(ctx, sid); err != nil {
 		return err
 	}
 	return jsonResponse(w, v)
+}
+
+func (ah apiHandler) vaultUpdateSecret(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault, sid string) error {
+	ctx := r.Context()
+	vscr := &vaultCreateSecretRequest{}
+	if err := jsonDecode(w, r, 16*1024, vscr); err != nil {
+		return err
+	}
+	s := &models.Secret{Id: sid, Data: vscr.Data}
+	if err := v.UpdateSecret(ctx, s); err != nil {
+		return err
+	}
+	return jsonResponse(w, s)
 }
