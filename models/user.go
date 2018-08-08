@@ -20,7 +20,7 @@ var (
 
 type User struct {
 	Id               string      `scaneo:"pk" json:"id"`
-	Email            string      `json:"-"`
+	Email            string      `json:"email"`
 	UnconfirmedEmail string      `json:"-"`
 	HashPass         []byte      `json:"-"`
 	FullName         string      `json:"fullname"`
@@ -173,13 +173,16 @@ func (u *User) validate() error {
 	if !reValidEmail.MatchString(u.Email) {
 		errs.SetFieldError("user_email", "invalid")
 	}
+	if len(u.UnconfirmedEmail) > 0 && !reValidEmail.MatchString(u.UnconfirmedEmail) {
+		errs.SetFieldError("user_email", "invalid")
+	}
 	if len(u.PublicKey) != publicKeyPackSize {
 		errs.SetFieldError("user_public_key", "invalid")
 	}
 	if len(u.Key) != privateKeyPackSize {
 		errs.SetFieldError("user_private_key", "invalid")
 	}
-	return errs.SetErrorOrCamo(ErrAlreadyExists)
+	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }
 
 func (u *User) SetPassword(pass string) error {
@@ -238,4 +241,23 @@ func (u *User) getTeam(tx *sql.Tx, tid string) (*Team, error) {
 	}
 	isErrOrPanic(err)
 	return t, err
+}
+
+func (u *User) ChangeEmail(ctx context.Context, email string) (t *Token, err error) {
+	return t, doTx(ctx, func(tx *sql.Tx) error {
+		tokens := findTokensForUser(tx, u.Id)
+		for _, token := range tokens {
+			if token.Type == TOKEN_VERIFICATION {
+				t = token
+			}
+		}
+		if t == nil {
+			t = &Token{Type: TOKEN_VERIFICATION, User: u.Id}
+			if err := t.insert(tx); err != nil {
+				return err
+			}
+		}
+		u.UnconfirmedEmail = email
+		return u.update(tx)
+	})
 }

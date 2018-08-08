@@ -28,13 +28,13 @@ func TestGetAllSecretsForUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s2 := &Secret{Data: signAndPack(v2Priv, a32b), Meta: signAndPack(v2Priv, a32b)}
+	s2 := &Secret{Data: signAndPack(v2Priv, a32b)}
 	err = v2.AddSecret(ctx, s2)
 	if err != nil {
 		t.Fatal(err)
 	}
 	vPriv := unsealVaultKey(&vf.Vault, vf.Key)
-	s := &Secret{Data: signAndPack(vPriv, a32b), Meta: signAndPack(vPriv, a32b)}
+	s := &Secret{Data: signAndPack(vPriv, a32b)}
 	err = vf.Vault.AddSecret(ctx, s)
 	if err != nil {
 		t.Fatal(err)

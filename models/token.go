@@ -30,8 +30,16 @@ func FindToken(ctx context.Context, id string) (*Token, error) {
 	return t, nil
 }
 
-func FindTokensForUser(ctx context.Context, user string) []*Token {
-	rows, err := GetDB(ctx).Query("SELECT "+selectTokenFields+" FROM \"token\" WHERE \"user\"=$1", user)
+func FindTokensForUser(ctx context.Context, user string) (tokens []*Token) {
+	doTx(ctx, func(tx *sql.Tx) error {
+		tokens = findTokensForUser(tx, user)
+		return nil
+	})
+	return tokens
+}
+
+func findTokensForUser(tx *sql.Tx, user string) []*Token {
+	rows, err := tx.Query("SELECT "+selectTokenFields+" FROM \"token\" WHERE \"user\"=$1", user)
 	if err != nil {
 		panic(err)
 	}

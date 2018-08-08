@@ -19,7 +19,7 @@ func TestAddModifyAndDeleteSecret(t *testing.T) {
 	o, team := getDummyOwnerWithTeam()
 	v := getFirstVault(o, team)
 	vPriv := unsealVaultKey(&v.Vault, v.Key)
-	s := &Secret{Data: signAndPack(vPriv, a32b), Meta: signAndPack(vPriv, a32b)}
+	s := &Secret{Data: signAndPack(vPriv, a32b)}
 	version := v.Version
 	if err := v.AddSecret(ctx, s); err != nil {
 		t.Fatal(err)

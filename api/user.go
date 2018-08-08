@@ -13,6 +13,8 @@ func (ah apiHandler) userRoot(w http.ResponseWriter, r *http.Request) error {
 		switch r.Method {
 		case "GET":
 			return ah.userGetInfo(w, r)
+		case "PUT", "PATCH":
+			return ah.userUpdate(w, r)
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
@@ -27,4 +29,29 @@ func (ah apiHandler) userGetInfo(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return jsonResponse(w, uf)
+}
+
+type userUpdateRequest struct {
+	Email string `json:"email"`
+}
+
+func (ah apiHandler) userUpdate(w http.ResponseWriter, r *http.Request) error {
+	uur := &userUpdateRequest{}
+	if err := jsonDecode(w, r, 8192, uur); err != nil {
+		return err
+	}
+	ctx := r.Context()
+	u := ctxGetUser(ctx)
+	if len(uur.Email) > 3 {
+		t, err := u.ChangeEmail(ctx, uur.Email)
+		if err != nil {
+			return err
+		}
+		if err := ah.mail.sendConfirmationMail(u, t, r.Header.Get("X-Locale")); err != nil {
+			panic(err)
+		}
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+	return util.NewErrorFrom(ErrNotFound)
 }
