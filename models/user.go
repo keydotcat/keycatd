@@ -52,7 +52,7 @@ func NewUser(ctx context.Context, id, fullname, email, password string, keyPack 
 		return nil, nil, err
 	}
 	t := &Token{Type: TOKEN_VERIFICATION, User: u.Id}
-	if err := u.SetPassword(password); err != nil {
+	if err := u.setPassword(password); err != nil {
 		return nil, nil, err
 	}
 	return u, t, doTx(ctx, func(tx *sql.Tx) error {
@@ -83,6 +83,21 @@ func NewUser(ctx context.Context, id, fullname, email, password string, keyPack 
 			}
 		}
 		return err
+	})
+}
+
+func (u *User) ChangePassword(ctx context.Context, password string, keyPack []byte) error {
+	pub, priv, err := expandUserKeyPack(keyPack)
+	if err != nil {
+		return err
+	}
+	if err := u.setPassword(password); err != nil {
+		return err
+	}
+	u.PublicKey = pub
+	u.Key = priv
+	return doTx(ctx, func(tx *sql.Tx) error {
+		return u.update(tx)
 	})
 }
 
@@ -185,7 +200,7 @@ func (u *User) validate() error {
 	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }
 
-func (u *User) SetPassword(pass string) error {
+func (u *User) setPassword(pass string) error {
 	hpas, err := bcrypt.GenerateFromPassword([]byte(pass), HASH_PASSWD_COST)
 	if err != nil {
 		panic(err)

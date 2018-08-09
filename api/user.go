@@ -32,7 +32,9 @@ func (ah apiHandler) userGetInfo(w http.ResponseWriter, r *http.Request) error {
 }
 
 type userUpdateRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	KeyPack  []byte `json:"user_keys"`
 }
 
 func (ah apiHandler) userUpdate(w http.ResponseWriter, r *http.Request) error {
@@ -49,6 +51,14 @@ func (ah apiHandler) userUpdate(w http.ResponseWriter, r *http.Request) error {
 		}
 		if err := ah.mail.sendConfirmationMail(u, t, r.Header.Get("X-Locale")); err != nil {
 			panic(err)
+		}
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+	if len(uur.Password) > 0 {
+		err := u.ChangePassword(ctx, uur.Password, uur.KeyPack)
+		if err != nil {
+			return err
 		}
 		w.WriteHeader(http.StatusOK)
 		return nil
