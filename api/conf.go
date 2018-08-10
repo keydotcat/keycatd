@@ -30,6 +30,7 @@ type Conf struct {
 	Url           string             `toml:"url"`
 	Port          int                `toml:"port"`
 	DB            string             `toml:"db"`
+	DBType        string             `toml:"db_type"`
 	MailSMTP      *ConfMailSMTP      `toml:"mail_smtp"`
 	MailSparkpost *ConfMailSparkpost `toml:"mail_sparkpost"`
 	MailFrom      string             `toml:"mail_from"`
@@ -45,7 +46,10 @@ func (c Conf) validate() error {
 		c.Url = fmt.Sprintf("http://localhost:%d", c.Port)
 	}
 	if len(c.DB) == 0 {
-		return util.NewErrorf("Invalid db configuration ")
+		return util.NewErrorf("Invalid db configuration")
+	}
+	if c.DBType != "postgresql" && c.DBType != "cockroackdb" {
+		return util.NewErrorf("Invalid db typu")
 	}
 	if len(c.MailFrom) == 0 {
 		return util.NewErrorf("Invalid mail.from")

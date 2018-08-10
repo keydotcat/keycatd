@@ -1,6 +1,8 @@
 port = 23764
 url = "http://localhost:23764"
-db = "user=root dbname=keycat sslmode=disable port=26257"
+#db = "user=root dbname=keycat sslmode=disable port=26257"
+db = "dbname=keycat sslmode=disable port=5432"
+db_type = "postgresql"
 [mail]
 	from = "test@nowhere.net"
 	[mail.smtp]

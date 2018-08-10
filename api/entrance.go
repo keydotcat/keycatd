@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -30,12 +31,13 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 	if err != nil {
 		return nil, util.NewErrorf("Could not connect to db '%s': %s", c.DB, err)
 	}
-	m := db.NewMigrateMgr(ah.db)
+	m := db.NewMigrateMgr(ah.db, c.DBType)
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}
 	lid, ap, err := m.ApplyRequiredMigrations()
 	if err != nil {
+		fmt.Println(util.GetStack(err))
 		panic(err)
 	}
 	log.Printf("Executed migrations until %d (%d applied)", lid, ap)

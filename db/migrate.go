@@ -15,15 +15,16 @@ import (
 
 type MigrateMgr struct {
 	db         *sql.DB
+	dbType     string
 	migrations map[int]string
 }
 
-func NewMigrateMgr(db *sql.DB) *MigrateMgr {
-	return &MigrateMgr{db, make(map[int]string)}
+func NewMigrateMgr(db *sql.DB, dbType string) *MigrateMgr {
+	return &MigrateMgr{db, dbType, make(map[int]string)}
 }
 
 func (m *MigrateMgr) LoadMigrations() error {
-	return static.Walk("migrations", func(path string, fi os.FileInfo, err error) error {
+	return static.Walk("migrations/"+m.dbType, func(path string, fi os.FileInfo, err error) error {
 		log.Println("Found migration", path)
 		if !strings.HasSuffix(path, ".sql") {
 			return nil
@@ -50,6 +51,7 @@ func (m *MigrateMgr) GetLastMigrationInstalled() (int, error) {
 	if exists, err := m.checkIfMigrationsTableExists(); err != nil {
 		return 0, err
 	} else if !exists {
+		log.Println("Creating migrations table")
 		if err = m.createMigrationsTable(); err != nil {
 			return 0, err
 		}
@@ -123,7 +125,16 @@ func (m *MigrateMgr) applyMigration(mid int) error {
 }
 
 func (m *MigrateMgr) checkIfMigrationsTableExists() (bool, error) {
-	rows, err := m.db.Query("SHOW TABLES")
+	var query string
+	switch m.dbType {
+	case "cockroach":
+		query = "SHOW TABLES"
+	case "postgresql":
+		query = `SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema'`
+	default:
+		return false, util.NewErrorf("Unknown database type: %s", m.dbType)
+	}
+	rows, err := m.db.Query(query)
 	if err != nil {
 		return false, util.NewErrorf("Could not retrieve tables: %s", err)
 	}
@@ -141,7 +152,16 @@ func (m *MigrateMgr) checkIfMigrationsTableExists() (bool, error) {
 }
 
 func (m *MigrateMgr) createMigrationsTable() error {
-	_, err := m.db.Exec("CREATE TABLE \"db_migrations\" (\"Id\" INT NOT NULL, \"CreatedAt\" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT \"primary\" PRIMARY KEY (\"Id\" DESC), FAMILY \"primary\" (\"Id\", \"CreatedAt\") )")
+	var query string
+	switch m.dbType {
+	case "cockroach":
+		query = `CREATE TABLE "db_migrations" ("Id" INT NOT NULL, "CreatedAt" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT "primary" PRIMARY KEY ("Id" DESC), FAMILY "primary" ("Id", "CreatedAt") )`
+	case "postgresql":
+		query = `CREATE TABLE "db_migrations" ("Id" INT NOT NULL, "CreatedAt" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT "primary" PRIMARY KEY ("Id") )`
+	default:
+		return util.NewErrorf("Unknown database type: %s", m.dbType)
+	}
+	_, err := m.db.Exec(query)
 	if err != nil {
 		return util.NewErrorf("Could not create migrations table: %s", err)
 	}
