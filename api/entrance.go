@@ -77,6 +77,9 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	err := util.NewErrorFrom(ErrNotFound)
 	r = ah.authorizeRequest(w, r)
+	if r == nil {
+		return
+	}
 	//From here on you need to be authenticated
 	switch head {
 	case "session":

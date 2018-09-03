@@ -7,7 +7,7 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-const CSRF_COOKIE_NAME = "4d018d7e07"
+const CSRF_COOKIE_NAME = "kc4d018d7e07"
 
 type csrf struct {
 	sc *securecookie.SecureCookie
@@ -33,13 +33,17 @@ func (c csrf) checkToken(w http.ResponseWriter, r *http.Request) (string, bool) 
 }
 
 func (c csrf) getToken(w http.ResponseWriter, r *http.Request) (string, bool) {
-	csrfToken := ""
 	if cookie, err := r.Cookie(CSRF_COOKIE_NAME); err == nil {
+		var csrfToken string
 		if err = c.sc.Decode(CSRF_COOKIE_NAME, cookie.Value, &csrfToken); err == nil {
 			return csrfToken, false
 		}
 	}
-	csrfToken = util.GenerateRandomToken(32)
+	return c.generateNewToken(w), true
+}
+
+func (c csrf) generateNewToken(w http.ResponseWriter) string {
+	csrfToken := util.GenerateRandomToken(8)
 	if encoded, err := c.sc.Encode(CSRF_COOKIE_NAME, csrfToken); err == nil {
 		cookie := &http.Cookie{
 			Name:  CSRF_COOKIE_NAME,
@@ -50,5 +54,5 @@ func (c csrf) getToken(w http.ResponseWriter, r *http.Request) (string, bool) {
 	} else {
 		panic(err)
 	}
-	return csrfToken, true
+	return csrfToken
 }

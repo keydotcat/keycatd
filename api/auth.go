@@ -4,18 +4,26 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/keydotcat/backend/managers"
 	"github.com/keydotcat/backend/models"
 	"github.com/keydotcat/backend/util"
 )
 
-func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *http.Request {
+func (ah apiHandler) getSessionFromHeader(r *http.Request) *managers.Session {
 	authHdr := strings.Split(r.Header.Get("Authorization"), " ")
 	if len(authHdr) < 2 || authHdr[0] != "Bearer" {
-		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
 		return nil
 	}
 	s, err := ah.sm.UpdateSession(authHdr[1], r.UserAgent())
 	if err != nil {
+		return nil
+	}
+	return s
+}
+
+func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *http.Request {
+	s := ah.getSessionFromHeader(r)
+	if s == nil {
 		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
 		return nil
 	}
@@ -60,6 +68,8 @@ func (ah apiHandler) authRoot(w http.ResponseWriter, r *http.Request) error {
 		return ah.authRequestConfirmationToken(w, r)
 	case "login":
 		return ah.authLogin(w, r)
+	case "session":
+		return ah.authGetSession(w, r)
 	}
 	return util.NewErrorFrom(ErrNotFound)
 }
@@ -138,11 +148,13 @@ func (ah apiHandler) authRequestConfirmationToken(w http.ResponseWriter, r *http
 }
 
 type authLoginResponse struct {
-	Username   string `json:"user_id"`
-	Token      string `json:"session_token"`
-	StoreToken string `json:"store_token"`
-	PublicKeys []byte `json:"public_key"`
-	SecretKeys []byte `json:"secret_key"`
+	Username     string `json:"user_id"`
+	Token        string `json:"session_token"`
+	StoreToken   string `json:"store_token"`
+	PublicKeys   []byte `json:"public_key"`
+	SecretKeys   []byte `json:"secret_key"`
+	RequiresCSRF bool   `json:"csrf_required"`
+	Csrf         string `json:"csrf,omitempty"`
 }
 
 // /auth/login
@@ -173,5 +185,28 @@ func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
 		s.StoreToken,
 		u.PublicKey,
 		u.Key,
+		s.RequiresCSRF,
+		ah.csrf.generateNewToken(w),
+	})
+}
+
+type authGetSessionResponse struct {
+	*managers.Session
+	Csrf       string `json:"csrf,omitempty"`
+	StoreToken string `json:"store_token,omitempty"`
+}
+
+// GET /auth/session/:token
+func (ah apiHandler) authGetSession(w http.ResponseWriter, r *http.Request) error {
+	currentSession := ah.getSessionFromHeader(r)
+	if currentSession == nil {
+		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+		return nil
+	}
+	csrf, _ := ah.csrf.getToken(w, r)
+	return jsonResponse(w, authGetSessionResponse{
+		currentSession,
+		csrf,
+		currentSession.StoreToken,
 	})
 }

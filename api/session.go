@@ -25,9 +25,8 @@ func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) error {
 	return util.NewErrorFrom(ErrNotFound)
 }
 
-type sessionResponse struct {
+type sessionGetTokenResponse struct {
 	*managers.Session
-	Csrf       string `json:"csrf,omitempty"`
 	StoreToken string `json:"store_token,omitempty"`
 }
 
@@ -35,7 +34,7 @@ type sessionResponse struct {
 func (ah apiHandler) sessionGetToken(w http.ResponseWriter, r *http.Request, tid string) error {
 	currentSession := ctxGetSession(r.Context())
 	if currentSession.Id == tid {
-		return jsonResponse(w, sessionResponse{currentSession, ctxGetCsrf(r.Context()), currentSession.StoreToken})
+		return jsonResponse(w, sessionGetTokenResponse{currentSession, currentSession.StoreToken})
 	}
 	currentUser := ctxGetUser(r.Context())
 	s, err := ah.sm.GetSession(tid)
