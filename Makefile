@@ -29,10 +29,18 @@ autogen: models/autogen.go managers/autogen.go
 dev: autogen dev-static
 	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/backend/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git
 
-test:
+test: test_db test_managers test_models test_api
+
+test_db: autogen
 	go test -v github.com/keydotcat/backend/db 
+
+test_managers: autogen
 	go test -v github.com/keydotcat/backend/managers 
+
+test_models: autogen
 	go test -v github.com/keydotcat/backend/models 
+
+test_api: autogen
 	go test -v github.com/keydotcat/backend/api
 
 test_coverage:

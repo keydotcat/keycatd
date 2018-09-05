@@ -8,7 +8,8 @@ import (
 	"github.com/lib/pq"
 )
 
-var regUniqueField = regexp.MustCompile(`\Aduplicate key value \((\w+)\).*\z`)
+var regUniqueFieldMessage = regexp.MustCompile(`\Aduplicate key value \((\w+)\).*\z`)
+var regUniqueFieldDetail = regexp.MustCompile(`\AKey \((\w+)\)=\(\w+\) already exists.*\z`)
 
 func IsDuplicateErr(err error) bool {
 	if err == nil {
@@ -23,8 +24,10 @@ func getDuplicateFieldFromErr(err error) string {
 	if !ok {
 		panic("Error is not a pq.Error")
 	}
-	f := regUniqueField.FindStringSubmatch(pe.Message)
-	if len(f) > 1 {
+	if f := regUniqueFieldMessage.FindStringSubmatch(pe.Message); len(f) > 1 {
+		return f[1]
+	}
+	if f := regUniqueFieldDetail.FindStringSubmatch(pe.Detail); len(f) > 1 {
 		return f[1]
 	}
 	return ""

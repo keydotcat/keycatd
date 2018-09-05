@@ -39,14 +39,17 @@ func TestAddModifyAndDeleteSecret(t *testing.T) {
 	if s.VaultVersion != v.Version {
 		t.Fatalf("Mismatch in the vault (%d) and secret vault (%d) version", v.Version, s.VaultVersion)
 	}
+	if s.Version != 1 {
+		t.Fatalf("Invalid secret version, expected 1 and got %d", s.Version)
+	}
 	if err := v.UpdateSecret(ctx, s); err != nil {
 		t.Fatal(err)
 	}
+	if s.Version != 2 {
+		t.Fatalf("Invalid secret version, expected 2 and got %d", s.Version)
+	}
 	if v.Version != version+2 {
 		t.Fatal("Vault version didn't increase")
-	}
-	if s.CreatedAt.Equal(s.UpdatedAt) {
-		t.Fatal("Didn't update the updated at time")
 	}
 	if s.VaultVersion != v.Version {
 		t.Fatalf("Mismatch in the vault (%d) and secret vault (%d) version", v.Version, s.VaultVersion)

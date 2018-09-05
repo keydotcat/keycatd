@@ -17,6 +17,7 @@ import (
 
 var cli *http.Client
 var activeSessionToken string
+var activeCsrfToken string
 
 func CheckErrorAndResponse(t *testing.T, r *http.Response, err error, code int) {
 	if err != nil {
@@ -177,7 +178,10 @@ func httpDo(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			return nil, err
 		}
-		val, err := apiH.csrf.sc.Encode(CSRF_COOKIE_NAME, "csrftoken")
+		if len(activeCsrfToken) == 0 {
+			activeCsrfToken = "dummy"
+		}
+		val, err := apiH.csrf.sc.Encode(CSRF_COOKIE_NAME, activeCsrfToken)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +194,7 @@ func httpDo(req *http.Request) (*http.Response, error) {
 	if req.Header == nil {
 		req.Header = http.Header{}
 	}
-	req.Header.Add("X-Csrf-Token", "csrftoken")
+	req.Header.Add("X-Csrf-Token", activeCsrfToken)
 	if len(activeSessionToken) != 0 {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", activeSessionToken))
 	}

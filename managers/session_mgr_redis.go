@@ -42,7 +42,7 @@ func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (*Session, 
 	p := radix.Pipeline(
 		radix.FlatCmd(nil, "SELECT", r.dbId),
 		radix.FlatCmd(nil, "SET", r.skey(s.Id), b.String()),
-		radix.FlatCmd(nil, "SADD", r.ukey(s.UserId), s.Id),
+		radix.FlatCmd(nil, "SADD", r.ukey(s.User), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (r sessionMgrRedis) storeSession(s *Session) error {
 	p := radix.Pipeline(
 		radix.FlatCmd(nil, "SELECT", r.dbId),
 		radix.FlatCmd(nil, "SET", r.skey(s.Id), b.String()),
-		radix.FlatCmd(nil, "SADD", r.ukey(s.UserId), s.Id),
+		radix.FlatCmd(nil, "SADD", r.ukey(s.User), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err
@@ -133,7 +133,7 @@ func (r sessionMgrRedis) delete(s *Session) error {
 	p := radix.Pipeline(
 		radix.FlatCmd(nil, "SELECT", r.dbId),
 		radix.FlatCmd(nil, "DEL", r.skey(s.Id), nil),
-		radix.FlatCmd(nil, "SREM", r.ukey(s.UserId), s.Id),
+		radix.FlatCmd(nil, "SREM", r.ukey(s.User), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err

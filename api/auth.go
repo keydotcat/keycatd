@@ -35,10 +35,10 @@ func (ah apiHandler) authorizeRequest(w http.ResponseWriter, r *http.Request) *h
 			r = r.WithContext(ctxAddCsrf(r.Context(), csrfToken))
 		}
 	}
-	u, err := models.FindUser(r.Context(), s.UserId)
+	u, err := models.FindUser(r.Context(), s.User)
 	if util.CheckErr(err, models.ErrDoesntExist) {
 		http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
-		ah.sm.DeleteAllSessions(u.Id)
+		//ah.sm.DeleteAllSessions(u.Id)
 		return nil
 	} else if err != nil {
 		panic(err)

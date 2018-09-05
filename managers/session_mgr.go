@@ -12,7 +12,7 @@ import (
 
 type Session struct {
 	Id           string    `json:"id" scaneo:"pk"`
-	UserId       string    `json:"user_id"`
+	User         string    `json:"user"`
 	Agent        string    `json:"agent"`
 	RequiresCSRF bool      `json:"csrf_required"`
 	LastAccess   time.Time `json:"last_access"`

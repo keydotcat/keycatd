@@ -14,18 +14,15 @@ import (
 
 	"github.com/keydotcat/backend/db"
 	"github.com/keydotcat/backend/models"
+	"github.com/keydotcat/backend/thelpers"
 	"github.com/keydotcat/backend/util"
 )
 
 var mdb *sql.DB
 
 func init() {
-	var err error
-	mdb, err = sql.Open("postgres", "user=root dbname=test sslmode=disable port=26257")
-	if err != nil {
-		panic(err)
-	}
-	m := db.NewMigrateMgr(mdb)
+	mdb = thelpers.GetDBConn()
+	m := db.NewMigrateMgr(mdb, thelpers.GetTestDBType())
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}
@@ -141,8 +138,8 @@ func addSessionForUser(rs SessionMgr, uid, agent string) error {
 	if err != nil {
 		return err
 	}
-	if s.UserId != uid {
-		return fmt.Errorf("Mismatch in the user id: %s vs %s", s.UserId, uid)
+	if s.User != uid {
+		return fmt.Errorf("Mismatch in the user id: %s vs %s", s.User, uid)
 	}
 	return nil
 }
@@ -197,10 +194,6 @@ func testSessionManager(rs SessionMgr, t *testing.T, smName string) {
 	}
 }
 func TestPSQLSessionManager(t *testing.T) {
-	mdb, err := sql.Open("postgres", "user=root dbname=test sslmode=disable port=26257")
-	if err != nil {
-		t.Fatal(err)
-	}
 	rs := NewSessionMgrPSQL(mdb)
 	testSessionManager(rs, t, "psql")
 }

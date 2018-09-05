@@ -13,6 +13,7 @@ import (
 	"github.com/codahale/http-handlers/logging"
 	"github.com/keydotcat/backend/db"
 	"github.com/keydotcat/backend/models"
+	"github.com/keydotcat/backend/thelpers"
 	"github.com/keydotcat/backend/util"
 )
 
@@ -33,7 +34,8 @@ func initSRV() {
 	c := Conf{
 		Port:     1, //Not used
 		Url:      "http://" + ln.Addr().String(),
-		DB:       "user=root dbname=test sslmode=disable port=26257",
+		DB:       thelpers.GetDBConnString(),
+		DBType:   thelpers.GetTestDBType(),
 		MailFrom: "blackhole@key.cat",
 		SessionRedis: ConfSessionRedis{
 			Server: "localhost:6379",
@@ -64,28 +66,8 @@ var DUMP_BEFORE_TEST = false
 func initDB() {
 	models.HASH_PASSWD_COST = bcrypt.MinCost
 	var err error
-	if DUMP_BEFORE_TEST {
-		tables := []string{}
-		rows, err := apiH.db.Query("SHOW TABLES")
-		if err != nil {
-			panic(err)
-		}
-		defer rows.Close()
-		var name string
-		for rows.Next() {
-			if err := rows.Scan(&name); err != nil {
-				panic(err)
-			}
-			tables = append(tables, name)
-		}
-		for _, tname := range tables {
-			log.Printf("Dropping %s", tname)
-			if _, err = apiH.db.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
-				panic(err)
-			}
-		}
-	}
-	m := db.NewMigrateMgr(apiH.db)
+	thelpers.DropAllTables(apiH.db)
+	m := db.NewMigrateMgr(apiH.db, thelpers.GetTestDBType())
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)
 	}

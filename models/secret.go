@@ -11,40 +11,45 @@ type Secret struct {
 	Team         string    `scaneo:"pk" json:"-"`
 	Vault        string    `scaneo:"pk" json:"vault"`
 	Id           string    `scaneo:"pk" json:"id"`
+	Version      uint32    `json:"version"`
 	Data         []byte    `json:"data"`
 	VaultVersion uint32    `json:"vault_version"`
 	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (v *Secret) insert(tx *sql.Tx) error {
 	v.Id = util.GenerateRandomToken(10)
-	if err := v.validate(); err != nil {
+	v.Version = 1
+	v.CreatedAt = time.Now().UTC()
+	if err := v.validate(false); err != nil {
 		return err
 	}
-	now := time.Now().UTC()
-	v.CreatedAt = now
-	v.UpdatedAt = now
 	_, err := v.dbInsert(tx)
 	switch {
 	case IsDuplicateErr(err):
 		return util.NewErrorFrom(ErrAlreadyExists)
 	case isErrOrPanic(err):
-		return err
+		return util.NewErrorFrom(err)
 	}
 	return nil
 }
 
-func (u *Secret) update(tx *sql.Tx) error {
-	if err := u.validate(); err != nil {
+func (v *Secret) update(tx *sql.Tx) error {
+	v.CreatedAt = time.Now().UTC()
+	if err := v.validate(true); err != nil {
 		return err
 	}
-	u.UpdatedAt = time.Now().UTC()
-	res, err := u.dbUpdate(tx)
-	return treatUpdateErr(res, err)
+	_, err := v.dbInsert(tx)
+	switch {
+	case IsDuplicateErr(err):
+		return util.NewErrorFrom(ErrAlreadyExists)
+	case isErrOrPanic(err):
+		return util.NewErrorFrom(err)
+	}
+	return nil
 }
 
-func (v Secret) validate() error {
+func (v Secret) validate(fistInsert bool) error {
 	errs := util.NewErrorFields().(*util.Error)
 	if len(v.Id) == 0 {
 		errs.SetFieldError("id", "missing")
@@ -60,6 +65,9 @@ func (v Secret) validate() error {
 	}
 	if v.VaultVersion == 0 {
 		errs.SetFieldError("vault_version", "invalid")
+	}
+	if v.Version == 0 {
+		errs.SetFieldError("version", "invalid")
 	}
 	return errs.SetErrorOrCamo(ErrInvalidAttributes)
 }

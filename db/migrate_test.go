@@ -5,59 +5,27 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/keydotcat/backend/thelpers"
 	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
-func dropTables() {
-	tables := []string{}
-	rows, err := db.Query("SHOW TABLES")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	var name string
-	for rows.Next() {
-		if err := rows.Scan(&name); err != nil {
-			panic(err)
-		}
-		tables = append(tables, name)
-	}
-	tx, err := db.Begin()
-	if err != nil {
-		panic(err)
-	}
-	for _, tname := range tables {
-		if _, err = tx.Exec("DROP TABLE \"" + tname + "\" CASCADE"); err != nil {
-			panic(err)
-		}
-	}
-	if err := tx.Commit(); err != nil {
-		panic(err)
-	}
-
-}
-
 func init() {
-	var err error
-	db, err = sql.Open("postgres", "user=root dbname=test sslmode=disable port=26257")
-	if err != nil {
-		panic(err)
-	}
-	dropTables()
+	db = thelpers.GetDBConn()
+	thelpers.DropAllTables(db)
 }
 
 func addMigration(m *MigrateMgr) {
 	i := len(m.migrations) + 1
 	m.migrations[i] = fmt.Sprintf(`
-	CREATE TABLE "a%d" ( "something" int );
-	CREATE TABLE "b%d" ( "else" string );`, i, i)
+	CREATE TABLE "a%d" ( "something" INT );
+	CREATE TABLE "b%d" ( "else" TEXT );`, i, i)
 }
 
 func TestMigrations(t *testing.T) {
-	defer dropTables()
-	m := NewMigrateMgr(db)
+	defer thelpers.DropAllTables(db)
+	m := NewMigrateMgr(db, "postgresql")
 	m.migrations = map[int]string{}
 	addMigration(m)
 	exists, err := m.checkIfMigrationsTableExists()

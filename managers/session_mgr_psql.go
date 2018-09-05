@@ -38,7 +38,10 @@ func (r sessionMgrPSQL) doTx(ftor func(*sql.Tx) error) error {
 
 func (r sessionMgrPSQL) NewSession(userId, agent string, csrf bool) (*Session, error) {
 	o := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
-	_, err := r.dbp.Exec("INSERT INTO \"session\" "+insertSessionFields+" VALUES "+insertSessionBinds, o.Id, o.UserId, o.Agent, o.RequiresCSRF, o.LastAccess, o.StoreToken)
+	err := r.doTx(func(tx *sql.Tx) error {
+		_, err := r.dbp.Exec("INSERT INTO \"session\" "+insertSessionFields+" VALUES "+insertSessionBinds, o.Id, o.User, o.Agent, o.RequiresCSRF, o.LastAccess, o.StoreToken)
+		return err
+	})
 	if err == nil {
 		return &o, nil
 	}
@@ -79,7 +82,7 @@ func (r sessionMgrPSQL) DeleteSession(id string) error {
 }
 
 func (r sessionMgrPSQL) DeleteAllSessions(userId string) error {
-	_, err := r.dbp.Exec("DELETE FROM \"session\" WHERE \"user_id\"=$1", userId)
+	_, err := r.dbp.Exec("DELETE FROM \"session\" WHERE \"user\"=$1", userId)
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +90,7 @@ func (r sessionMgrPSQL) DeleteAllSessions(userId string) error {
 }
 
 func (r sessionMgrPSQL) GetAllSessions(userId string) ([]*Session, error) {
-	rows, err := r.dbp.Query("SELECT "+selectSessionFields+" FROM \"session\" WHERE \"user_id\"=$1", userId)
+	rows, err := r.dbp.Query("SELECT "+selectSessionFields+" FROM \"session\" WHERE \"user\"=$1", userId)
 	if err != nil {
 		panic(err)
 	}

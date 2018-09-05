@@ -86,7 +86,7 @@ CREATE TABLE "vault_user" (
 	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "pk_vault_user" PRIMARY KEY ("team", "vault", "user"),
-	CONSTRAINT "fk_Vault" FOREIGN KEY ("team", "vault") REFERENCES "vault" ON DELETE CASCADE,
+	CONSTRAINT "fk_vault" FOREIGN KEY ("team", "vault") REFERENCES "vault" ON DELETE CASCADE,
 	CONSTRAINT "fk_vault_user_team_user" FOREIGN KEY ("team", "user") REFERENCES "team_user" ON DELETE CASCADE
 );
 
@@ -95,23 +95,24 @@ CREATE TABLE "secret" (
 	"team" TEXT NOT NULL,
 	"vault" TEXT NOT NULL,
 	"id"  TEXT NOT NULL,
+	"version" INT NOT NULL,
 	"data" BYTEA NOT NULL,
 	"vault_version" INT NOT NULL,
 	"created_at" TIMESTAMP WITH TIME ZONE NOT NULL,
-	"updated_at" TIMESTAMP WITH TIME ZONE NOT NULL,
-	CONSTRAINT "pk_secret" PRIMARY KEY ("team", "vault", "id"),
+	CONSTRAINT "pk_secret" PRIMARY KEY ("team", "vault", "id", "version"),
 	CONSTRAINT "fk_secret_team" FOREIGN KEY ("team", "vault" ) REFERENCES "vault" ON DELETE CASCADE
 );
+CREATE INDEX "idx_secret_team_vault_id" ON "secret" ("team","vault","id");
 
 DROP TABLE IF EXISTS "session" CASCADE;
 CREATE TABLE "session" (
 	"id" TEXT NOT NULL,
-	"user_id" TEXT NOT NULL,
+	"user" TEXT NOT NULL,
 	"agent" TEXT NOT NULL,
 	"requires_csrf" BOOL NOT NULL,
 	"last_access" TIMESTAMP WITH TIME ZONE NOT NULL,
 	"store_token" TEXT NOT NULL,
 	CONSTRAINT "pk_session" PRIMARY KEY ("id"),
-	CONSTRAINT "fk_session_user" FOREIGN KEY ("user_id") REFERENCES "user" ON DELETE CASCADE
+	CONSTRAINT "fk_session_user" FOREIGN KEY ("user") REFERENCES "user" ON DELETE CASCADE
 );
-CREATE INDEX "idx_session_user" ON "session" ("user_id");
+CREATE INDEX "idx_session_user" ON "session" ("user");

@@ -41,7 +41,7 @@ func (ah apiHandler) sessionGetToken(w http.ResponseWriter, r *http.Request, tid
 	if err != nil {
 		return util.NewErrorFrom(models.ErrDoesntExist)
 	}
-	if s.UserId != currentUser.Id {
+	if s.User != currentUser.Id {
 		return util.NewErrorFrom(models.ErrDoesntExist)
 	}
 	return jsonResponse(w, s)

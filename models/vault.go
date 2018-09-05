@@ -37,6 +37,7 @@ func (v *Vault) insert(tx *sql.Tx) error {
 	now := time.Now().UTC()
 	v.CreatedAt = now
 	v.UpdatedAt = now
+	v.Version = 1
 	_, err := v.dbInsert(tx)
 	switch {
 	case IsDuplicateErr(err):
@@ -211,6 +212,7 @@ func (v *Vault) UpdateSecret(ctx context.Context, s *Secret) error {
 		s.Vault = os.Vault
 		s.CreatedAt = os.CreatedAt
 		s.VaultVersion = v.Version
+		s.Version = s.Version + 1
 		return s.update(tx)
 	})
 }
