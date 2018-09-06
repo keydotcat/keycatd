@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -12,7 +11,6 @@ func TestGetAndDeleteSessions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("GETSES")
 	r, err := GetRequest("/session/" + activeSessionToken)
 	CheckErrorAndResponse(t, r, err, 200)
 	sr := &sessionGetTokenResponse{}

@@ -6,7 +6,7 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-func TestGetAllSecretsForUser(t *testing.T) {
+func TestGetAllSecretsForOwnerAndUser(t *testing.T) {
 	ctx := getCtx()
 	owner, team := getDummyOwnerWithTeam()
 	ownerPrivKeys := getUserPrivateKeys(owner.PublicKey, owner.Key)
@@ -53,5 +53,57 @@ func TestGetAllSecretsForUser(t *testing.T) {
 	if len(secsOwner) != 2 {
 		t.Errorf("Expected 2 secret and got %d", len(secsOwner))
 	}
+}
 
+func TestCheckRetrieveLastVersionOfSecret(t *testing.T) {
+	ctx := getCtx()
+	owner, team := getDummyOwnerWithTeam()
+	vf := getFirstVault(owner, team)
+	v := &vf.Vault
+	vPriv := unsealVaultKey(&vf.Vault, vf.Key)
+	ownerPrivKeys := getUserPrivateKeys(owner.PublicKey, owner.Key)
+	vkp := getDummyVaultKeyPair(ownerPrivKeys, owner.Id)
+	v2, err := team.CreateVault(ctx, owner, util.GenerateRandomToken(5), vkp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v2Priv := unsealVaultKey(v2, vkp.Keys[owner.Id])
+	secrets := map[string]*Secret{}
+	var vault *Vault
+	numSecrets := 10
+	var s *Secret
+	for i := 0; i < numSecrets; i++ {
+		if i%2 == 0 {
+			vault = v
+			s = &Secret{Data: signAndPack(vPriv, a32b)}
+		} else {
+			vault = v2
+			s = &Secret{Data: signAndPack(v2Priv, a32b)}
+		}
+		if err := vault.AddSecret(ctx, s); err != nil {
+			t.Fatal(err)
+		}
+		for j := 0; j < i; j++ {
+			if err := vault.UpdateSecret(ctx, s); err != nil {
+				t.Fatal(err)
+			}
+		}
+		secrets[s.Id] = s
+	}
+	secs, err := team.GetSecretsForUser(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(secs) != numSecrets {
+		t.Fatalf("Expected %d secrets and got %d", numSecrets, len(secs))
+	}
+	for _, s := range secs {
+		rs, ok := secrets[s.Id]
+		switch {
+		case !ok:
+			t.Fatal("Unknown secret")
+		case s.Version != rs.Version:
+			t.Errorf("Expected version %d and got %d", rs.Version, s.Version)
+		}
+	}
 }

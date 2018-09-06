@@ -326,7 +326,17 @@ func (t *Team) GetSecretsForUser(ctx context.Context, u *User) (s []*Secret, err
 }
 
 func (t *Team) getSecretsForUser(tx *sql.Tx, u *User) (s []*Secret, err error) {
-	rows, err := tx.Query(`SELECT `+selectSecretFullFields+` FROM "secret", "vault_user" WHERE  "secret"."team" = $1 AND "secret"."team" = "vault_user"."team" AND "secret"."vault" = "vault_user"."vault" AND "vault_user"."user" = $2`, t.Id, u.Id)
+	query := `
+	SELECT DISTINCT ON ("secret"."team", "secret"."vault", "secret"."id")
+		"secret"."team", "secret"."vault", "secret"."id", "secret"."version", "secret"."data", "secret"."vault_version", "secret"."created_at"  
+	FROM "secret", "vault_user" 
+	WHERE 
+		"secret"."team" = $1 AND 
+		"secret"."team" = "vault_user"."team" AND 
+		"secret"."vault" = "vault_user"."vault" AND 
+		"vault_user"."user" = $2
+	ORDER BY "secret"."team", "secret"."vault", "secret"."id", "secret"."version" DESC`
+	rows, err := tx.Query(query, t.Id, u.Id)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}
