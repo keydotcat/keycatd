@@ -34,7 +34,7 @@ type Conf struct {
 	MailSMTP      *ConfMailSMTP      `toml:"mail_smtp"`
 	MailSparkpost *ConfMailSparkpost `toml:"mail_sparkpost"`
 	MailFrom      string             `toml:"mail_from"`
-	SessionRedis  ConfSessionRedis   `toml:"session_redis"`
+	SessionRedis  *ConfSessionRedis  `toml:"session_redis"`
 	Csrf          ConfCsrf           `toml:"csrf"`
 }
 

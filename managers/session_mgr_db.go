@@ -8,15 +8,15 @@ import (
 	"github.com/keydotcat/backend/util"
 )
 
-type sessionMgrPSQL struct {
+type sessionMgrDB struct {
 	dbp *sql.DB
 }
 
-func NewSessionMgrPSQL(dbp *sql.DB) SessionMgr {
-	return sessionMgrPSQL{dbp}
+func NewSessionMgrDB(dbp *sql.DB) SessionMgr {
+	return sessionMgrDB{dbp}
 }
 
-func (r sessionMgrPSQL) doTx(ftor func(*sql.Tx) error) error {
+func (r sessionMgrDB) doTx(ftor func(*sql.Tx) error) error {
 	tx, err := r.dbp.Begin()
 	if err != nil {
 		panic(err)
@@ -36,7 +36,7 @@ func (r sessionMgrPSQL) doTx(ftor func(*sql.Tx) error) error {
 	return nil
 }
 
-func (r sessionMgrPSQL) NewSession(userId, agent string, csrf bool) (*Session, error) {
+func (r sessionMgrDB) NewSession(userId, agent string, csrf bool) (*Session, error) {
 	o := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
 	err := r.doTx(func(tx *sql.Tx) error {
 		_, err := r.dbp.Exec("INSERT INTO \"session\" "+insertSessionFields+" VALUES "+insertSessionBinds, o.Id, o.User, o.Agent, o.RequiresCSRF, o.LastAccess, o.StoreToken)
@@ -51,13 +51,13 @@ func (r sessionMgrPSQL) NewSession(userId, agent string, csrf bool) (*Session, e
 	panic(err)
 }
 
-func (r sessionMgrPSQL) GetSession(id string) (*Session, error) {
+func (r sessionMgrDB) GetSession(id string) (*Session, error) {
 	o := &Session{}
 	row := r.dbp.QueryRow("SELECT "+selectSessionFields+" FROM \"session\" WHERE "+findSessionCondition, id)
 	return o, o.dbScanRow(row)
 }
 
-func (r sessionMgrPSQL) UpdateSession(id, agent string) (*Session, error) {
+func (r sessionMgrDB) UpdateSession(id, agent string) (*Session, error) {
 	o := &Session{Id: id}
 	return o, r.doTx(func(tx *sql.Tx) error {
 		if err := o.dbFind(tx); err != nil {
@@ -73,7 +73,7 @@ func (r sessionMgrPSQL) UpdateSession(id, agent string) (*Session, error) {
 	})
 }
 
-func (r sessionMgrPSQL) DeleteSession(id string) error {
+func (r sessionMgrDB) DeleteSession(id string) error {
 	_, err := r.dbp.Exec("DELETE FROM \"session\" WHERE "+findSessionCondition, id)
 	if err != nil {
 		panic(err)
@@ -81,7 +81,7 @@ func (r sessionMgrPSQL) DeleteSession(id string) error {
 	return nil
 }
 
-func (r sessionMgrPSQL) DeleteAllSessions(userId string) error {
+func (r sessionMgrDB) DeleteAllSessions(userId string) error {
 	_, err := r.dbp.Exec("DELETE FROM \"session\" WHERE \"user\"=$1", userId)
 	if err != nil {
 		panic(err)
@@ -89,7 +89,7 @@ func (r sessionMgrPSQL) DeleteAllSessions(userId string) error {
 	return nil
 }
 
-func (r sessionMgrPSQL) GetAllSessions(userId string) ([]*Session, error) {
+func (r sessionMgrDB) GetAllSessions(userId string) ([]*Session, error) {
 	rows, err := r.dbp.Query("SELECT "+selectSessionFields+" FROM \"session\" WHERE \"user\"=$1", userId)
 	if err != nil {
 		panic(err)
@@ -97,7 +97,7 @@ func (r sessionMgrPSQL) GetAllSessions(userId string) ([]*Session, error) {
 	return scanSessions(rows)
 }
 
-func (r sessionMgrPSQL) purgeAllData() {
+func (r sessionMgrDB) purgeAllData() {
 	_, err := r.dbp.Exec("DELETE FROM \"session\"")
 	if err != nil {
 		panic(err)

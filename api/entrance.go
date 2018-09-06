@@ -53,9 +53,13 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 	if err != nil {
 		return nil, util.NewErrorf("Could not create mailer: %s", err)
 	}
-	ah.sm, err = managers.NewSessionMgrRedis(c.SessionRedis.Server, c.SessionRedis.DBId)
-	if err != nil {
-		return nil, util.NewErrorf("Could not connect to redis at %s: %s", c.SessionRedis.Server, err)
+	if c.SessionRedis != nil {
+		ah.sm, err = managers.NewSessionMgrRedis(c.SessionRedis.Server, c.SessionRedis.DBId)
+		if err != nil {
+			return nil, util.NewErrorf("Could not connect to redis at %s: %s", c.SessionRedis.Server, err)
+		}
+	} else {
+		ah.sm = managers.NewSessionMgrDB(ah.db)
 	}
 	var blockKey []byte
 	if len(c.Csrf.BlockKey) > 0 {

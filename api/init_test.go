@@ -37,7 +37,7 @@ func initSRV() {
 		DB:       thelpers.GetDBConnString(),
 		DBType:   thelpers.GetTestDBType(),
 		MailFrom: "blackhole@key.cat",
-		SessionRedis: ConfSessionRedis{
+		SessionRedis: &ConfSessionRedis{
 			Server: "localhost:6379",
 			DBId:   10,
 		},

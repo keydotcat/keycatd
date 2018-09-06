@@ -193,7 +193,7 @@ func testSessionManager(rs SessionMgr, t *testing.T, smName string) {
 		}
 	}
 }
-func TestPSQLSessionManager(t *testing.T) {
-	rs := NewSessionMgrPSQL(mdb)
-	testSessionManager(rs, t, "psql")
+func TestDBSessionManager(t *testing.T) {
+	rs := NewSessionMgrDB(mdb)
+	testSessionManager(rs, t, "db")
 }
