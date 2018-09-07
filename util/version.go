@@ -54,6 +54,22 @@ func GetVersion() string {
 	return currentVersion.Commit
 }
 
+func GetServerVersion() string {
+	data, err := static.Asset("version/current.server")
+	if err != nil {
+		return GetVersion()
+	}
+	return strings.TrimSpace(string(data))
+}
+
+func GetWebVersion() string {
+	data, err := static.Asset("version/current.web")
+	if err != nil {
+		return "none"
+	}
+	return strings.TrimSpace(string(data))
+}
+
 func GetVersionInfo(cid string) (*VersionEntry, error) {
 	v, ok := versionHistory[cid]
 	if !ok {

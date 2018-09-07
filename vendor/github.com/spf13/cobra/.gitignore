@@ -19,16 +19,18 @@ _cgo_export.*
 
 _testmain.go
 
-*.exe
-*.test
-*.prof
-
-data/version
-static/data.go
-models/autogen.go
-managers/autogen.go
-bin/
+# Vim files https://github.com/github/gitignore/blob/master/Global/Vim.gitignore
+# swap
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+# auto-generated tag files
 tags
-cover.out
-data/web
-web/
+
+*.exe
+
+cobra.test

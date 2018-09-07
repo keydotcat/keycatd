@@ -14,7 +14,9 @@ import (
 	"github.com/codahale/http-handlers/logging"
 	"github.com/codahale/http-handlers/recovery"
 	"github.com/keydotcat/server/api"
+	"github.com/keydotcat/server/util"
 	"github.com/rs/cors"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -30,11 +32,16 @@ func enableStackDump() {
 	signal.Notify(dump, syscall.SIGUSR1)
 }
 
-func processConf() api.Conf {
-	viper.SetConfigName("keycatd")
-	viper.AddConfigPath(".")
+func processConf(cfgFile string) api.Conf {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		viper.SetConfigName("keycatd")
+		viper.AddConfigPath("/etc/keycatd")
+		viper.AddConfigPath(".")
+	}
 	viper.SetDefault("port", 27623)
-	viper.SetDefault("url", "http://localhost:26257")
+	viper.SetDefault("url", "http://localhost:27623")
 	viper.SetDefault("db", "keycat")
 	viper.SetDefault("db_type", "postgresql")
 	viper.SetDefault("csrf.hash_key", "")
@@ -72,13 +79,13 @@ func processConf() api.Conf {
 			Key: viper.GetString("mail.sparkpost.key"),
 		}
 	}
-	c.SessionRedis.Server = viper.GetString("session.redis.server")
-	c.SessionRedis.DBId = viper.GetInt("session.redis.db_id")
+	if srv := viper.GetString("session.redis.server"); len(srv) > 0 {
+		c.SessionRedis = &api.ConfSessionRedis{srv, viper.GetInt("session.redis.db_id")}
+	}
 	return c
 }
 
-func main() {
-	c := processConf()
+func runServer(c api.Conf) {
 	apiHandler, err := api.NewAPIHandler(c)
 	if err != nil {
 		log.Fatalf("Could not parse configuration: %s", err)
@@ -99,4 +106,33 @@ func main() {
 	log.Printf("Listening at %s", s.Addr)
 	enableStackDump()
 	log.Fatal(s.ListenAndServe())
+}
+
+func main() {
+	var rootCmd = &cobra.Command{
+		Use:   "keycatd",
+		Short: "Keycat service to provide identities management",
+		Run: func(cmd *cobra.Command, args []string) {
+			flags := cmd.Flags()
+			showVer, err := flags.GetBool("version")
+			if err != nil {
+				log.Fatalf("Could not get version flag: %s", err)
+				return
+			}
+			if showVer {
+				log.Printf("Keycat server version is %s (web %s)", util.GetServerVersion(), util.GetWebVersion())
+				return
+			}
+			cfgFile, err := flags.GetString("config")
+			if err != nil {
+				log.Fatalf("Could not get config file: %s", err)
+				return
+			}
+			c := processConf(cfgFile)
+			runServer(c)
+		},
+	}
+	rootCmd.PersistentFlags().Bool("version", true, "Show version")
+	rootCmd.PersistentFlags().String("config", "", "Configuration file (default is ./keycatd.yaml)")
+	rootCmd.Execute()
 }
