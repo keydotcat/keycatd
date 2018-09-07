@@ -1,4 +1,3 @@
-GIT_VERSION = $(shell git describe --abbrev=8 --dirty --always --tags 2>/dev/null)
 ROOT = github.com/keydotcat/server
 SUF=
 ifdef GOOS
@@ -30,8 +29,8 @@ bindir:
 git-static: autogen
 	mkdir -p data/version
 	git log --date=iso  --pretty=format:'{ "commit": "%H", "date": "%ad"},' | perl -pe 'BEGIN{print "["}; END{print "]\n"}' | perl -pe 's/},]/}]/' > data/version/history
-	echo ${GIT_VERSION} > data/version/current.server
-	test -e data/web && ( cd data/web; git describe --abbrev=8 --dirty --always --tags) > data/version/current.web
+	git describe --abbrev=8 --dirty --always --tags > data/version/current.server
+	if [[ -e data/web ]]; then ( cd data/web; git describe --abbrev=8 --dirty --always --tags); else echo dev; fi > data/version/current.web
 
 static: git-static
 	go-bindata -prefix data/ -o static/data.go -pkg static data/...
