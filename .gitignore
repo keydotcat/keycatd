@@ -31,4 +31,5 @@ managers/autogen.go
 bin/
 tags
 cover.out
-
+data/web
+web/

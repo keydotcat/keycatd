@@ -1,11 +1,31 @@
 GIT_VERSION = $(shell git describe --abbrev=8 --dirty --always 2>/dev/null)
+ROOT = github.com/backend/keycatd
+SUF=
+ifdef GOOS
+       SUF=.$(GOOS)
+ifeq ($(GOOS),windows)
+       SUF=.windows.exe
+endif
+endif
+ifdef GOARCH
+       SUF=${SUF}.$(GOARCH)
+endif
 
-.PHONY: static
+.PHONY: static web
 
 cmds:
 	go get github.com/jteeuwen/go-bindata/...
 	go get github.com/acasajus/scaneo
 	go get github.com/githubnemo/CompileDaemon
+
+web:
+	./build_web.sh
+
+keycatd: web static bindir
+	go build -o bin/keycatd${SUF} ${ROOT}/cmd/keycatd
+
+bindir:
+	mkdir -p bindir
 
 git-static: autogen
 	mkdir -p data/version
