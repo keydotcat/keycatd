@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/util"
 )
 
 func (ah apiHandler) teamRoot(w http.ResponseWriter, r *http.Request) error {

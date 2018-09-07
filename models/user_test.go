@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 var a32b = make([]byte, 32)

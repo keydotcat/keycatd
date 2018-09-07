@@ -11,10 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/codahale/http-handlers/logging"
-	"github.com/keydotcat/backend/db"
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/thelpers"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/db"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/thelpers"
+	"github.com/keydotcat/server/util"
 )
 
 var srv httptest.Server

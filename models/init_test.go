@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/keydotcat/backend/db"
-	"github.com/keydotcat/backend/thelpers"
+	"github.com/keydotcat/server/db"
+	"github.com/keydotcat/server/thelpers"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )

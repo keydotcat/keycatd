@@ -3,8 +3,8 @@ package api
 import (
 	"crypto/rand"
 
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/util"
 
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/securecookie"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 const CSRF_COOKIE_NAME = "kc4d018d7e07"

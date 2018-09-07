@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keydotcat/backend/static"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/static"
+	"github.com/keydotcat/server/util"
 )
 
 type MigrateMgr struct {

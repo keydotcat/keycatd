@@ -5,7 +5,7 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 func NewMailMgrSMTP(server, user, pass, from string) MailMgr {

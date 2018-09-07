@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/util"
 )
 
 func loginDummyUser() *models.User {

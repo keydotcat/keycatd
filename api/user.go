@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 func (ah apiHandler) userRoot(w http.ResponseWriter, r *http.Request) error {

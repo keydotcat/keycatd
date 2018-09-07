@@ -1,5 +1,5 @@
 GIT_VERSION = $(shell git describe --abbrev=8 --dirty --always 2>/dev/null)
-ROOT = github.com/backend/keycatd
+ROOT = github.com/keydotcat/server
 SUF=
 ifdef GOOS
        SUF=.$(GOOS)
@@ -47,24 +47,24 @@ managers/autogen.go: managers/session_mgr.go
 autogen: models/autogen.go managers/autogen.go
 
 dev: autogen dev-static
-	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/backend/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git
+	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/server/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git
 
 test: test_db test_managers test_models test_api
 
 test_db: autogen
-	go test -v github.com/keydotcat/backend/db 
+	go test -v github.com/keydotcat/server/db 
 
 test_managers: autogen
-	go test -v github.com/keydotcat/backend/managers 
+	go test -v github.com/keydotcat/server/managers 
 
 test_models: autogen
-	go test -v github.com/keydotcat/backend/models 
+	go test -v github.com/keydotcat/server/models 
 
 test_api: autogen
-	go test -v github.com/keydotcat/backend/api
+	go test -v github.com/keydotcat/server/api
 
 test_coverage:
-	go test -v -coverprofile db/cover.out -covermode atomic github.com/keydotcat/backend/db
-	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/backend/managers 
-	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/backend/models 
-	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/backend/api
+	go test -v -coverprofile db/cover.out -covermode atomic github.com/keydotcat/server/db
+	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/server/managers 
+	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/server/models 
+	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/server/api

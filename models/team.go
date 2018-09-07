@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 const DEFAULT_VAULT_NAME = "Generic"

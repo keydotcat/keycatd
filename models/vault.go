@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 type Vault struct {

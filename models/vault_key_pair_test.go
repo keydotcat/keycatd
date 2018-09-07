@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"

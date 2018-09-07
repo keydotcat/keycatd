@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/keydotcat/backend/managers"
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/managers"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/util"
 )
 
 func (ah apiHandler) getSessionFromHeader(r *http.Request) *managers.Session {

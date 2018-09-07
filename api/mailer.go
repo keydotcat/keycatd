@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/keydotcat/backend/managers"
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/static"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/managers"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/static"
+	"github.com/keydotcat/server/util"
 )
 
 type mailer struct {

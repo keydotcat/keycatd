@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"regexp"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 	"github.com/lib/pq"
 )
 

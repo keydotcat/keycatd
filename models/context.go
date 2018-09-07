@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 type contextType int

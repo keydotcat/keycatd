@@ -12,10 +12,10 @@ import (
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
 
-	"github.com/keydotcat/backend/db"
-	"github.com/keydotcat/backend/models"
-	"github.com/keydotcat/backend/thelpers"
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/db"
+	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/server/thelpers"
+	"github.com/keydotcat/server/util"
 )
 
 var mdb *sql.DB

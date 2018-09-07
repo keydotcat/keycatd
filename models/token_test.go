@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 )
 
 func TestConfirmEmail(t *testing.T) {

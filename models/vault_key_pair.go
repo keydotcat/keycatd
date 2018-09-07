@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/keydotcat/backend/util"
+	"github.com/keydotcat/server/util"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/secretbox"
 )
