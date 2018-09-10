@@ -15,10 +15,11 @@ import (
 var TEST_MODE = false
 
 type apiHandler struct {
-	db   *sql.DB
-	sm   managers.SessionMgr
-	mail *mailer
-	csrf csrf
+	db            *sql.DB
+	sm            managers.SessionMgr
+	mail          *mailer
+	csrf          csrf
+	staticHandler *StaticHandler
 }
 
 func NewAPIHandler(c Conf) (http.Handler, error) {
@@ -66,10 +67,22 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 		blockKey = []byte(c.Csrf.BlockKey)
 	}
 	ah.csrf = newCsrf([]byte(c.Csrf.HashKey), blockKey)
+	ah.staticHandler = NewStaticHandler()
 	return ah, nil
 }
 
 func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = r.WithContext(models.AddDBToContext(r.Context(), ah.db))
+	head, subPath := shiftPath(r.URL.Path)
+	if head == "api" {
+		r.URL.Path = subPath
+		ah.apiRoot(w, r)
+	} else {
+		ah.staticHandler.ServeHTTP(w, r)
+	}
+}
+
+func (ah apiHandler) apiRoot(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(models.AddDBToContext(r.Context(), ah.db))
 	head := ""
 	head, r.URL.Path = shiftPath(r.URL.Path)

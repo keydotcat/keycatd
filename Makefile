@@ -47,7 +47,7 @@ managers/autogen.go: managers/session_mgr.go
 autogen: models/autogen.go managers/autogen.go
 
 dev: autogen dev-static
-	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/server/cmd/keycatd' -command 'bin/keycatd' -directory . -color=true -exclude=tags -exclude vendor -exclude .git
+	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/server/cmd/keycatd' -command 'bin/keycatd' -directory=. -color=true -exclude=web -exclude=tags -exclude=vendor -exclude=.git -exclude=data/web
 
 test: test_db test_managers test_models test_api
 

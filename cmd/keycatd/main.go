@@ -132,7 +132,7 @@ func main() {
 			runServer(c)
 		},
 	}
-	rootCmd.PersistentFlags().Bool("version", true, "Show version")
+	rootCmd.PersistentFlags().Bool("version", false, "Show version")
 	rootCmd.PersistentFlags().String("config", "", "Configuration file (default is ./keycatd.yaml)")
 	rootCmd.Execute()
 }

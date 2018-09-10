@@ -9,7 +9,8 @@ test -d ${webDir} || git clone https://github.com/keydotcat/web.git ${webDir}
 (
 cd ${webDir}
 git fetch
-[ $(git describe --abbrev=8 --dirty --always --tags) == "${webTag}" ] || git checkout tags/${webTag} -b tag-${webTag}
+[ $(git describe --abbrev=8 --dirty --always --tags) == "${webTag}" ] || git checkout ${webTag} -b auto-${webTag}
+echo 'Set web version to' ${webTag}
 yarn install
 yarn run build:web
 )
