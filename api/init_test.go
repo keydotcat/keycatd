@@ -58,6 +58,7 @@ func initSRV() {
 		Config:   &http.Server{Handler: logHandler},
 	}
 	srv.Start()
+	srv.URL = srv.URL + "/api"
 	log.Printf("Starting test server %s", srv.URL)
 }
 
