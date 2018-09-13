@@ -1,4 +1,5 @@
 ROOT = github.com/keydotcat/server
+GIT_VERSION=$(shell git describe --abbrev=8 --dirty --always --tags 2>/dev/null)
 SUF=
 ifdef GOOS
        SUF=.$(GOOS)
@@ -7,7 +8,7 @@ ifeq ($(GOOS),windows)
 endif
 endif
 ifdef GOARCH
-       SUF=${SUF}.$(GOARCH)
+		SUF:=$(SUF).$(GOARCH)
 endif
 
 .PHONY: static web
@@ -20,7 +21,7 @@ cmds:
 web:
 	./build_web.sh
 
-keycatd: web static bindir
+keycatd: bindir
 	go build -o bin/keycatd${SUF} ${ROOT}/cmd/keycatd
 
 bindir:
@@ -29,7 +30,7 @@ bindir:
 git-static: autogen
 	mkdir -p data/version
 	git log --date=iso  --pretty=format:'{ "commit": "%H", "date": "%ad"},' | perl -pe 'BEGIN{print "["}; END{print "]\n"}' | perl -pe 's/},]/}]/' > data/version/history
-	git describe --abbrev=8 --dirty --always --tags > data/version/current.server
+	echo $(GIT_VERSION) > data/version/current.server
 	if [[ -e data/web ]]; then ( cd data/web; git describe --abbrev=8 --dirty --always --tags); else echo dev; fi > data/version/current.web
 
 static: git-static
@@ -68,3 +69,24 @@ test_coverage:
 	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/server/managers 
 	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/server/models 
 	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/server/api
+
+local_release: web static 
+	GOOS=linux $(MAKE) keycatd
+
+release: static 
+	mkdir -p bin/releases/$(GIT_VERSION)
+	GOOS=linux $(MAKE) keycatd
+	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux	
+	mv bin/keycatd.linux.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
+	GOOS=linux GOARCH=arm $(MAKE) keycatd
+	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux.arm
+	mv bin/keycatd.linux.arm.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
+	GOOS=linux GOARCH=arm64 $(MAKE) keycatd
+	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux.arm64
+	mv bin/keycatd.linux.arm64.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
+	GOOS=darwin $(MAKE) keycatd
+	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.darwin
+	mv bin/keycatd.darwin.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
+	GOOS=windows $(MAKE) keycatd
+	zip -9 bin/keycatd.windows.$(GIT_VERSION).zip bin/keycatd.windows.exe
+	mv bin/keycatd.windows.$(GIT_VERSION).zip bin/releases/$(GIT_VERSION)
