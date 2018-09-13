@@ -73,7 +73,7 @@ test_coverage:
 local_release: web static 
 	GOOS=linux $(MAKE) keycatd
 
-release: static 
+release: web static 
 	mkdir -p bin/releases/$(GIT_VERSION)
 	GOOS=linux $(MAKE) keycatd
 	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux	
