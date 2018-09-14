@@ -20,3 +20,8 @@ Key.cat can manage all your credentials and lets you share them with others.
   - Currently there are no extensions for browsers but it's something I want to add.
   - Libraries to make it easy to integrate it in third party software.
   - Two factor authentication.
+
+# Installation instructions
+
+Download the latest release from [here](https://github.com/keydotcat/server/releases), generate a configuration file like [this one](https://github.com/keydotcat/server/blob/master/keycatd.toml) and
+run the server with `keycatd --config keycatd.toml`
