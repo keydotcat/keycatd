@@ -46,9 +46,10 @@ func (c csrf) generateNewToken(w http.ResponseWriter) string {
 	csrfToken := util.GenerateRandomToken(8)
 	if encoded, err := c.sc.Encode(CSRF_COOKIE_NAME, csrfToken); err == nil {
 		cookie := &http.Cookie{
-			Name:  CSRF_COOKIE_NAME,
-			Value: encoded,
-			Path:  "/",
+			Name:     CSRF_COOKIE_NAME,
+			Value:    encoded,
+			Path:     "/",
+			HttpOnly: true,
 		}
 		http.SetCookie(w, cookie)
 	} else {
