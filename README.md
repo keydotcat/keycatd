@@ -1,6 +1,6 @@
 # Key.cat Password Manager
 ******
-|Build Status| |Coverage Status| |Code Climate| |Documentation Status| |Gitter|
+[![Codeship Status for keydotcat/server](https://app.codeship.com/projects/03c1bc10-a7a0-0135-0335-16fec4d4b7f0/status?branch=master)](https://app.codeship.com/projects/255872) [![Maintainability](https://api.codeclimate.com/v1/badges/032a995c74982335ed9b/maintainability)](https://codeclimate.com/github/keydotcat/server/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/032a995c74982335ed9b/test_coverage)](https://codeclimate.com/github/keydotcat/server/test_coverage) 
 
 Key.cat can manage all your credentials and lets you share them with others.
 
