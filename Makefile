@@ -1,16 +1,17 @@
 ROOT = github.com/keydotcat/server
-GIT_VERSION=$(shell git describe --abbrev=8 --dirty --always --tags 2>/dev/null)
+ifeq ($(GIT_VERSION),)
+	GIT_VERSION:=$(shell git describe --abbrev=8 --dirty --always --tags 2>/dev/null)
+endif
 SUF=
-ifdef GOOS
-       SUF=.$(GOOS)
-ifeq ($(GOOS),windows)
-       SUF=.windows.exe
-endif
-endif
 ifdef GOARCH
-		SUF:=$(SUF).$(GOARCH)
+	SUF:=.$(GOARCH)
 endif
-
+ifdef GOOS
+	SUF:=.$(GOOS)$(SUF)
+ifeq ($(GOOS),windows)
+	SUF:=$(SUF).exe
+endif
+endif
 .PHONY: static web
 
 cmds:
@@ -69,9 +70,6 @@ test_coverage:
 	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/server/managers 
 	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/server/models 
 	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/server/api
-
-local_release: web static 
-	GOOS=linux $(MAKE) keycatd
 
 release: web static 
 	mkdir -p bin/releases/$(GIT_VERSION)
