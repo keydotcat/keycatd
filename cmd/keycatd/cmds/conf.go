@@ -1,23 +1,13 @@
-package main
+package cmds
 
 import (
-	"fmt"
 	"log"
-	"net/http"
-	"os"
-	"time"
 
-	"github.com/codahale/http-handlers/debug"
-	"github.com/codahale/http-handlers/logging"
-	"github.com/codahale/http-handlers/recovery"
 	"github.com/keydotcat/server/api"
-	"github.com/keydotcat/server/util"
-	"github.com/rs/cors"
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func processConf(cfgFile string) api.Conf {
+func ProcessConf(cfgFile string) api.Conf {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
@@ -68,55 +58,4 @@ func processConf(cfgFile string) api.Conf {
 		c.SessionRedis = &api.ConfSessionRedis{srv, viper.GetInt("session.redis.db_id")}
 	}
 	return c
-}
-
-func runServer(c api.Conf) {
-	apiHandler, err := api.NewAPIHandler(c)
-	if err != nil {
-		log.Fatalf("Could not parse configuration: %s", err)
-	}
-	handler := cors.AllowAll().Handler(apiHandler)
-	logHandler := logging.Wrap(handler, os.Stdout)
-	logHandler.Start()
-	defer logHandler.Stop()
-	handler = recovery.Wrap(logHandler, recovery.LogOnPanic)
-	handler = debug.Wrap(handler)
-	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", c.Port),
-		Handler:        handler,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
-	log.Printf("Listening at %s", s.Addr)
-	log.Fatal(s.ListenAndServe())
-}
-
-func main() {
-	var rootCmd = &cobra.Command{
-		Use:   "keycatd",
-		Short: "Keycat service to provide identities management",
-		Run: func(cmd *cobra.Command, args []string) {
-			flags := cmd.Flags()
-			showVer, err := flags.GetBool("version")
-			if err != nil {
-				log.Fatalf("Could not get version flag: %s", err)
-				return
-			}
-			if showVer {
-				log.Printf("Keycat server version is %s (web %s)", util.GetServerVersion(), util.GetWebVersion())
-				return
-			}
-			cfgFile, err := flags.GetString("config")
-			if err != nil {
-				log.Fatalf("Could not get config file: %s", err)
-				return
-			}
-			c := processConf(cfgFile)
-			runServer(c)
-		},
-	}
-	rootCmd.PersistentFlags().Bool("version", false, "Show version")
-	rootCmd.PersistentFlags().String("config", "", "Configuration file (default is ./keycatd.yaml)")
-	rootCmd.Execute()
 }

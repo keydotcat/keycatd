@@ -76,7 +76,7 @@ func (c Conf) validate() error {
 			return util.NewErrorf("Invalid mail.sparkpost.key")
 		}
 	}
-	if len(c.SessionRedis.Server) == 0 {
+	if c.SessionRedis != nil && len(c.SessionRedis.Server) == 0 {
 		return util.NewErrorf("Invalid session.redis.server")
 	}
 	return nil
