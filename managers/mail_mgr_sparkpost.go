@@ -45,7 +45,7 @@ func (s mailMgrSparkPost) SendMail(to, subject, data string) error {
 	sm := spMail{
 		Recipients: []spRecipient{spRecipient{Address: spAddress{Email: to, Name: to}}},
 		Content: spContent{
-			From:    spAddress{Email: s.From, Name: "Reku"},
+			From:    spAddress{Email: s.From, Name: "Key.cat"},
 			Subject: subject,
 			Html:    data,
 		},
