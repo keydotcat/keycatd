@@ -8,13 +8,14 @@ import (
 	"github.com/keydotcat/server/util"
 )
 
-func NewMailMgrSparkpost(key, from string) MailMgr {
-	return mailMgrSparkPost{key, from}
+func NewMailMgrSparkpost(key, from string, eu bool) MailMgr {
+	return mailMgrSparkPost{key, from, eu}
 }
 
 type mailMgrSparkPost struct {
 	Key  string
 	From string
+	EU   bool
 }
 
 type spAddress struct {
@@ -54,7 +55,13 @@ func (s mailMgrSparkPost) SendMail(to, subject, data string) error {
 	if err := json.NewEncoder(reqBody).Encode(sm); err != nil {
 		return err
 	}
-	req, _ := http.NewRequest("POST", "https://api.sparkpost.com/api/v1/transmissions", reqBody)
+	var endpoint string
+	if s.EU {
+		endpoint = "https://api.eu.sparkpost.com/api/v1/transmissions"
+	} else {
+		endpoint = "https://api.sparkpost.com/api/v1/transmissions"
+	}
+	req, _ := http.NewRequest("POST", endpoint, reqBody)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", s.Key)
 

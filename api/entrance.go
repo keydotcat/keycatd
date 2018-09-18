@@ -48,7 +48,7 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 	case c.MailSMTP != nil:
 		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSMTP(c.MailSMTP.Server, c.MailSMTP.User, c.MailSMTP.Password, c.MailFrom))
 	case c.MailSparkpost != nil:
-		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSparkpost(c.MailSparkpost.Key, c.MailFrom))
+		ah.mail, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSparkpost(c.MailSparkpost.Key, c.MailFrom, c.MailSparkpost.EU))
 	default:
 	}
 	if err != nil {

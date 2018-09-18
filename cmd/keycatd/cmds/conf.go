@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func ProcessConf(cfgFile string) api.Conf {
+func processConf(cfgFile string) api.Conf {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
@@ -28,6 +28,7 @@ func ProcessConf(cfgFile string) api.Conf {
 	viper.SetDefault("mail.smtp.user", "")
 	viper.SetDefault("mail.smtp.password", "")
 	viper.SetDefault("mail.sparkpost.key", "")
+	viper.SetDefault("mail.sparkpost.eu", false)
 	viper.SetEnvPrefix("KEYCATD")
 	viper.AutomaticEnv()
 	err := viper.ReadInConfig()
@@ -52,6 +53,7 @@ func ProcessConf(cfgFile string) api.Conf {
 	if len(viper.GetString("mail.sparkpost.key")) > 0 {
 		c.MailSparkpost = &api.ConfMailSparkpost{
 			Key: viper.GetString("mail.sparkpost.key"),
+			EU:  viper.GetBool("mail.sparkpost.eu"),
 		}
 	}
 	if srv := viper.GetString("session.redis.server"); len(srv) > 0 {

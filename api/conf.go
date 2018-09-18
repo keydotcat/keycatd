@@ -14,6 +14,7 @@ type ConfMailSMTP struct {
 
 type ConfMailSparkpost struct {
 	Key string `toml:"key"`
+	EU  bool
 }
 
 type ConfSessionRedis struct {

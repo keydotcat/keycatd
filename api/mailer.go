@@ -96,3 +96,28 @@ func (mm *mailer) sendInvitationMail(t *models.Team, u *models.User, i *models.I
 	muttd := mailUserTeamTokenData{FullName: u.FullName, HostUrl: mm.rootUrl, Email: i.Email, Team: t.Name}
 	return mm.send(muttd, locale, "invite_user", fmt.Sprintf("%s has invited you to join key.cat", u.FullName))
 }
+
+func (mm *mailer) sendTestEmail(to string) error {
+	muttd := mailUserTeamTokenData{Email: to}
+	return mm.send(muttd, "en", "test_email", "Keycat test email")
+}
+
+func SendTestEmail(c Conf, to string) error {
+	err := c.validate()
+	if err != nil {
+		return err
+	}
+	var m *mailer
+	switch {
+	case c.MailSMTP != nil:
+		m, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSMTP(c.MailSMTP.Server, c.MailSMTP.User, c.MailSMTP.Password, c.MailFrom))
+	case c.MailSparkpost != nil:
+		m, err = newMailer(c.Url, TEST_MODE, managers.NewMailMgrSparkpost(c.MailSparkpost.Key, c.MailFrom, c.MailSparkpost.EU))
+	default:
+		return util.NewErrorf("No mail was configured")
+	}
+	if err != nil {
+		return util.NewErrorf("Could not create mailer: %s", err)
+	}
+	return m.sendTestEmail(to)
+}
