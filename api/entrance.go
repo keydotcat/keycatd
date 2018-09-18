@@ -32,7 +32,7 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 	if err != nil {
 		return nil, util.NewErrorf("Could not connect to db '%s': %s", c.DB, err)
 	}
-	ah.db.SetMaxOpenConns(5)
+	ah.db.SetMaxOpenConns(c.DBMaxConns)
 	m := db.NewMigrateMgr(ah.db, c.DBType)
 	if err := m.LoadMigrations(); err != nil {
 		panic(err)

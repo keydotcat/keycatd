@@ -28,9 +28,10 @@ type ConfCsrf struct {
 }
 
 type Conf struct {
-	Url           string             `toml:"url"`
-	Port          int                `toml:"port"`
-	DB            string             `toml:"db"`
+	Url           string `toml:"url"`
+	Port          int    `toml:"port"`
+	DB            string `toml:"db"`
+	DBMaxConns    int
 	DBType        string             `toml:"db_type"`
 	MailSMTP      *ConfMailSMTP      `toml:"mail_smtp"`
 	MailSparkpost *ConfMailSparkpost `toml:"mail_sparkpost"`
