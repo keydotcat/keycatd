@@ -229,7 +229,7 @@ func (u *User) GetTeams(ctx context.Context) ([]*Team, error) {
 }
 
 func (u *User) GetVerificationToken(ctx context.Context) (t *Token, err error) {
-	t = &Token{Id: u.Id, Type: TOKEN_VERIFICATION}
+	t = &Token{}
 	err = doTx(ctx, func(tx *sql.Tx) error {
 		r := tx.QueryRow(`SELECT `+selectTokenFields+` FROM "token" WHERE "user" = $1 AND "type" = $2"`, u.Id, TOKEN_VERIFICATION)
 		return t.dbScanRow(r)
