@@ -26,5 +26,4 @@ do
 	fi
 done
 
-GOOS=linux make -C $rootDir keycatd
-(cd $rootDir && docker build --label keycat/keycatd:${GIT_VERSION} . )
+
