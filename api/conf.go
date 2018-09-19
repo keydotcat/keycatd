@@ -50,9 +50,7 @@ func (c Conf) validate() error {
 	if len(c.DB) == 0 {
 		return util.NewErrorf("Invalid db configuration")
 	}
-	if len(c.DBType) == 0 {
-		c.DBType = "postgresql"
-	} else if c.DBType != "postgresql" && c.DBType != "cockroackdb" {
+	if c.DBType != "postgresql" && c.DBType != "cockroackdb" {
 		return util.NewErrorf("Invalid db type (%s)", c.DBType)
 	}
 	if len(c.MailFrom) == 0 {

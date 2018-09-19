@@ -14,8 +14,10 @@ endif
 endif
 .PHONY: static web
 
+all: dev
+
 cmds:
-	go get github.com/jteeuwen/go-bindata/...
+	go get github.com/go-bindata/go-bindata/...
 	go get github.com/acasajus/scaneo
 	go get github.com/githubnemo/CompileDaemon
 
@@ -49,7 +51,7 @@ managers/autogen.go: managers/session_mgr.go
 autogen: models/autogen.go managers/autogen.go
 
 dev: autogen dev-static
-	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/server/cmd/keycatd' -command 'bin/keycatd' -directory=. -color=true -exclude=web -exclude=tags -exclude=vendor -exclude=.git -exclude=data/web
+	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/server/cmd/keycatd' -command 'bin/keycatd' -color=true -directory=. -exclude-dir=bin -exclude-dir=web -exclude-dir=data/web -exclude-dir=scrips -exclude=tags -exclude-dir=vendor
 
 test: test_db test_managers test_models test_api
 

@@ -41,6 +41,9 @@ func processConf(cfgFile string) api.Conf {
 	c.Port = viper.GetInt("port")
 	c.DB = viper.GetString("db")
 	c.DBType = viper.GetString("db.type")
+	if len(c.DBType) == 0 {
+		c.DBType = "postgresql"
+	}
 	c.DBMaxConns = viper.GetInt("db.maxconns")
 	c.MailFrom = viper.GetString("mail.from")
 	c.Csrf.HashKey = viper.GetString("csrf.hash_key")
