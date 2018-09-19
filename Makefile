@@ -72,21 +72,3 @@ test_coverage:
 	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/server/managers 
 	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/server/models 
 	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/server/api
-
-release: web static 
-	mkdir -p bin/releases/$(GIT_VERSION)
-	GOOS=linux $(MAKE) keycatd
-	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux	
-	mv bin/keycatd.linux.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
-	GOOS=linux GOARCH=arm $(MAKE) keycatd
-	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux.arm
-	mv bin/keycatd.linux.arm.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
-	GOOS=linux GOARCH=arm64 $(MAKE) keycatd
-	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.linux.arm64
-	mv bin/keycatd.linux.arm64.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
-	GOOS=darwin $(MAKE) keycatd
-	gzip -9 -S .$(GIT_VERSION).gz bin/keycatd.darwin
-	mv bin/keycatd.darwin.$(GIT_VERSION).gz bin/releases/$(GIT_VERSION)
-	GOOS=windows $(MAKE) keycatd
-	zip -9 bin/keycatd.windows.$(GIT_VERSION).zip bin/keycatd.windows.exe
-	mv bin/keycatd.windows.$(GIT_VERSION).zip bin/releases/$(GIT_VERSION)
