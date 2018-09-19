@@ -20,7 +20,7 @@ func (ah apiHandler) teamSecretRoot(w http.ResponseWriter, r *http.Request, t *m
 	return util.NewErrorFrom(ErrNotFound)
 }
 
-type teamSecretGetAllResponse struct {
+type teamSecretListWrap struct {
 	Secrets []*models.Secret `json:"secrets"`
 }
 
@@ -32,7 +32,7 @@ func (ah apiHandler) teamSecretGetAll(w http.ResponseWriter, r *http.Request, t 
 	if err != nil {
 		return err
 	}
-	return jsonResponse(w, teamSecretGetAllResponse{s})
+	return jsonResponse(w, teamSecretListWrap{s})
 }
 
 // /team/:tid/vault/:vid/secret
@@ -110,16 +110,16 @@ func (ah apiHandler) validVaultSecretsRoot(w http.ResponseWriter, r *http.Reques
 
 func (ah apiHandler) vaultCreateSecretList(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault) error {
 	ctx := r.Context()
-	vl := []vaultCreateSecretRequest{}
+	vl := &teamSecretListWrap{}
 	if err := jsonDecode(w, r, 1024*1024, &vl); err != nil {
 		return err
 	}
-	sl := make([]*models.Secret, len(vl))
-	for i, vc := range vl {
+	sl := make([]*models.Secret, len(vl.Secrets))
+	for i, vc := range vl.Secrets {
 		sl[i] = &models.Secret{Data: vc.Data}
 	}
 	if err := v.AddSecretList(ctx, sl); err != nil {
 		return err
 	}
-	return jsonResponse(w, sl)
+	return jsonResponse(w, teamSecretListWrap{sl})
 }

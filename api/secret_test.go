@@ -18,7 +18,7 @@ func TestGetAllSecrets(t *testing.T) {
 	team := teams[0]
 	r, err := GetRequest(fmt.Sprintf("/team/%s/secret", team.Id))
 	CheckErrorAndResponse(t, r, err, 200)
-	sga := &teamSecretGetAllResponse{}
+	sga := &teamSecretListWrap{}
 	if err := json.NewDecoder(r.Body).Decode(sga); err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestGetAllSecrets(t *testing.T) {
 	}
 	r, err = GetRequest(fmt.Sprintf("/team/%s/secret", team.Id))
 	CheckErrorAndResponse(t, r, err, 200)
-	sga = &teamSecretGetAllResponse{}
+	sga = &teamSecretListWrap{}
 	if err := json.NewDecoder(r.Body).Decode(sga); err != nil {
 		t.Fatal(err)
 	}
@@ -73,27 +73,27 @@ func TestAddSecretList(t *testing.T) {
 	}
 	v := vs.Vaults[0]
 	vPriv := unsealVaultKey(&v.Vault, v.Key)
-	vl := []vaultCreateSecretRequest{}
+	vl := &teamSecretListWrap{}
 	for i := 0; i < 3; i++ {
-		vl = append(vl, vaultCreateSecretRequest{Data: signAndPack(vPriv, a32b)})
+		vl.Secrets = append(vl.Secrets, &models.Secret{Data: signAndPack(vPriv, a32b)})
 	}
 	r, err = PostRequest(fmt.Sprintf("/team/%s/vault/%s/secrets", team.Id, v.Vault.Id), vl)
 	CheckErrorAndResponse(t, r, err, 200)
-	sl := []*models.Secret{}
+	sl := &teamSecretListWrap{}
 	if err := json.NewDecoder(r.Body).Decode(&sl); err != nil {
 		t.Fatal(err)
 	}
-	if len(sl) != len(vl) {
-		t.Fatalf("Unexpected number of secrets: %d vs %d", len(vl), len(sl))
+	if len(sl.Secrets) != len(vl.Secrets) {
+		t.Fatalf("Unexpected number of secrets: %d vs %d", len(vl.Secrets), len(sl.Secrets))
 	}
 	r, err = GetRequest(fmt.Sprintf("/team/%s/secret", team.Id))
 	CheckErrorAndResponse(t, r, err, 200)
-	sga := &teamSecretGetAllResponse{}
+	sga := &teamSecretListWrap{}
 	if err := json.NewDecoder(r.Body).Decode(sga); err != nil {
 		t.Fatal(err)
 	}
-	if len(sga.Secrets) != len(vl) {
-		t.Fatalf("Unexpected number of secrets: %d vs %d", len(vl), len(sga.Secrets))
+	if len(sga.Secrets) != len(vl.Secrets) {
+		t.Fatalf("Unexpected number of secrets: %d vs %d", len(vl.Secrets), len(sga.Secrets))
 	}
 
 }
