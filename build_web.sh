@@ -1,6 +1,6 @@
 #!/bin/bash
 
-webTag="${WEB_TAG:-0.0.1}"
+webTag="${WEB_TAG:-0.0.2}"
 
 here=$(python -c 'import os; print os.path.realpath(os.getcwd())')
 webDir=${here}/web
