@@ -1,9 +1,16 @@
 #!/bin/bash
 
-webTag="${WEB_TAG:-0.0.2}"
+webTag="${WEB_TAG:-v0.0.2}"
 
-here=$(python -c 'import os; print os.path.realpath(os.getcwd())')
-webDir=${here}/web
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
+me=$(realpath $0)
+here=$(dirname $me)
+rootDir=${here}/..
+webDir=${rootDir}/web
+
 test -d ${webDir} || git clone https://github.com/keydotcat/web.git ${webDir}
 
 (
@@ -15,5 +22,5 @@ yarn install
 yarn run build:web
 )
 
-ln -sf ${webDir}/dist/web ${here}/data/web 
+ln -sf ${webDir}/dist/web ${rootDir}/data/web 
 

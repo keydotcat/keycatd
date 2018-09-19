@@ -1,10 +1,16 @@
 #!/bin/bash
 
-rootDir=$(dirname $0)/..
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
+me=$(realpath $0)
+here=$(dirname $me)
+rootDir=${here}/..
 
 GIT_VERSION=${GIT_VERSION:-$(git describe --abbrev=8 --dirty --always --tags 2>/dev/null)}
 
-#make -C $rootDir web 
+$here/build_web.sh
 make -C $rootDir static
 relDir=$rootDir/bin/releases/${GIT_VERSION}
 mkdir -p $relDir
