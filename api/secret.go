@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/keydotcat/server/models"
@@ -48,7 +47,6 @@ func (ah apiHandler) validVaultSecretRoot(w http.ResponseWriter, r *http.Request
 			return ah.vaultCreateSecret(w, r, t, v)
 		}
 	} else {
-		fmt.Println("Got to root", head)
 		switch r.Method {
 		case "DELETE":
 			return ah.vaultDeleteSecret(w, r, t, v, head)
@@ -95,4 +93,33 @@ func (ah apiHandler) vaultUpdateSecret(w http.ResponseWriter, r *http.Request, t
 		return err
 	}
 	return jsonResponse(w, s)
+}
+
+// /team/:tid/vault/:vid/secrets
+func (ah apiHandler) validVaultSecretsRoot(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault) error {
+	var head string
+	head, r.URL.Path = shiftPath(r.URL.Path)
+	if len(head) == 0 {
+		switch r.Method {
+		case "POST":
+			return ah.vaultCreateSecretList(w, r, t, v)
+		}
+	}
+	return util.NewErrorFrom(ErrNotFound)
+}
+
+func (ah apiHandler) vaultCreateSecretList(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault) error {
+	ctx := r.Context()
+	vl := []vaultCreateSecretRequest{}
+	if err := jsonDecode(w, r, 1024*1024, &vl); err != nil {
+		return err
+	}
+	sl := make([]*models.Secret, len(vl))
+	for i, vc := range vl {
+		sl[i] = &models.Secret{Data: vc.Data}
+	}
+	if err := v.AddSecretList(ctx, sl); err != nil {
+		return err
+	}
+	return jsonResponse(w, sl)
 }

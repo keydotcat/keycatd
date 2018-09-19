@@ -75,3 +75,28 @@ func TestAddModifyAndDeleteSecret(t *testing.T) {
 		t.Fatalf("Expected different error: %s vs %s", ErrDoesntExist, err)
 	}
 }
+
+func TestAddSecretList(t *testing.T) {
+	ctx := getCtx()
+	o, team := getDummyOwnerWithTeam()
+	v := getFirstVault(o, team)
+	vPriv := unsealVaultKey(&v.Vault, v.Key)
+	sl := []*Secret{
+		&Secret{Data: signAndPack(vPriv, a32b)},
+		&Secret{Data: signAndPack(vPriv, a32b)},
+	}
+	if err := v.AddSecretList(ctx, sl); err != nil {
+		t.Fatal(err)
+	}
+	for i, s := range sl {
+		if len(s.Id) == 0 {
+			t.Errorf("Secret %d does not have an id", i)
+		}
+	}
+	if sl[0].VaultVersion != v.Version-1 {
+		t.Fatalf("Mismatch in the vault (%d) and secret vault (%d) version", v.Version-1, sl[0].VaultVersion)
+	}
+	if sl[1].VaultVersion != v.Version {
+		t.Fatalf("Mismatch in the vault (%d) and secret vault (%d) version", v.Version, sl[1].VaultVersion)
+	}
+}

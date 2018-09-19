@@ -10,7 +10,7 @@ import (
 	"github.com/keydotcat/server/util"
 )
 
-const DEFAULT_VAULT_NAME = "Generic"
+const DEFAULT_VAULT_NAME = "Personal"
 
 type Team struct {
 	Id        string    `scaneo:"pk" json:"id"`

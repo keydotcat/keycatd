@@ -183,13 +183,42 @@ func (v *Vault) AddSecret(ctx context.Context, s *Secret) error {
 	}
 	var err error
 	for retry := 0; retry < 3; retry++ {
-		s.Id = util.GenerateRandomToken(10)
 		err = doTx(ctx, func(tx *sql.Tx) error {
 			if err := v.update(tx); err != nil {
 				return err
 			}
 			s.VaultVersion = v.Version
 			return s.insert(tx)
+		})
+		if err == ErrAlreadyExists {
+			continue
+		}
+		break
+	}
+	return err
+}
+
+func (v *Vault) AddSecretList(ctx context.Context, sl []*Secret) error {
+	for _, s := range sl {
+		s.Team = v.Team
+		s.Vault = v.Id
+		if _, err := verifyAndUnpack(v.PublicKey, s.Data); err != nil {
+			return err
+		}
+	}
+	var err error
+	for retry := 0; retry < 3; retry++ {
+		err = doTx(ctx, func(tx *sql.Tx) error {
+			for _, s := range sl {
+				if err := v.update(tx); err != nil {
+					return err
+				}
+				s.VaultVersion = v.Version
+				if err := s.insert(tx); err != nil {
+					return err
+				}
+			}
+			return nil
 		})
 		if err == ErrAlreadyExists {
 			continue
