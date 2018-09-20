@@ -55,6 +55,35 @@ func TestGetAllSecretsForOwnerAndUser(t *testing.T) {
 	}
 }
 
+func TestUpdateSecret(t *testing.T) {
+	ctx := getCtx()
+	owner, team := getDummyOwnerWithTeam()
+	vf := getFirstVault(owner, team)
+	v := &vf.Vault
+	vPriv := unsealVaultKey(&vf.Vault, vf.Key)
+	s := &Secret{Data: signAndPack(vPriv, a32b)}
+	if err := v.AddSecret(ctx, s); err != nil {
+		t.Fatal(err)
+	}
+	s.Version = 0
+	s.VaultVersion = 0
+	if err := v.UpdateSecret(ctx, s); err != nil {
+		t.Fatal(err)
+	}
+	if s.Version != 2 {
+		t.Errorf("Unexpected secret version 2 vs %d", s.Version)
+	}
+	if s.VaultVersion != v.Version {
+		t.Errorf("Mismatch in the vault version %d vs %d", s.VaultVersion, v.Version)
+	}
+	if err := v.UpdateSecret(ctx, s); err != nil {
+		t.Fatal(err)
+	}
+	if s.Version != 3 {
+		t.Errorf("Unexpected secret version 2 vs %d", s.Version)
+	}
+}
+
 func TestCheckRetrieveLastVersionOfSecret(t *testing.T) {
 	ctx := getCtx()
 	owner, team := getDummyOwnerWithTeam()

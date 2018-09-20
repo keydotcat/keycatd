@@ -239,9 +239,8 @@ func (v *Vault) UpdateSecret(ctx context.Context, s *Secret) error {
 		}
 		s.Team = os.Team
 		s.Vault = os.Vault
-		s.CreatedAt = os.CreatedAt
+		s.Version = os.Version + 1
 		s.VaultVersion = v.Version
-		s.Version = s.Version + 1
 		return s.update(tx)
 	})
 }
