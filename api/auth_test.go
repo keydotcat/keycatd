@@ -10,7 +10,7 @@ import (
 
 func loginDummyUser() *models.User {
 	u := getDummyUser()
-	s, err := apiH.sm.NewSession(u.Id, "none", true)
+	s, err := apiH.sm.NewSession(u.Id, "1.1.1.1", "none", true)
 	if err != nil {
 		panic(err)
 	}

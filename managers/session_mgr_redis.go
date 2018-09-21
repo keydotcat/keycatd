@@ -32,8 +32,8 @@ func (r sessionMgrRedis) ukey(i string) string {
 	return fmt.Sprintf("%su:%s", r.prefix, i)
 }
 
-func (r sessionMgrRedis) NewSession(userId, agent string, csrf bool) (*Session, error) {
-	s := &Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
+func (r sessionMgrRedis) NewSession(userId, ip, agent string, csrf bool) (*Session, error) {
+	s := &Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15), ip}
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	if err := encodeSession(b, s); err != nil {
@@ -111,13 +111,14 @@ func (r sessionMgrRedis) GetSession(id string) (*Session, error) {
 	return s, err
 }
 
-func (r sessionMgrRedis) UpdateSession(id, agent string) (*Session, error) {
+func (r sessionMgrRedis) UpdateSession(id, ip, agent string) (*Session, error) {
 	s, err := r.getSession(id)
 	if err != nil {
 		return nil, err
 	}
 	s.Agent = agent
 	s.LastAccess = time.Now().UTC()
+	s.LastIp = ip
 	return s, r.storeSession(s)
 }
 

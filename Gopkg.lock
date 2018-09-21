@@ -128,6 +128,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/tomasen/realip"
+  packages = ["."]
+  revision = "f0c99a92ddcedd3964a269d23c8e89d9a9229be6"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["bcrypt","blowfish","curve25519","ed25519","ed25519/internal/edwards25519","nacl/box","nacl/secretbox","poly1305","salsa20/salsa"]
   revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
@@ -153,6 +159,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7ebe86143cf51dc15dbf904362cb8f6aa11e98fe84a123b22852f86b62237d92"
+  inputs-digest = "6f13dd4e1a37cb2a30c46cb4efd70472dbb08204730b67e5810d478f28d8660f"
   solver-name = "gps-cdcl"
   solver-version = 1

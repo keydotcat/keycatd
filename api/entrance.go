@@ -14,12 +14,17 @@ import (
 
 var TEST_MODE = false
 
+type apiOptions struct {
+	onlyInvited bool
+}
+
 type apiHandler struct {
 	db            *sql.DB
 	sm            managers.SessionMgr
 	mail          *mailer
 	csrf          csrf
 	staticHandler *StaticHandler
+	options       apiOptions
 }
 
 func NewAPIHandler(c Conf) (http.Handler, error) {
@@ -28,6 +33,7 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 		return nil, err
 	}
 	ah := apiHandler{}
+	ah.options.onlyInvited = c.OnlyInvited
 	ah.db, err = sql.Open("postgres", c.DB)
 	if err != nil {
 		return nil, util.NewErrorf("Could not connect to db '%s': %s", c.DB, err)

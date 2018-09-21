@@ -55,19 +55,19 @@ dev: autogen dev-static
 
 test: test_db test_managers test_models test_api
 
-test_db: autogen
+test_db: autogen dev-static
 	go test -v github.com/keydotcat/server/db 
 
-test_managers: autogen
+test_managers: autogen dev-static
 	go test -v github.com/keydotcat/server/managers 
 
-test_models: autogen
+test_models: autogen dev-static
 	go test -v github.com/keydotcat/server/models 
 
-test_api: autogen
+test_api: autogen dev-static
 	go test -v github.com/keydotcat/server/api
 
-test_coverage:
+test_coverage: autogen dev-static
 	go test -v -coverprofile db/cover.out -covermode atomic github.com/keydotcat/server/db
 	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/server/managers 
 	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/server/models 

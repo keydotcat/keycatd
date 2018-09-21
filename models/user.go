@@ -66,7 +66,7 @@ func NewUser(ctx context.Context, id, fullname, email, password string, keyPack 
 		if err != nil {
 			return err
 		}
-		invites, err := findInvitesForUser(tx, u.Email)
+		invites, err := findInvitesForEmail(tx, u.Email)
 		if err != nil {
 			return err
 		}

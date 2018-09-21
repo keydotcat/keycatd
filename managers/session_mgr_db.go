@@ -36,17 +36,17 @@ func (r sessionMgrDB) doTx(ftor func(*sql.Tx) error) error {
 	return nil
 }
 
-func (r sessionMgrDB) NewSession(userId, agent string, csrf bool) (*Session, error) {
-	o := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15)}
+func (r sessionMgrDB) NewSession(userId, ip, agent string, csrf bool) (*Session, error) {
+	o := Session{util.GenerateRandomToken(15), userId, agent, csrf, time.Now().UTC(), util.GenerateRandomToken(15), ip}
 	err := r.doTx(func(tx *sql.Tx) error {
-		_, err := r.dbp.Exec("INSERT INTO \"session\" "+insertSessionFields+" VALUES "+insertSessionBinds, o.Id, o.User, o.Agent, o.RequiresCSRF, o.LastAccess, o.StoreToken)
+		_, err := r.dbp.Exec("INSERT INTO \"session\" "+insertSessionFields+" VALUES "+insertSessionBinds, o.Id, o.User, o.Agent, o.RequiresCSRF, o.LastAccess, o.StoreToken, o.LastIp)
 		return err
 	})
 	if err == nil {
 		return &o, nil
 	}
 	if models.IsDuplicateErr(err) {
-		return r.NewSession(userId, agent, csrf)
+		return r.NewSession(userId, ip, agent, csrf)
 	}
 	panic(err)
 }
@@ -57,7 +57,7 @@ func (r sessionMgrDB) GetSession(id string) (*Session, error) {
 	return o, o.dbScanRow(row)
 }
 
-func (r sessionMgrDB) UpdateSession(id, agent string) (*Session, error) {
+func (r sessionMgrDB) UpdateSession(id, ip, agent string) (*Session, error) {
 	o := &Session{Id: id}
 	return o, r.doTx(func(tx *sql.Tx) error {
 		if err := o.dbFind(tx); err != nil {
@@ -68,6 +68,7 @@ func (r sessionMgrDB) UpdateSession(id, agent string) (*Session, error) {
 		}
 		o.Agent = agent
 		o.LastAccess = time.Now().UTC()
+		o.LastIp = ip
 		_, err := o.dbUpdate(tx)
 		return err
 	})

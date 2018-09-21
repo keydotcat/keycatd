@@ -17,6 +17,7 @@ type Session struct {
 	RequiresCSRF bool      `json:"csrf_required"`
 	LastAccess   time.Time `json:"last_access"`
 	StoreToken   string    `json:"-"`
+	LastIp       string    `json:"last_ip"`
 }
 
 func encodeSession(buf *bytes.Buffer, s *Session) error {
@@ -38,8 +39,8 @@ func decodeSession(buf *bytes.Buffer, s *Session) error {
 }
 
 type SessionMgr interface {
-	NewSession(userId string, agent string, csrf bool) (*Session, error)
-	UpdateSession(id, agent string) (*Session, error)
+	NewSession(userId string, ip string, agent string, csrf bool) (*Session, error)
+	UpdateSession(id, ip, agent string) (*Session, error)
 	GetSession(id string) (*Session, error)
 	DeleteSession(id string) error
 	GetAllSessions(userId string) ([]*Session, error)

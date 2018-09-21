@@ -7,7 +7,7 @@ import (
 
 func TestGetAndDeleteSessions(t *testing.T) {
 	u := loginDummyUser()
-	s, err := apiH.sm.NewSession(u.Id, "none", true)
+	s, err := apiH.sm.NewSession(u.Id, "1.1.1.1", "none", true)
 	if err != nil {
 		t.Fatal(err)
 	}

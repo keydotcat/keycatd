@@ -134,12 +134,16 @@ func getVaultPrivateKeys(pubPack, privPack []byte) []byte {
 }
 
 func addSessionForUser(rs SessionMgr, uid, agent string) error {
-	s, err := rs.NewSession(uid, agent, false)
+	ip := "1.1.1.1"
+	s, err := rs.NewSession(uid, ip, agent, false)
 	if err != nil {
 		return err
 	}
 	if s.User != uid {
 		return fmt.Errorf("Mismatch in the user id: %s vs %s", s.User, uid)
+	}
+	if s.LastIp != ip {
+		return fmt.Errorf("Mismatch in the ip: %s vs %s", ip, s.LastIp)
 	}
 	return nil
 }
@@ -147,6 +151,7 @@ func addSessionForUser(rs SessionMgr, uid, agent string) error {
 func testSessionManager(rs SessionMgr, t *testing.T, smName string) {
 	uid1 := getDummyUser().Id
 	uid2 := getDummyUser().Id
+	ip := "1.1.1.2"
 	if err := addSessionForUser(rs, uid1, uid1+":s1"); err != nil {
 		t.Fatalf("%s failed test: %s", smName, err)
 	}
@@ -169,21 +174,24 @@ func testSessionManager(rs SessionMgr, t *testing.T, smName string) {
 			t.Errorf("%s didn't find session %s", smName, k)
 		}
 	}
-	s, err := rs.UpdateSession(sess[0].Id, sess[0].Agent+":")
+	s, err := rs.UpdateSession(sess[0].Id, ip, sess[0].Agent+":")
 	if err != nil {
 		t.Fatalf("%s failed test: %s", smName, err)
 	}
 	if s.Id != sess[0].Id || s.Agent != sess[0].Agent+":" {
 		t.Fatalf("%s session hasn't been updated", smName)
 	}
-	_, err = rs.UpdateSession("nonexistant", "asd")
+	if s.LastIp != ip {
+		t.Errorf("Mismatch in the ip: %s vs %s", ip, s.LastIp)
+	}
+	_, err = rs.UpdateSession("nonexistant", "rast", "asd")
 	if !util.CheckErr(err, models.ErrDoesntExist) {
 		t.Fatalf("%s Unexpected error: %s vs %s", smName, models.ErrDoesntExist, err)
 	}
 	if err = rs.DeleteSession(sess[0].Id); err != nil {
 		t.Fatalf("%s failed test: %s", smName, err)
 	}
-	_, err = rs.UpdateSession(sess[0].Id, "asd")
+	_, err = rs.UpdateSession(sess[0].Id, "rast", "asd")
 	if !util.CheckErr(err, models.ErrDoesntExist) {
 		t.Fatalf("%s unexpected error: %s vs %s", smName, models.ErrDoesntExist, err)
 	}

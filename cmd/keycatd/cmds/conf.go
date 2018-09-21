@@ -20,6 +20,7 @@ func processConf(cfgFile string) api.Conf {
 	viper.SetDefault("db", "keycat")
 	viper.SetDefault("db.maxconns", 0)
 	viper.SetDefault("db.type", "postgresql")
+	viper.SetDefault("only_invited", false)
 	viper.SetDefault("csrf.hash_key", "")
 	viper.SetDefault("csrf.block_key", "")
 	viper.SetDefault("session.redis.server", "")
@@ -45,6 +46,7 @@ func processConf(cfgFile string) api.Conf {
 		c.DBType = "postgresql"
 	}
 	c.DBMaxConns = viper.GetInt("db.maxconns")
+	c.OnlyInvited = viper.GetBool("only_invited")
 	c.MailFrom = viper.GetString("mail.from")
 	c.Csrf.HashKey = viper.GetString("csrf.hash_key")
 	c.Csrf.BlockKey = viper.GetString("csrf.block_key")

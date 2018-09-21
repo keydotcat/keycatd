@@ -1,0 +1,1 @@
+ALTER TABLE "session" ADD COLUMN "last_ip" TEXT NOT NULL;

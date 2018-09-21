@@ -7,37 +7,39 @@ import (
 )
 
 type ConfMailSMTP struct {
-	Server   string `toml:"server_url"`
-	User     string `toml:"user"`
-	Password string `toml:"password"`
+	Server   string
+	User     string
+	Password string
 }
 
 type ConfMailSparkpost struct {
-	Key string `toml:"key"`
+	Key string
 	EU  bool
 }
 
 type ConfSessionRedis struct {
-	Server string `toml:"server"`
-	DBId   int    `toml:"db_id"`
+	Server string
+	DBId   int
 }
 
 type ConfCsrf struct {
-	HashKey  string `toml:"hash_key"`
-	BlockKey string `toml:"block_key"`
+	HashKey  string
+	BlockKey string
 }
 
 type Conf struct {
-	Url           string `toml:"url"`
-	Port          int    `toml:"port"`
-	DB            string `toml:"db"`
+	Url           string
+	Port          int
+	DB            string
 	DBMaxConns    int
-	DBType        string             `toml:"db_type"`
-	MailSMTP      *ConfMailSMTP      `toml:"mail_smtp"`
-	MailSparkpost *ConfMailSparkpost `toml:"mail_sparkpost"`
-	MailFrom      string             `toml:"mail_from"`
-	SessionRedis  *ConfSessionRedis  `toml:"session_redis"`
-	Csrf          ConfCsrf           `toml:"csrf"`
+	DBType        string
+	OnlyInvited   bool
+	ProxyMode     bool
+	MailSMTP      *ConfMailSMTP
+	MailSparkpost *ConfMailSparkpost
+	MailFrom      string
+	SessionRedis  *ConfSessionRedis
+	Csrf          ConfCsrf
 }
 
 func (c Conf) validate() error {

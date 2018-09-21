@@ -8,6 +8,7 @@ import (
 	"github.com/keydotcat/server/managers"
 	"github.com/keydotcat/server/models"
 	"github.com/keydotcat/server/util"
+	"github.com/tomasen/realip"
 )
 
 func (ah apiHandler) getSessionFromHeader(r *http.Request) *managers.Session {
@@ -15,7 +16,7 @@ func (ah apiHandler) getSessionFromHeader(r *http.Request) *managers.Session {
 	if len(authHdr) < 2 || authHdr[0] != "Bearer" {
 		return nil
 	}
-	s, err := ah.sm.UpdateSession(authHdr[1], r.UserAgent())
+	s, err := ah.sm.UpdateSession(authHdr[1], realip.FromRequest(r), r.UserAgent())
 	if err != nil {
 		return nil
 	}
@@ -81,8 +82,18 @@ func (ah apiHandler) authRegister(w http.ResponseWriter, r *http.Request) error 
 	if err := jsonDecode(w, r, 1024*5, apr); err != nil {
 		return err
 	}
+	ctx := r.Context()
+	if ah.options.onlyInvited {
+		invs, err := models.FindInvitesForEmail(ctx, apr.Email)
+		if err != nil {
+			return err
+		}
+		if len(invs) == 0 {
+			return util.NewErrorFrom(models.ErrUnauthorized)
+		}
+	}
 	u, t, err := models.NewUser(
-		r.Context(),
+		ctx,
 		apr.Username,
 		apr.Fullname,
 		apr.Email,
@@ -181,7 +192,7 @@ func (ah apiHandler) authLogin(w http.ResponseWriter, r *http.Request) error {
 	if err := u.CheckPassword(aer.Password); err != nil {
 		return util.NewErrorFrom(models.ErrUnauthorized)
 	}
-	s, err := ah.sm.NewSession(u.Id, r.UserAgent(), aer.RequireCSRF)
+	s, err := ah.sm.NewSession(u.Id, realip.FromRequest(r), r.UserAgent(), aer.RequireCSRF)
 	if err != nil {
 		panic(err)
 	}

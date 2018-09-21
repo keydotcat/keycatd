@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -13,7 +14,14 @@ type Invite struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func findInvitesForUser(tx *sql.Tx, email string) ([]*Invite, error) {
+func FindInvitesForEmail(ctx context.Context, email string) (invs []*Invite, err error) {
+	return invs, doTx(ctx, func(tx *sql.Tx) error {
+		invs, err = findInvitesForEmail(tx, email)
+		return err
+	})
+}
+
+func findInvitesForEmail(tx *sql.Tx, email string) ([]*Invite, error) {
 	rows, err := tx.Query(`SELECT `+selectInviteFields+` FROM "invite" WHERE "email" = $1`, email)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
