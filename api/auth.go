@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -134,12 +135,17 @@ func (ah apiHandler) authRequestConfirmationToken(w http.ResponseWriter, r *http
 	}
 	u, err := models.FindUserByEmail(r.Context(), aer.Email)
 	if err != nil {
+		if util.CheckErr(err, models.ErrDoesntExist) {
+			w.WriteHeader(http.StatusOK)
+			return nil
+		}
 		return err
 	}
 	t, err := u.GetVerificationToken(r.Context())
 	if err != nil {
 		return err
 	}
+	fmt.Println("Token is", t)
 	if err := ah.mail.sendConfirmationMail(u, t, r.Header.Get("X-Locale")); err != nil {
 		panic(err)
 	}
