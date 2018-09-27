@@ -11,17 +11,15 @@ rootDir=${here}/..
 function showChanges() {
 	last=$(git tag | sort -r | head -n 1)
 	prev=$(git tag | sort -r | head -n 2 | tail -n 1)
+	echo "## $1 $last"
+	echo
 	git log ${prev}..${last} '--pretty=format:%s' | grep -i -e '^new:' -e '^fix:' -e '^change:' | sort -r | sed 's/^/* /'
 }
 
-echo "## Backend"
-echo 
-showChanges
+showChanges "Backend"
 echo 
 
 (
 cd $rootDir/web
-echo "## Web"
-echo 
-showChanges
+showChanges "Web"
 )
