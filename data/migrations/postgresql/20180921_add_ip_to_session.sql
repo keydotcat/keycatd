@@ -1,1 +1,1 @@
-ALTER TABLE "session" ADD COLUMN "last_ip" TEXT NOT NULL;
+ALTER TABLE "session" ADD COLUMN "last_ip" TEXT NOT NULL DEFAULT '1.1.1.1';
