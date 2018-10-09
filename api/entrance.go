@@ -91,20 +91,30 @@ func (ah apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (ah apiHandler) apiRoot(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(models.AddDBToContext(r.Context(), ah.db))
+	var err error
 	head := ""
 	head, r.URL.Path = shiftPath(r.URL.Path)
-	if head == "auth" {
-		if err := ah.authRoot(w, r); err != nil {
-			httpErr(w, err)
-		}
-		return
+	//This is the non authenticated root
+	switch head {
+	case "auth":
+		err = ah.authRoot(w, r)
+	case "version":
+		err = ah.versionRoot(w, r)
+	default:
+		err = ah.authenticatedRoot(w, r, head)
 	}
+	if err != nil {
+		httpErr(w, err)
+	}
+}
+
+func (ah apiHandler) authenticatedRoot(w http.ResponseWriter, r *http.Request, head string) error {
+	//From here on you need to be authenticated
 	err := util.NewErrorFrom(ErrNotFound)
 	r = ah.authorizeRequest(w, r)
 	if r == nil {
-		return
+		return nil
 	}
-	//From here on you need to be authenticated
 	switch head {
 	case "session":
 		err = ah.sessionRoot(w, r)
@@ -113,7 +123,5 @@ func (ah apiHandler) apiRoot(w http.ResponseWriter, r *http.Request) {
 	case "team":
 		err = ah.teamRoot(w, r)
 	}
-	if err != nil {
-		httpErr(w, err)
-	}
+	return err
 }
