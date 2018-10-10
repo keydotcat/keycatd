@@ -25,6 +25,7 @@ type apiHandler struct {
 	csrf          csrf
 	staticHandler *StaticHandler
 	options       apiOptions
+	bcast         managers.BroadcasterMgr
 }
 
 func NewAPIHandler(c Conf) (http.Handler, error) {
@@ -33,6 +34,7 @@ func NewAPIHandler(c Conf) (http.Handler, error) {
 		return nil, err
 	}
 	ah := apiHandler{}
+	ah.bcast = managers.NewInternalBroadcasterMgr()
 	ah.options.onlyInvited = c.OnlyInvited
 	ah.db, err = sql.Open("postgres", c.DB)
 	if err != nil {
@@ -122,6 +124,8 @@ func (ah apiHandler) authenticatedRoot(w http.ResponseWriter, r *http.Request, h
 		err = ah.userRoot(w, r)
 	case "team":
 		err = ah.teamRoot(w, r)
+	case "ws":
+		err = ah.wsRoot(w, r)
 	}
 	return err
 }
