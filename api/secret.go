@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/keydotcat/server/managers"
 	"github.com/keydotcat/server/models"
 	"github.com/keydotcat/server/util"
 )
@@ -71,6 +72,7 @@ func (ah apiHandler) vaultCreateSecret(w http.ResponseWriter, r *http.Request, t
 	if err := v.AddSecret(ctx, s); err != nil {
 		return err
 	}
+	ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_NEW, s)
 	return jsonResponse(w, s)
 }
 
@@ -79,6 +81,7 @@ func (ah apiHandler) vaultDeleteSecret(w http.ResponseWriter, r *http.Request, t
 	if err := v.DeleteSecret(ctx, sid); err != nil {
 		return err
 	}
+	ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_REMOVE, &models.Secret{Id: sid})
 	return jsonResponse(w, v)
 }
 
@@ -92,6 +95,7 @@ func (ah apiHandler) vaultUpdateSecret(w http.ResponseWriter, r *http.Request, t
 	if err := v.UpdateSecret(ctx, s); err != nil {
 		return err
 	}
+	ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_CHANGE, s)
 	return jsonResponse(w, s)
 }
 
@@ -120,6 +124,9 @@ func (ah apiHandler) vaultCreateSecretList(w http.ResponseWriter, r *http.Reques
 	}
 	if err := v.AddSecretList(ctx, sl); err != nil {
 		return err
+	}
+	for _, s := range sl {
+		ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_NEW, s)
 	}
 	return jsonResponse(w, teamSecretListWrap{sl})
 }

@@ -6,6 +6,14 @@ import (
 	"github.com/keydotcat/server/models"
 )
 
+type BroadcastAction string
+
+const (
+	BCAST_ACTION_SECRET_NEW    = BroadcastAction("secret:new")
+	BCAST_ACTION_SECRET_CHANGE = BroadcastAction("secret:change")
+	BCAST_ACTION_SECRET_REMOVE = BroadcastAction("secret:remove")
+)
+
 type Broadcast struct {
 	Team    string
 	Vault   string
@@ -15,18 +23,18 @@ type Broadcast struct {
 type BroadcasterMgr interface {
 	Subscribe(address string) <-chan *Broadcast
 	Unsubscribe(address string)
-	Send(team, vault, action string, secret *models.Secret)
+	Send(team, vault string, action BroadcastAction, secret *models.Secret)
 	Stop()
 }
 
 type BroadcastPayload struct {
-	Team   string         `json:"team"`
-	Vault  string         `json:"vault"`
-	Action string         `json:"action"`
-	Secret *models.Secret `json:"secret,omitempty"`
+	Team   string          `json:"team"`
+	Vault  string          `json:"vault"`
+	Action BroadcastAction `json:"action"`
+	Secret *models.Secret  `json:"secret,omitempty"`
 }
 
-func createBroadcast(team, vault, action string, secret *models.Secret) *Broadcast {
+func createBroadcast(team, vault string, action BroadcastAction, secret *models.Secret) *Broadcast {
 	msg, err := json.Marshal(BroadcastPayload{team, vault, action, secret})
 	if err != nil {
 		panic(err)

@@ -31,16 +31,17 @@ func validateBcastMsg(b *Broadcast, t *testing.T) error {
 	if b.Vault != p.Vault {
 		return fmt.Errorf("Vault mismatch: %s vs %s", b.Vault, p.Vault)
 	}
-	ai := 0
-	n, err = fmt.Sscanf(p.Action, "action:%d", &ai)
-	if n != 1 || err != nil {
-		return fmt.Errorf("Could not parse action value %s: %s", b.Team, err)
-	}
-	if ai%2 == 0 {
+	if ti%2 == 0 {
+		if p.Action != BCAST_ACTION_SECRET_NEW {
+			return fmt.Errorf("Action mismatch: %s vs %s", BCAST_ACTION_SECRET_NEW, p.Action)
+		}
 		if p.Secret == nil {
 			return fmt.Errorf("Secret is nil")
 		}
 	} else {
+		if p.Action != BCAST_ACTION_SECRET_REMOVE {
+			return fmt.Errorf("Action mismatch: %s vs %s", BCAST_ACTION_SECRET_REMOVE, p.Action)
+		}
 		if p.Secret != nil {
 			return fmt.Errorf("Secret is not nil")
 		}
@@ -73,13 +74,13 @@ func testBroadcastMgr(name string, bc BroadcasterMgr, t *testing.T) {
 	for i := 0; i < 1000; i++ {
 		sec := &models.Secret{}
 		if i%2 == 0 {
-			bc.Send(fmt.Sprintf("team:%d", i), fmt.Sprintf("vault:%d", i), fmt.Sprintf("action:%d", i), sec)
+			bc.Send(fmt.Sprintf("team:%d", i), fmt.Sprintf("vault:%d", i), BCAST_ACTION_SECRET_NEW, sec)
 		} else {
-			bc.Send(fmt.Sprintf("team:%d", i), fmt.Sprintf("vault:%d", i), fmt.Sprintf("action:%d", i), nil)
+			bc.Send(fmt.Sprintf("team:%d", i), fmt.Sprintf("vault:%d", i), BCAST_ACTION_SECRET_REMOVE, nil)
 		}
 	}
 	wg.Wait()
 	for i := 0; i < 1000; i++ {
-		bc.Send("team", "vault", "action", nil)
+		bc.Send("team", "vault", BCAST_ACTION_SECRET_CHANGE, nil)
 	}
 }

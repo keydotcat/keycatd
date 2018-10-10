@@ -79,7 +79,7 @@ func (ibm *InternalBroadcasterMgr) Unsubscribe(sid string) {
 	ibm.delChan <- sid
 }
 
-func (ibm *InternalBroadcasterMgr) Send(team, vault, action string, secret *models.Secret) {
+func (ibm *InternalBroadcasterMgr) Send(team, vault string, action BroadcastAction, secret *models.Secret) {
 	ibm.sourceChan <- createBroadcast(team, vault, action, secret)
 }
 
