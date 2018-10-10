@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -71,12 +70,12 @@ func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
 	}
 	bChan := ah.bcast.Subscribe(r.RemoteAddr)
 	defer ah.bcast.Unsubscribe(r.RemoteAddr)
-	for {
+	alive := true
+	for alive {
 		select {
 		case <-time.After(2 * time.Minute):
 			if err := ws.WriteMessage(websocket.PingMessage, []byte{1}); err != nil {
-				log.Printf("Cannot send to ws (%s). Closing...", err)
-				break
+				alive = false
 			}
 		case b := <-bChan:
 			vs, ok := tv[b.Team]
@@ -94,9 +93,9 @@ func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
 				continue
 			}
 			if err := ws.WriteMessage(websocket.TextMessage, b.Message); err != nil {
-				log.Printf("Cannot send to ws (%s). Closing...", err)
-				break
+				alive = false
 			}
 		}
 	}
+	return nil
 }

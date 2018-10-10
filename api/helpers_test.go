@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"mime"
 	"net/http"
 	"net/http/cookiejar"
@@ -15,7 +14,7 @@ import (
 	"testing"
 )
 
-var cli *http.Client
+var gCli *http.Client
 var activeSessionToken string
 var activeCsrfToken string
 
@@ -170,26 +169,30 @@ func PostForm(path string, v url.Values) (*http.Response, error) {
 	return httpDo(req)
 }
 
+func getCookieJar() http.CookieJar {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		panic(err)
+	}
+	if len(activeCsrfToken) == 0 {
+		activeCsrfToken = "dummy"
+	}
+	val, err := apiH.csrf.sc.Encode(CSRF_COOKIE_NAME, activeCsrfToken)
+	if err != nil {
+		panic(err)
+	}
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		panic(err)
+	}
+	jar.SetCookies(u, []*http.Cookie{&http.Cookie{Name: CSRF_COOKIE_NAME, Value: val, Path: "/"}})
+	return jar
+}
+
 func httpDo(req *http.Request) (*http.Response, error) {
-	if cli == nil {
-		var err error
-		cli = &http.Client{}
-		cli.Jar, err = cookiejar.New(nil)
-		if err != nil {
-			return nil, err
-		}
-		if len(activeCsrfToken) == 0 {
-			activeCsrfToken = "dummy"
-		}
-		val, err := apiH.csrf.sc.Encode(CSRF_COOKIE_NAME, activeCsrfToken)
-		if err != nil {
-			return nil, err
-		}
-		u, err := url.Parse(srv.URL)
-		if err != nil {
-			log.Fatal(err)
-		}
-		cli.Jar.SetCookies(u, []*http.Cookie{&http.Cookie{Name: CSRF_COOKIE_NAME, Value: val, Path: "/"}})
+	if gCli == nil {
+		gCli = &http.Client{}
+		gCli.Jar = getCookieJar()
 	}
 	if req.Header == nil {
 		req.Header = http.Header{}
@@ -198,5 +201,5 @@ func httpDo(req *http.Request) (*http.Response, error) {
 	if len(activeSessionToken) != 0 {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", activeSessionToken))
 	}
-	return cli.Do(req)
+	return gCli.Do(req)
 }
