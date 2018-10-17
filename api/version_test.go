@@ -2,13 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
 	"testing"
 
 	"github.com/keydotcat/server/util"
 )
 
 func TestGetFullVersion(t *testing.T) {
-	r, err := GetRequest("/version")
+	r, err := http.Get(srv.URL + "/version")
 	CheckErrorAndResponse(t, r, err, 200)
 	sga := &versionSendFullResponse{}
 	if err := json.NewDecoder(r.Body).Decode(sga); err != nil {
