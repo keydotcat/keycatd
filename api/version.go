@@ -16,11 +16,12 @@ func (ah apiHandler) versionRoot(w http.ResponseWriter, r *http.Request) error {
 }
 
 type versionSendFullResponse struct {
+	Name   string `json:"name"`
 	Server string `json:"server"`
 	Web    string `json:"web"`
 }
 
 // /version
 func (ah apiHandler) versionSendFull(w http.ResponseWriter, r *http.Request) error {
-	return jsonResponse(w, versionSendFullResponse{Server: util.GetServerVersion(), Web: util.GetWebVersion()})
+	return jsonResponse(w, versionSendFullResponse{Name: "Key cat", Server: util.GetServerVersion(), Web: util.GetWebVersion()})
 }

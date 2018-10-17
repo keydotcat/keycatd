@@ -21,4 +21,7 @@ func TestGetFullVersion(t *testing.T) {
 	if sga.Web != util.GetWebVersion() {
 		t.Errorf("Mismatch in the web version: %s vs %s", util.GetWebVersion(), sga.Web)
 	}
+	if sga.Name != "Key cat" {
+		t.Errorf("Mismatch in the name : 'Key cat' vs %s", sga.Name)
+	}
 }
