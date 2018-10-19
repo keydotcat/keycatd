@@ -1,0 +1,61 @@
+project_name: keycatd
+before:
+  hooks:
+    - make web
+    - make static
+    - make autogen
+builds:
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/keycatd
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - '386'
+      - arm64
+      - arm
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: arm64
+      - goos: windows
+        goarch: 386
+      - goos: windows
+        goarch: arm64
+    goarm:
+      - 6
+      - 7
+archive:
+  replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    386: i386
+    amd64: x86_64
+  format_overrides:
+    - goos: windows
+      format: zip
+  files:
+    - LICENSE
+    - README.md
+  name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}" 
+sign:
+  artifacts: all
+checksum:
+  name_template: 'checksums.txt'
+release:
+  github:
+    owner: keycat
+    name: server
+dockers:
+  - goos: linux
+    goarch: amd64
+    binary: keycatd
+    image: keycat/keycatd
+    tag_templates:
+    - "{{ .Tag }}"
+    - latest

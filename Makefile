@@ -22,10 +22,13 @@ cmds:
 	go get github.com/githubnemo/CompileDaemon
 
 web:
-	./build_web.sh
+	./scripts/build_web.sh
 
-keycatd: bindir
+keycatd: bindir autogen
 	go build -o bin/keycatd${SUF} ${ROOT}/cmd/keycatd
+	
+publish:
+	bash -c 'goreleaser release --debug  --skip-publish --release-notes <(./scripts/notes.sh)'
 
 bindir:
 	mkdir -p bindir
