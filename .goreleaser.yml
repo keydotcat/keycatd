@@ -46,7 +46,7 @@ checksum:
   name_template: 'checksums.txt'
 release:
   github:
-    owner: keycat
+    owner: keydotcat
     name: server
 dockers:
   - goos: linux
