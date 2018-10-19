@@ -1,7 +1,6 @@
 project_name: keycatd
 before:
   hooks:
-    - make web
     - make static
     - make autogen
 builds:

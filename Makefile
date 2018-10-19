@@ -27,7 +27,7 @@ web:
 keycatd: bindir autogen
 	go build -o bin/keycatd${SUF} ${ROOT}/cmd/keycatd
 	
-publish:
+publish: web
 	bash -c 'goreleaser release --rm-dist --release-notes <(./scripts/notes.sh)'
 
 bindir:
