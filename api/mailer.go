@@ -99,7 +99,7 @@ func (mm *mailer) sendInvitationMail(t *models.Team, u *models.User, i *models.I
 
 func (mm *mailer) sendTestEmail(to string) error {
 	muttd := mailUserTeamTokenData{Email: to}
-	return mm.send(muttd, "en", "test_email", "Keycat test email")
+	return mm.send(muttd, "en", "test_email", "KeyCat test email")
 }
 
 func SendTestEmail(c Conf, to string) error {

@@ -23,5 +23,5 @@ type versionSendFullResponse struct {
 
 // /version
 func (ah apiHandler) versionSendFull(w http.ResponseWriter, r *http.Request) error {
-	return jsonResponse(w, versionSendFullResponse{Name: "Key cat", Server: util.GetServerVersion(), Web: util.GetWebVersion()})
+	return jsonResponse(w, versionSendFullResponse{Name: "KeyCat", Server: util.GetServerVersion(), Web: util.GetWebVersion()})
 }
