@@ -15,7 +15,6 @@ builds:
       - amd64
       - '386'
       - arm64
-      - arm
     ignore:
       - goos: darwin
         goarch: 386
@@ -25,9 +24,6 @@ builds:
         goarch: 386
       - goos: windows
         goarch: arm64
-    goarm:
-      - 6
-      - 7
 archive:
   replacements:
     darwin: Darwin
