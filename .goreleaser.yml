@@ -43,8 +43,6 @@ archive:
     - LICENSE
     - README.md
   name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}" 
-sign:
-  artifacts: all
 checksum:
   name_template: 'checksums.txt'
 release:
@@ -59,3 +57,5 @@ dockers:
     tag_templates:
     - "{{ .Tag }}"
     - latest
+    extra_files:
+    - keycatd.toml
