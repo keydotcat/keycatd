@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keydotcat/server/static"
+	"github.com/keydotcat/keycatd/static"
 )
 
 type VersionTime time.Time

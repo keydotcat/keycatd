@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type UserFull struct {

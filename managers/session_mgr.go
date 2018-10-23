@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/snappy"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type Session struct {

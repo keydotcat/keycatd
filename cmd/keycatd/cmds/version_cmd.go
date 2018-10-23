@@ -3,7 +3,7 @@ package cmds
 import (
 	"log"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 	"github.com/spf13/cobra"
 )
 

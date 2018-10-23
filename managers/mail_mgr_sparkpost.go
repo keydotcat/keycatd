@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 func NewMailMgrSparkpost(key, from string, eu bool) MailMgr {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 func getDummyOwnerWithTeam() (*User, *Team) {

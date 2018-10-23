@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type VaultFull struct {

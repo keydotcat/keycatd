@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/keydotcat/server/models"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/models"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type sessionMgrDB struct {

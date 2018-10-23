@@ -3,9 +3,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/keydotcat/server/managers"
-	"github.com/keydotcat/server/models"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/managers"
+	"github.com/keydotcat/keycatd/models"
+	"github.com/keydotcat/keycatd/util"
 )
 
 func (ah apiHandler) sessionRoot(w http.ResponseWriter, r *http.Request) error {

@@ -3,7 +3,7 @@ package models
 import (
 	"database/sql"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type teamUser struct {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keydotcat/server/static"
+	"github.com/keydotcat/keycatd/static"
 )
 
 //HACK: html/template removes the html comments and since we only require the csrf.. :P

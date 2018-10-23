@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 
-	"github.com/keydotcat/server/managers"
-	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/keycatd/managers"
+	"github.com/keydotcat/keycatd/models"
 )
 
 type contextType int

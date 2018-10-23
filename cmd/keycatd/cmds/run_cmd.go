@@ -10,7 +10,7 @@ import (
 	"github.com/codahale/http-handlers/debug"
 	"github.com/codahale/http-handlers/logging"
 	"github.com/codahale/http-handlers/recovery"
-	"github.com/keydotcat/server/api"
+	"github.com/keydotcat/keycatd/api"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 )

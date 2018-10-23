@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/keydotcat/server/cmd/keycatd/cmds"
+	"github.com/keydotcat/keycatd/cmd/keycatd/cmds"
 	"github.com/spf13/cobra"
 )
 

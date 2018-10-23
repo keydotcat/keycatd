@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/keydotcat/server/thelpers"
+	"github.com/keydotcat/keycatd/thelpers"
 	_ "github.com/lib/pq"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/keycatd/models"
 )
 
 func TestGetAllSecrets(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/keydotcat/server/models"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/models"
+	"github.com/keydotcat/keycatd/util"
 )
 
 func shiftPath(p string) (head, tail string) {

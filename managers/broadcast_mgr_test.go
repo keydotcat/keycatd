@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/keycatd/models"
 )
 
 func validateBcastMsg(b *Broadcast, t *testing.T) error {

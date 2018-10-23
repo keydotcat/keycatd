@@ -1,4 +1,4 @@
-ROOT = github.com/keydotcat/server
+ROOT = github.com/keydotcat/keycatd
 ifeq ($(GIT_VERSION),)
 	GIT_VERSION:=$(shell git describe --abbrev=8 --dirty --always --tags 2>/dev/null)
 endif
@@ -54,24 +54,24 @@ managers/autogen.go: managers/session_mgr.go
 autogen: models/autogen.go managers/autogen.go
 
 dev: autogen dev-static
-	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/server/cmd/keycatd' -command 'bin/keycatd' -color=true -directory=. -exclude-dir=bin -exclude-dir=web -exclude-dir=data/web -exclude-dir=scrips -exclude=tags -exclude-dir=vendor
+	CompileDaemon -build 'go build -o bin/keycatd github.com/keydotcat/keycatd/cmd/keycatd' -command 'bin/keycatd' -color=true -directory=. -exclude-dir=bin -exclude-dir=web -exclude-dir=data/web -exclude-dir=scrips -exclude=tags -exclude-dir=vendor
 
 test: test_db test_managers test_models test_api
 
 test_db: autogen dev-static
-	go test -v github.com/keydotcat/server/db 
+	go test -v github.com/keydotcat/keycatd/db 
 
 test_managers: autogen dev-static
-	go test -v github.com/keydotcat/server/managers 
+	go test -v github.com/keydotcat/keycatd/managers 
 
 test_models: autogen dev-static
-	go test -v github.com/keydotcat/server/models 
+	go test -v github.com/keydotcat/keycatd/models 
 
 test_api: autogen dev-static
-	go test -v github.com/keydotcat/server/api
+	go test -v github.com/keydotcat/keycatd/api
 
 test_coverage: autogen dev-static
-	go test -v -coverprofile db/cover.out -covermode atomic github.com/keydotcat/server/db
-	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/server/managers 
-	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/server/models 
-	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/server/api
+	go test -v -coverprofile db/cover.out -covermode atomic github.com/keydotcat/keycatd/db
+	go test -v -coverprofile managers/cover.out -covermode atomic github.com/keydotcat/keycatd/managers 
+	go test -v -coverprofile models/cover.out -covermode atomic github.com/keydotcat/keycatd/models 
+	go test -v -coverprofile api/cover.out -covermode atomic github.com/keydotcat/keycatd/api

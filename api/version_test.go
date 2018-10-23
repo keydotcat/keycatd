@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 func TestGetFullVersion(t *testing.T) {

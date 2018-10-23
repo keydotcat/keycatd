@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/keydotcat/server/managers"
-	"github.com/keydotcat/server/models"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/managers"
+	"github.com/keydotcat/keycatd/models"
+	"github.com/keydotcat/keycatd/util"
 	"github.com/tomasen/realip"
 )
 

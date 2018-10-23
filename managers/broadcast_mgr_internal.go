@@ -1,6 +1,6 @@
 package managers
 
-import "github.com/keydotcat/server/models"
+import "github.com/keydotcat/keycatd/models"
 
 type ibmRegister struct {
 	sid  string

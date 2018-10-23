@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )

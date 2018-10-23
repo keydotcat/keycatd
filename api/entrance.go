@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/keydotcat/server/db"
-	"github.com/keydotcat/server/managers"
-	"github.com/keydotcat/server/models"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/db"
+	"github.com/keydotcat/keycatd/managers"
+	"github.com/keydotcat/keycatd/models"
+	"github.com/keydotcat/keycatd/util"
 )
 
 var TEST_MODE = false

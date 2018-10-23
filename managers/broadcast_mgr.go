@@ -3,7 +3,7 @@ package managers
 import (
 	"encoding/json"
 
-	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/keycatd/models"
 )
 
 type BroadcastAction string

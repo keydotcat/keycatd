@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 const DEFAULT_VAULT_NAME = "Personal"

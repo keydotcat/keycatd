@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
-	"github.com/keydotcat/server/managers"
+	"github.com/keydotcat/keycatd/managers"
 )
 
 func connectWs(path string, t *testing.T) *websocket.Conn {

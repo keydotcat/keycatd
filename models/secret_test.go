@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 func TestGetAllSecretsForOwnerAndUser(t *testing.T) {

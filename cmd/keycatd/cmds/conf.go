@@ -3,7 +3,7 @@ package cmds
 import (
 	"log"
 
-	"github.com/keydotcat/server/api"
+	"github.com/keydotcat/keycatd/api"
 	"github.com/spf13/viper"
 )
 

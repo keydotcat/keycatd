@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/keydotcat/server/models"
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/models"
+	"github.com/keydotcat/keycatd/util"
 	radix "github.com/mediocregopher/radix.v3"
 )
 

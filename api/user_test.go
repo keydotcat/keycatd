@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/keydotcat/server/models"
+	"github.com/keydotcat/keycatd/models"
 )
 
 func TestGetUserInfo(t *testing.T) {

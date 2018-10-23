@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 const TOKEN_VERIFICATION = 0

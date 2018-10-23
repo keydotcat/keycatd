@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type Secret struct {

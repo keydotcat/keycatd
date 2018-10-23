@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"github.com/keydotcat/server/util"
+	"github.com/keydotcat/keycatd/util"
 )
 
 type ConfMailSMTP struct {
