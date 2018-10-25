@@ -43,7 +43,7 @@ checksum:
 release:
   github:
     owner: keydotcat
-    name: server
+    name: keycatd
 dockers:
   - goos: linux
     goarch: amd64
