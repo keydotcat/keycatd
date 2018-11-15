@@ -15,6 +15,8 @@ Key.cat can manage all your credentials and lets you share them with others. The
   - Multiple credentials per site.
   - API available to third-party software.
 
+More info is in the [wiki](https://github.com/keydotcat/keycatd/wiki)!
+
 # Planned features:
 
   - Currently there are no extensions for browsers but it's something I want to add.
