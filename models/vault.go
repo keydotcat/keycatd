@@ -277,7 +277,7 @@ func (v Vault) GetSecret(ctx context.Context, sid string) (s *Secret, err error)
 
 func (v Vault) getSecret(tx *sql.Tx, sid string) (*Secret, error) {
 	s := &Secret{Id: sid}
-	r := tx.QueryRow(`SELECT `+selectSecretFields+` FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2 AND "secret"."id" = $3`, v.Team, v.Id, sid)
+	r := tx.QueryRow(`SELECT `+selectSecretFields+` FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2 AND "secret"."id" = $3 ORDER BY "secret"."version" DESC LIMIT 1`, v.Team, v.Id, sid)
 	err := s.dbScanRow(r)
 	if isNotExistsErr(err) {
 		return nil, util.NewErrorFrom(ErrDoesntExist)
