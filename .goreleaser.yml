@@ -48,9 +48,8 @@ dockers:
   - goos: linux
     goarch: amd64
     binary: keycatd
-    image: keycat/keycatd
-    tag_templates:
-    - "{{ .Tag }}"
-    - latest
+    image_templates:
+      - 'keycat/keycatd:{{ .Tag }}'
+      - 'keycat/keycatd:latest'
     extra_files:
     - keycatd.toml
