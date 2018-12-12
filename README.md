@@ -4,7 +4,7 @@
 
 Key.cat can manage all your credentials and lets you share them with others. The idea is to make a password manager that can work offline and sync when there's a connection available to the server. Like an auto-sync keepass.
 
-**This is alpha software and things can break. Nonetheless API, data formats and encryption schemas will not change UNLESS THERE IS A REALLY GOOD REASON. In that case a migration path will be provided**
+**This is beta software and things can break. Nonetheless API, data formats and encryption schemas will not change UNLESS THERE IS A REALLY GOOD REASON. In that case a migration path will be provided**
 
   - Everything is encrypted end-to-end using [NaCL](https://nacl.cr.yp.to) via [tweetnacl.js](https://github.com/dchest/tweetnacl-js).
     - No metadata leaks. No metadata is stored unencrypted.
@@ -14,6 +14,8 @@ Key.cat can manage all your credentials and lets you share them with others. The
     - Each team and vault can be independently managed and shared with others. 
   - Multiple credentials per site.
   - API available to third-party software.
+
+More info is in the [wiki](https://github.com/keydotcat/keycatd/wiki)!
 
 # Planned features:
 
