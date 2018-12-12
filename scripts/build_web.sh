@@ -1,6 +1,6 @@
 #!/bin/bash
 
-webTag="${WEB_TAG:-v0.0.7}"
+webTag="${WEB_TAG:-v0.0.8}"
 
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
