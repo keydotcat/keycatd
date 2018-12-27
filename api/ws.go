@@ -54,14 +54,7 @@ func receiveWsPongs(ws *websocket.Conn) {
 	}
 }
 
-// /ws
-func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return util.NewErrorFrom(err)
-	}
-	defer ws.Close()
-	go receiveWsPongs(ws)
+func (ah apiHandler) broadcastEventListenLoop(r *http.Request, idleCb func() error, msgCb func([]byte) error) error {
 	ctx := r.Context()
 	currentUser := ctxGetUser(ctx)
 	tv, err := getTeamVaultMapForUser(ctx, currentUser)
@@ -74,7 +67,7 @@ func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
 	for alive {
 		select {
 		case <-time.After(2 * time.Minute):
-			if err := ws.WriteMessage(websocket.PingMessage, []byte{1}); err != nil {
+			if err := idleCb(); err != nil {
 				alive = false
 			}
 		case b := <-bChan:
@@ -92,10 +85,25 @@ func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
 			if !found {
 				continue
 			}
-			if err := ws.WriteMessage(websocket.TextMessage, b.Message); err != nil {
+			if err := msgCb(b.Message); err != nil {
 				alive = false
 			}
 		}
 	}
 	return nil
+}
+
+// /ws
+func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return util.NewErrorFrom(err)
+	}
+	defer ws.Close()
+	go receiveWsPongs(ws)
+	return ah.broadcastEventListenLoop(r, func() error {
+		return ws.WriteMessage(websocket.PingMessage, []byte{1})
+	}, func(msg []byte) error {
+		return ws.WriteMessage(websocket.TextMessage, msg)
+	})
 }

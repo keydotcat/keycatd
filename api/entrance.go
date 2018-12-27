@@ -126,6 +126,8 @@ func (ah apiHandler) authenticatedRoot(w http.ResponseWriter, r *http.Request, h
 		err = ah.teamRoot(w, r)
 	case "ws":
 		err = ah.wsRoot(w, r)
+	case "eventsource":
+		err = ah.eventSourceRoot(w, r)
 	}
 	return err
 }
