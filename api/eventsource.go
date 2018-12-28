@@ -2,11 +2,31 @@ package api
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/keydotcat/keycatd/util"
 )
+
+var gEventSourceHeaders []byte
+
+func init() {
+	buf := util.BufPool.Get()
+	defer util.BufPool.Put(buf)
+	headers := []string{
+		"HTTP/1.1 200 OK",
+		"Content-Type: text/event-stream",
+		"Vary: Accept-Encoding",
+		"Cache-Control: no-cache",
+		"Connection: keep-alive",
+		"",
+	}
+	for _, header := range headers {
+		buf.Write([]byte(fmt.Sprintf("%s\r\n", header)))
+	}
+	gEventSourceHeaders = append(gEventSourceHeaders, buf.Bytes()...)
+}
 
 func (ah apiHandler) eventSourceRoot(w http.ResponseWriter, r *http.Request) error {
 	var head string
@@ -17,47 +37,44 @@ func (ah apiHandler) eventSourceRoot(w http.ResponseWriter, r *http.Request) err
 	return util.NewErrorFrom(ErrNotFound)
 }
 
-func (ah apiHandler) eventSourceFlusher(w http.ResponseWriter) http.Flusher {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-		return nil
+func (ah apiHandler) makeEventSourceSender(w http.ResponseWriter) (*eventSourceSender, error) {
+	conn, _, err := w.(http.Hijacker).Hijack()
+	if err != nil {
+		return nil, util.NewErrorFrom(err)
 	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	return flusher
+	_, err = conn.Write(gEventSourceHeaders)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	return &eventSourceSender{conn}, nil
 }
 
 type eventSourceSender struct {
-	w http.ResponseWriter
-	f http.Flusher
+	conn net.Conn
+}
+
+func (e eventSourceSender) sendPayload(msg string) error {
+	payload := fmt.Sprintf("id: %d\nevent: message\ndata: %s\n\n", time.Now().UTC().UnixNano(), msg)
+	e.conn.SetWriteDeadline(time.Now().Add(time.Second))
+	_, err := e.conn.Write([]byte(payload))
+	return err
 }
 
 func (e eventSourceSender) sendPing() error {
-	if _, err := fmt.Fprintf(e.w, "id: %d\ndata: {\"action\": \"ping\"}\n\n", time.Now().UTC().UnixNano()); err != nil {
-		return err
-	}
-	e.f.Flush()
-	return nil
+	return e.sendPayload("{\"action\": \"ping\"}")
 }
 
 func (e eventSourceSender) sengMessage(msg []byte) error {
-	if _, err := fmt.Fprintf(e.w, "id: %d\ndata: %s\n\n", time.Now().UTC().UnixNano(), string(msg)); err != nil {
-		return err
-	}
-	e.f.Flush()
-	return nil
+	return e.sendPayload(string(msg))
 }
 
 // /eventsource
 func (ah apiHandler) eventSourceSubscribe(w http.ResponseWriter, r *http.Request) error {
-	flusher := ah.eventSourceFlusher(w)
-	if flusher == nil {
+	ess, err := ah.makeEventSourceSender(w)
+	if err != nil {
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
 		return nil
 	}
-	flusher.Flush()
-	ess := eventSourceSender{w, flusher}
 	return ah.broadcastEventListenLoop(r, ess.sendPing, ess.sengMessage)
 }

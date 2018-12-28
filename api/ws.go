@@ -66,7 +66,7 @@ func (ah apiHandler) broadcastEventListenLoop(r *http.Request, idleCb func() err
 	alive := true
 	for alive {
 		select {
-		case <-time.After(time.Minute):
+		case <-time.After(time.Second * 30):
 			if err := idleCb(); err != nil {
 				alive = false
 			}
