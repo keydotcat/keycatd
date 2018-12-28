@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/codahale/http-handlers/logging"
 	"github.com/codahale/http-handlers/recovery"
 	"github.com/keydotcat/keycatd/api"
-	"github.com/keydotcat/keycatd/util"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ func runServer(c api.Conf) {
 		log.Fatalf("Could not parse configuration: %s", err)
 	}
 	handler := cors.AllowAll().Handler(apiHandler)
-	logHandler := util.LogWrap(handler, os.Stdout)
+	logHandler := logging.Wrap(handler, os.Stdout)
 	logHandler.Start()
 	defer logHandler.Stop()
 	handler = recovery.Wrap(logHandler, recovery.LogOnPanic)
