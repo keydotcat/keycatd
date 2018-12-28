@@ -10,7 +10,6 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/codahale/http-handlers/logging"
 	"github.com/keydotcat/keycatd/db"
 	"github.com/keydotcat/keycatd/models"
 	"github.com/keydotcat/keycatd/thelpers"
@@ -51,7 +50,7 @@ func initSRV() {
 		panic(err)
 	}
 	apiH = handler.(apiHandler)
-	logHandler := logging.Wrap(apiH, os.Stdout)
+	logHandler := util.LogWrap(apiH, os.Stdout)
 	logHandler.Start()
 	srv = httptest.Server{
 		Listener: ln,

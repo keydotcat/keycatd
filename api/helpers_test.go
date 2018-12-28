@@ -169,6 +169,15 @@ func PostForm(path string, v url.Values) (*http.Response, error) {
 	return httpDo(req)
 }
 
+func EventRequest(path string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", srv.URL+path, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "text/event-stream")
+	return httpDo(req)
+}
+
 func getCookieJar() http.CookieJar {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
