@@ -37,13 +37,13 @@ func (ah apiHandler) eventSourceSubscribe(w http.ResponseWriter, r *http.Request
 	}
 	flusher.Flush()
 	return ah.broadcastEventListenLoop(r, func() error {
-		if _, err := fmt.Fprintf(w, "{ping: true}\r\n"); err != nil {
+		if _, err := fmt.Fprintf(w, "data: {\"action\": \"ping\"}\n\n"); err != nil {
 			return err
 		}
 		flusher.Flush()
 		return nil
 	}, func(msg []byte) error {
-		if _, err := fmt.Fprintf(w, "%s\r\n", string(msg)); err != nil {
+		if _, err := fmt.Fprintf(w, "data: %s\n\n", string(msg)); err != nil {
 			return err
 		}
 		flusher.Flush()
