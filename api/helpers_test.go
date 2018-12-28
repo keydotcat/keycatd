@@ -175,6 +175,7 @@ func EventRequest(path string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set("Accept", "text/event-stream")
+	req.Close = true
 	return httpDo(req)
 }
 

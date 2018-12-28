@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -32,9 +31,6 @@ func TestGetEventSourceNotifications(t *testing.T) {
 		CheckErrorAndResponse(t, r, err, 200)
 	}()
 	bp := &managers.BroadcastPayload{}
-	buf := bytes.NewBuffer(nil)
-	buf.ReadFrom(resp.Body)
-	fmt.Println("GOT  " + buf.String())
 	if err := json.NewDecoder(resp.Body).Decode(bp); err != nil {
 		t.Fatalf("Could not read the msg: %s", err)
 	}

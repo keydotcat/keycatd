@@ -35,6 +35,7 @@ func (ah apiHandler) eventSourceSubscribe(w http.ResponseWriter, r *http.Request
 	if flusher == nil {
 		return nil
 	}
+	flusher.Flush()
 	return ah.broadcastEventListenLoop(r, func() error {
 		if _, err := fmt.Fprintf(w, "{ping: true}\r\n"); err != nil {
 			return err
