@@ -1,6 +1,8 @@
 package managers
 
-import "github.com/keydotcat/keycatd/models"
+import (
+	"github.com/keydotcat/keycatd/models"
+)
 
 type ibmRegister struct {
 	sid  string
@@ -33,12 +35,15 @@ func (ibm *InternalBroadcasterMgr) del(sid string) {
 }
 
 func (ibm *InternalBroadcasterMgr) send(sid string, c chan<- *Broadcast, b *Broadcast) {
-	for {
+	sent := false
+	for !sent {
 		if _, ok := ibm.clients[sid]; !ok {
+			sent = true
 			break
 		}
 		select {
 		case c <- b:
+			sent = true
 			break
 		case sid := <-ibm.delChan:
 			ibm.del(sid)
