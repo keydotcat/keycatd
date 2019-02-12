@@ -43,7 +43,7 @@ func (ah apiHandler) validVaultSecretRoot(w http.ResponseWriter, r *http.Request
 	if len(head) == 0 {
 		switch r.Method {
 		case "GET":
-			//TODO: Get all secrets for vault
+			return ah.vaultGetSecrets(w, r, t, v)
 		case "POST":
 			return ah.vaultCreateSecret(w, r, t, v)
 		}
@@ -56,6 +56,16 @@ func (ah apiHandler) validVaultSecretRoot(w http.ResponseWriter, r *http.Request
 		}
 	}
 	return util.NewErrorFrom(ErrNotFound)
+}
+
+func (ah apiHandler) vaultGetSecrets(w http.ResponseWriter, r *http.Request, t *models.Team, v *models.Vault) error {
+	ctx := r.Context()
+	secrets, err := v.GetSecrets(ctx)
+	if err != nil {
+		return err
+	}
+	return jsonResponse(w, teamSecretListWrap{secrets})
+
 }
 
 type vaultCreateSecretRequest struct {
