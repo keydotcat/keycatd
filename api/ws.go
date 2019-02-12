@@ -68,7 +68,7 @@ func (ah apiHandler) broadcastEventListenLoop(r *http.Request, eb eventSender) e
 	verMsg := struct {
 		Action string                     `json:"action"`
 		Data   map[string][]*models.Vault `json:"data"`
-	}{"vaults", tv}
+	}{"vaults:version", tv}
 	if err := json.NewEncoder(buf).Encode(verMsg); err != nil {
 		return err
 	}
