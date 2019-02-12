@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -26,21 +27,18 @@ func (ah apiHandler) wsRoot(w http.ResponseWriter, r *http.Request) error {
 	return util.NewErrorFrom(ErrNotFound)
 }
 
-func getTeamVaultMapForUser(ctx context.Context, u *models.User) (map[string][]string, error) {
+func getTeamVaultMapForUser(ctx context.Context, u *models.User) (map[string][]*models.Vault, error) {
 	teams, err := u.GetTeams(ctx)
 	if err != nil {
 		return nil, err
 	}
-	tv := map[string][]string{}
+	tv := map[string][]*models.Vault{}
 	for _, t := range teams {
 		vs, err := t.GetVaultsForUser(ctx, u)
 		if err != nil {
 			return nil, err
 		}
-		tv[t.Id] = make([]string, len(vs))
-		for i, v := range vs {
-			tv[t.Id][i] = v.Id
-		}
+		tv[t.Id] = vs
 	}
 	return tv, nil
 }
@@ -54,11 +52,28 @@ func receiveWsPongs(ws *websocket.Conn) {
 	}
 }
 
-func (ah apiHandler) broadcastEventListenLoop(r *http.Request, idleCb func() error, msgCb func([]byte) error) error {
+type eventSender interface {
+	sendMessage([]byte) error
+	sendPing() error
+}
+
+func (ah apiHandler) broadcastEventListenLoop(r *http.Request, eb eventSender) error {
 	ctx := r.Context()
 	currentUser := ctxGetUser(ctx)
 	tv, err := getTeamVaultMapForUser(ctx, currentUser)
 	if err != nil {
+		return err
+	}
+	buf := util.BufPool.Get()
+	verMsg := struct {
+		Action string                     `json:"action"`
+		Data   map[string][]*models.Vault `json:"data"`
+	}{"vaults", tv}
+	if err := json.NewEncoder(buf).Encode(verMsg); err != nil {
+		return err
+	}
+	defer util.BufPool.Put(buf)
+	if err := eb.sendMessage(buf.Bytes()); err != nil {
 		return err
 	}
 	bChan := ah.bcast.Subscribe(r.RemoteAddr)
@@ -67,7 +82,7 @@ func (ah apiHandler) broadcastEventListenLoop(r *http.Request, idleCb func() err
 	for alive {
 		select {
 		case <-time.After(time.Second * 30):
-			if err := idleCb(); err != nil {
+			if err := eb.sendPing(); err != nil {
 				alive = false
 			}
 		case b := <-bChan:
@@ -77,7 +92,7 @@ func (ah apiHandler) broadcastEventListenLoop(r *http.Request, idleCb func() err
 			}
 			found := false
 			for _, v := range vs {
-				if v == b.Vault {
+				if v.Id == b.Vault {
 					found = true
 					break
 				}
@@ -85,12 +100,24 @@ func (ah apiHandler) broadcastEventListenLoop(r *http.Request, idleCb func() err
 			if !found {
 				continue
 			}
-			if err := msgCb(b.Message); err != nil {
+			if err := eb.sendMessage(b.Message); err != nil {
 				alive = false
 			}
 		}
 	}
 	return nil
+}
+
+type webSocketSender struct {
+	ws *websocket.Conn
+}
+
+func (ss webSocketSender) sendPing() error {
+	return ss.ws.WriteMessage(websocket.PingMessage, []byte{1})
+}
+
+func (ss webSocketSender) sendMessage(msg []byte) error {
+	return ss.ws.WriteMessage(websocket.TextMessage, msg)
 }
 
 // /ws
@@ -101,9 +128,5 @@ func (ah apiHandler) wsSubscribe(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer ws.Close()
 	go receiveWsPongs(ws)
-	return ah.broadcastEventListenLoop(r, func() error {
-		return ws.WriteMessage(websocket.PingMessage, []byte{1})
-	}, func(msg []byte) error {
-		return ws.WriteMessage(websocket.TextMessage, msg)
-	})
+	return ah.broadcastEventListenLoop(r, webSocketSender{ws})
 }

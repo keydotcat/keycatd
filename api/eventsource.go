@@ -65,7 +65,7 @@ func (e eventSourceSender) sendPing() error {
 	return e.sendPayload("{\"action\": \"ping\"}")
 }
 
-func (e eventSourceSender) sengMessage(msg []byte) error {
+func (e eventSourceSender) sendMessage(msg []byte) error {
 	return e.sendPayload(string(msg))
 }
 
@@ -76,5 +76,5 @@ func (ah apiHandler) eventSourceSubscribe(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
 		return nil
 	}
-	return ah.broadcastEventListenLoop(r, ess.sendPing, ess.sengMessage)
+	return ah.broadcastEventListenLoop(r, ess)
 }
