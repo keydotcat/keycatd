@@ -21,8 +21,9 @@ type StaticHandler struct {
 
 func NewStaticHandler() *StaticHandler {
 	return &StaticHandler{
-		Dir:       "web",
-		IndexFile: "index.html",
+		Dir:         "web",
+		IndexFile:   "index.html",
+		cacheStatic: true,
 	}
 }
 
@@ -37,8 +38,10 @@ func (s *StaticHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	file = strings.TrimLeft(file, "/")
+	cacheResource := s.cacheStatic
 	if len(file) == 0 || file == s.IndexFile || len(filepath.Ext(file)) == 0 {
 		file = s.IndexFile
+		cacheResource = false
 	}
 	filePath := fmt.Sprintf("%s/%s", s.Dir, file)
 	finfo, err := static.AssetInfo(filePath)
@@ -51,7 +54,7 @@ func (s *StaticHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		http.NotFound(rw, r)
 		return
 	}
-	if s.cacheStatic {
+	if cacheResource {
 		rw.Header().Add("Cache-Control", "public, max-age=31536000")
 		rw.Header().Add("Expires", time.Now().Add(30*24*time.Hour).Format(time.RFC1123))
 	}
