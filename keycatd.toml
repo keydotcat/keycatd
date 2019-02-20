@@ -1,5 +1,5 @@
 port = 23764
-url = "http://localhost:9080"
+url = "http://localhost:8080"
 db = "dbname=keycat sslmode=disable port=5432"
 [mail]
 	from = "test@nowhere.net"
@@ -9,15 +9,15 @@ db = "dbname=keycat sslmode=disable port=5432"
 		user = "myuser"
 		password = "mypassword"
 # Alternative sender
-#	[mail.sparkpost]
-#		key = "arstrsat"
-#If no redis server defined, it will use the DB as the session store
-#[session.redis]
-#	server = "localhost:6379"
-#	db_id = 0
-#	Place random values here to use as hash and block keys of the securecookie
-#	  For instance the result of 
-#	  dd if=/dev/urandom count=1024 2>/dev/null | openssl md5
+	#[mail.sparkpost]
+		#key = "arstrsat"
+# If no redis server defined, it will use the DB as the session store
+	#[session.redis]
+	#server = "localhost:6379"
+	#db_id = 0
+# Place random values here to use as hash and block keys of the securecookie
+# For instance the result of 
+# dd if=/dev/urandom count=1024 2>/dev/null | openssl md5
 [csrf]
 	hash_key = "4d018d7e070ca9d5da7e767001bdaf90"
 	block_key	= "4e3797182c94f05b384c81ed0246f6b4"
