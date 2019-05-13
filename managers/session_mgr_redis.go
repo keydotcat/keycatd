@@ -7,7 +7,7 @@ import (
 
 	"github.com/keydotcat/keycatd/models"
 	"github.com/keydotcat/keycatd/util"
-	radix "github.com/mediocregopher/radix.v3"
+	radix "github.com/mediocregopher/radix/v3"
 )
 
 type sessionMgrRedis struct {
@@ -40,9 +40,9 @@ func (r sessionMgrRedis) NewSession(userId, ip, agent string, csrf bool) (*Sessi
 		return nil, err
 	}
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SELECT", r.dbId),
-		radix.FlatCmd(nil, "SET", r.skey(s.Id), b.String()),
-		radix.FlatCmd(nil, "SADD", r.ukey(s.User), s.Id),
+		radix.Cmd(nil, "SELECT", r.dbId),
+		radix.Cmd(nil, "SET", r.skey(s.Id), b.String()),
+		radix.Cmd(nil, "SADD", r.ukey(s.User), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return nil, err
@@ -55,8 +55,8 @@ func (r sessionMgrRedis) purgeAllData() error {
 	var key string
 	for s.Next(&key) {
 		p := radix.Pipeline(
-			radix.FlatCmd(nil, "SELECT", r.dbId),
-			radix.FlatCmd(nil, "DEL", key),
+			radix.Cmd(nil, "SELECT", r.dbId),
+			radix.Cmd(nil, "DEL", key),
 		)
 		if err := r.pool.Do(p); err != nil {
 			return err
@@ -69,7 +69,7 @@ func (r sessionMgrRedis) getSession(id string) (*Session, error) {
 	b := util.BufPool.Get()
 	defer util.BufPool.Put(b)
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SELECT", r.dbId),
+		radix.Cmd(nil, "SELECT", r.dbId),
 		radix.Cmd(b, "GET", r.skey(id)),
 	)
 	if err := r.pool.Do(p); err != nil {
@@ -93,9 +93,9 @@ func (r sessionMgrRedis) storeSession(s *Session) error {
 		return err
 	}
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SELECT", r.dbId),
-		radix.FlatCmd(nil, "SET", r.skey(s.Id), b.String()),
-		radix.FlatCmd(nil, "SADD", r.ukey(s.User), s.Id),
+		radix.Cmd(nil, "SELECT", r.dbId),
+		radix.Cmd(nil, "SET", r.skey(s.Id), b.String()),
+		radix.Cmd(nil, "SADD", r.ukey(s.User), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err
@@ -132,9 +132,9 @@ func (r sessionMgrRedis) DeleteSession(id string) error {
 
 func (r sessionMgrRedis) delete(s *Session) error {
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SELECT", r.dbId),
-		radix.FlatCmd(nil, "DEL", r.skey(s.Id), nil),
-		radix.FlatCmd(nil, "SREM", r.ukey(s.User), s.Id),
+		radix.Cmd(nil, "SELECT", r.dbId),
+		radix.Cmd(nil, "DEL", r.skey(s.Id)),
+		radix.Cmd(nil, "SREM", r.ukey(s.User), s.Id),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err
@@ -145,25 +145,25 @@ func (r sessionMgrRedis) delete(s *Session) error {
 func (r sessionMgrRedis) DeleteAllSessions(userId string) error {
 	sids := []string{}
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SELECT", r.dbId),
+		radix.Cmd(nil, "SELECT", r.dbId),
 		radix.Cmd(&sids, "SMEMBERS", r.ukey(userId)),
 	)
 	if err := r.pool.Do(p); err != nil {
 		return err
 	}
 	as := make([]radix.CmdAction, len(sids)+2)
-	as[0] = radix.FlatCmd(nil, "SELECT", r.dbId)
+	as[0] = radix.Cmd(nil, "SELECT", r.dbId)
 	for i, sid := range sids {
-		as[i+1] = radix.FlatCmd(nil, "DEL", r.skey(sid))
+		as[i+1] = radix.Cmd(nil, "DEL", r.skey(sid))
 	}
-	as[len(as)-1] = radix.FlatCmd(nil, "DEL", r.ukey(userId))
+	as[len(as)-1] = radix.Cmd(nil, "DEL", r.ukey(userId))
 	return r.pool.Do(radix.Pipeline(as...))
 }
 
 func (r sessionMgrRedis) GetAllSessions(userId string) ([]*Session, error) {
 	sids := []string{}
 	p := radix.Pipeline(
-		radix.FlatCmd(nil, "SELECT", r.dbId),
+		radix.Cmd(nil, "SELECT", r.dbId),
 		radix.Cmd(&sids, "SMEMBERS", r.ukey(userId)),
 	)
 	if err := r.pool.Do(p); err != nil {
@@ -175,7 +175,7 @@ func (r sessionMgrRedis) GetAllSessions(userId string) ([]*Session, error) {
 	for i, sid := range sids {
 		b.Reset()
 		p = radix.Pipeline(
-			radix.FlatCmd(nil, "SELECT", r.dbId),
+			radix.Cmd(nil, "SELECT", r.dbId),
 			radix.Cmd(b, "GET", r.skey(sid)),
 		)
 		if err := r.pool.Do(p); err != nil {

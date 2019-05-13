@@ -9,7 +9,8 @@ import (
 )
 
 var regUniqueFieldMessage = regexp.MustCompile(`\Aduplicate key value \((\w+)\).*\z`)
-var regUniqueFieldDetail = regexp.MustCompile(`\AKey \((\w+)\)=\(\w+\) already exists.*\z`)
+var regUniqueFieldDetailFull = regexp.MustCompile(`\AKey \((\w+)\)=\(\w+\) already exists.*\z`)
+var regUniqueFieldDetail = regexp.MustCompile(`\((\w+)\)=\(\w+\)`)
 
 func IsDuplicateErr(err error) bool {
 	if err == nil {
@@ -24,6 +25,13 @@ func getDuplicateFieldFromErr(err error) string {
 	if !ok {
 		panic("Error is not a pq.Error")
 	}
+	if pe.Code == "23505" {
+		if f := regUniqueFieldDetail.FindStringSubmatch(pe.Detail); len(f) > 1 {
+			return f[1]
+		}
+		return pe.Constraint
+	}
+	//Fallback
 	if f := regUniqueFieldMessage.FindStringSubmatch(pe.Message); len(f) > 1 {
 		return f[1]
 	}
