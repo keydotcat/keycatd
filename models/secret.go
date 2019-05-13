@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
@@ -47,6 +48,21 @@ func (v *Secret) update(tx *sql.Tx) error {
 		return util.NewErrorFrom(err)
 	}
 	return nil
+}
+
+func (s *Secret) MoveToTeamVault(ctx context.Context, tid, vid string) error {
+	return doTx(ctx, func(tx *sql.Tx) error {
+		rows, err := tx.Exec(`UPDATE "secret" SET "team" = $1, "vault" = $2 WHERE "id" = $3 AND "team" = $4 AND "vault" = $5`, tid, vid, s.Id, s.Team, s.Vault)
+		if isErrOrPanic(err) {
+			return util.NewErrorFrom(err)
+		}
+		if r, _ := rows.RowsAffected(); r == 0 {
+			return util.NewErrorFrom(ErrDoesntExist)
+		}
+		s.Team = tid
+		s.Vault = vid
+		return nil
+	})
 }
 
 func (v Secret) validate(fistInsert bool) error {
