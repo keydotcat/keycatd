@@ -12,6 +12,7 @@ const (
 	BCAST_ACTION_SECRET_NEW    = BroadcastAction("secret:new")
 	BCAST_ACTION_SECRET_CHANGE = BroadcastAction("secret:change")
 	BCAST_ACTION_SECRET_REMOVE = BroadcastAction("secret:remove")
+	BCAST_ACTION_VAULT_VERSION = BroadcastAction("vault:version")
 )
 
 type Broadcast struct {
@@ -28,14 +29,15 @@ type BroadcasterMgr interface {
 }
 
 type BroadcastPayload struct {
-	Team   string          `json:"team"`
-	Vault  string          `json:"vault"`
-	Action BroadcastAction `json:"action"`
-	Secret *models.Secret  `json:"secret,omitempty"`
+	Action       BroadcastAction              `json:"action"`
+	Team         string                       `json:"team,omitempty"`
+	Vault        string                       `json:"vault,omitempty"`
+	Secret       *models.Secret               `json:"secret,omitempty"`
+	VaultVersion map[string]map[string]uint32 `json:"vault_version,omitempty"`
 }
 
 func createBroadcast(team, vault string, action BroadcastAction, secret *models.Secret) *Broadcast {
-	msg, err := json.Marshal(BroadcastPayload{team, vault, action, secret})
+	msg, err := json.Marshal(BroadcastPayload{action, team, vault, secret, nil})
 	if err != nil {
 		panic(err)
 	}

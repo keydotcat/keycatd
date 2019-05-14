@@ -1,8 +1,11 @@
 package api
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/keydotcat/keycatd/managers"
@@ -31,7 +34,30 @@ func TestGetEventSourceNotifications(t *testing.T) {
 		CheckErrorAndResponse(t, r, err, 200)
 	}()
 	bp := &managers.BroadcastPayload{}
-	if err := json.NewDecoder(resp.Body).Decode(bp); err != nil {
+	source := bufio.NewReader(resp.Body)
+	line, err := source.ReadString('\n')
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Index(line, "id: ") != 0 {
+		t.Fatalf("Didn't find 'id' in line %s", line)
+	}
+	line, err = source.ReadString('\n')
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Index(line, "event: ") != 0 {
+		t.Fatalf("Didn't find 'event' in line %s", line)
+	}
+	line, err = source.ReadString('\n')
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Index(line, "data: ") != 0 {
+		t.Fatalf("Didn't find 'data' in line %s", line)
+	}
+	fmt.Println(line[6:])
+	if err := json.NewDecoder(bytes.NewBuffer([]byte(line[6:]))).Decode(bp); err != nil {
 		t.Fatalf("Could not read the msg: %s", err)
 	}
 	if bp.Team != teams[0].Id || bp.Vault != v.Id {

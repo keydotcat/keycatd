@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/keydotcat/keycatd/managers"
 	"github.com/keydotcat/keycatd/models"
 	"github.com/keydotcat/keycatd/util"
 )
@@ -65,14 +66,14 @@ func (ah apiHandler) broadcastEventListenLoop(r *http.Request, eb eventSender) e
 		return err
 	}
 	buf := util.BufPool.Get()
-	verMsg := struct {
-		Action string                       `json:"action"`
-		Data   map[string]map[string]uint32 `json:"data"`
-	}{"vaults:version", map[string]map[string]uint32{}}
+	verMsg := managers.BroadcastPayload{
+		Action:       managers.BCAST_ACTION_VAULT_VERSION,
+		VaultVersion: map[string]map[string]uint32{},
+	}
 	for tid, vaults := range tv {
-		verMsg.Data[tid] = map[string]uint32{}
+		verMsg.VaultVersion[tid] = map[string]uint32{}
 		for _, vault := range vaults {
-			verMsg.Data[tid][vault.Id] = vault.Version
+			verMsg.VaultVersion[tid][vault.Id] = vault.Version
 		}
 	}
 	if err := json.NewEncoder(buf).Encode(verMsg); err != nil {
