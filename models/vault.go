@@ -257,7 +257,25 @@ func (v *Vault) DeleteSecret(ctx context.Context, sid string) error {
 
 func (v Vault) GetSecrets(ctx context.Context) ([]*Secret, error) {
 	db := GetDB(ctx)
-	rows, err := db.Query(`SELECT `+selectSecretFields+` FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2`, v.Team, v.Id)
+	query := `
+		SELECT DISTINCT ON ("secret"."team", "secret"."vault", "secret"."id") ` + selectSecretFullFields + ` 
+		FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2 
+		ORDER BY "secret"."team", "secret"."vault", "secret"."id", "secret"."version" DESC`
+	rows, err := db.Query(query, v.Team, v.Id)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	secrets, err := scanSecrets(rows)
+	if isErrOrPanic(err) {
+		return nil, util.NewErrorFrom(err)
+	}
+	return secrets, nil
+}
+
+func (v Vault) GetSecretsAllVersions(ctx context.Context) ([]*Secret, error) {
+	db := GetDB(ctx)
+	query := `SELECT` + selectSecretFullFields + ` FROM "secret" WHERE "secret"."team" = $1 AND "secret"."vault" = $2`
+	rows, err := db.Query(query, v.Team, v.Id)
 	if isErrOrPanic(err) {
 		return nil, util.NewErrorFrom(err)
 	}

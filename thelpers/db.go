@@ -1,10 +1,15 @@
 package thelpers
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+
+	"github.com/lib/pq"
+	"github.com/luna-duclos/instrumentedsql"
 )
 
 func GetTestDBType() string {
@@ -28,7 +33,22 @@ func GetDBConnString() string {
 }
 
 func GetDBConn() *sql.DB {
-	mdb, err := sql.Open("postgres", GetDBConnString())
+	dbType := "postgres"
+	if len(os.Getenv("dblog")) > 0 {
+		logger := instrumentedsql.LoggerFunc(func(ctx context.Context, msg string, keyvals ...interface{}) {
+			switch msg {
+			case "sql-conn-exec", "sql-conn-query":
+				log.Printf("SQL: %v", keyvals)
+			}
+		})
+		dbType = "instrumented-postgres"
+		sql.Register(dbType, instrumentedsql.WrapDriver(
+			&pq.Driver{},
+			instrumentedsql.WithOpsExcluded(instrumentedsql.OpSQLRowsNext, instrumentedsql.OpSQLTxBegin, instrumentedsql.OpSQLTxCommit),
+			instrumentedsql.WithLogger(logger),
+		))
+	}
+	mdb, err := sql.Open(dbType, GetDBConnString())
 	if err != nil {
 		panic(err)
 	}

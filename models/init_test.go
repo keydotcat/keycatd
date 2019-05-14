@@ -7,7 +7,7 @@ import (
 
 	"github.com/keydotcat/keycatd/db"
 	"github.com/keydotcat/keycatd/thelpers"
-	_ "github.com/lib/pq"
+	"github.com/keydotcat/keycatd/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,4 +32,39 @@ func init() {
 
 func getCtx() context.Context {
 	return AddDBToContext(context.Background(), mdb)
+}
+
+type vaultMock struct {
+	v    *Vault
+	priv []byte
+}
+
+func createVaultMock(user *User, team *Team) vaultMock {
+	ctx := getCtx()
+	userPrivKeys := getUserPrivateKeys(user.PublicKey, user.Key)
+	vkp := getDummyVaultKeyPair(userPrivKeys, user.Id)
+	v, err := team.CreateVault(ctx, user, util.GenerateRandomToken(5), vkp)
+	if err != nil {
+		panic(err)
+	}
+	return vaultMock{v, unsealVaultKey(v, vkp.Keys[user.Id])}
+}
+
+func getFirstVault(o *User, t *Team) vaultMock {
+	vs, err := t.GetVaultsFullForUser(getCtx(), o)
+	if err != nil {
+		panic(err)
+	}
+	return vaultMock{&vs[0].Vault, unsealVaultKey(&vs[0].Vault, vs[0].Key)}
+}
+
+func createTeamMock(user *User) *Team {
+	ctx := getCtx()
+	privKeys := getUserPrivateKeys(user.PublicKey, user.Key)
+	vkp := getDummyVaultKeyPair(privKeys, user.Id)
+	team, err := user.CreateTeam(ctx, "team:"+util.GenerateRandomToken(10), vkp)
+	if err != nil {
+		panic(nil)
+	}
+	return team
 }

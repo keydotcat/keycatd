@@ -92,6 +92,16 @@ func getDummyVaultKeyPair(signerPack []byte, ids ...string) VaultKeyPair {
 	return vkp
 }
 
+func sealVaultKey(v *Vault, privPack []byte) []byte {
+	vaultSigner := privPack[:ed25519.PrivateKeySize]
+	snonce := util.GenerateRandomByteArray(boxNonceSize)
+	var nonce [24]byte
+	copy(nonce[:], snonce)
+	var sharedK [32]byte
+	copy(sharedK[:], v.PublicKey)
+	return signAndPack(vaultSigner, box.SealAfterPrecomputation(snonce, privPack, &nonce, &sharedK))
+}
+
 func unsealVaultKey(v *Vault, signedsealed []byte) []byte {
 	var sharedK [32]byte
 	copy(sharedK[:], v.PublicKey)
