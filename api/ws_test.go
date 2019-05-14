@@ -49,6 +49,12 @@ func TestGetWSNotifications(t *testing.T) {
 	if err := ws.ReadJSON(bp); err != nil {
 		t.Fatalf("Could not read the msg: %s", err)
 	}
+	if bp.Action != managers.BCAST_ACTION_VAULT_VERSION {
+		t.Errorf("Unexpected action: %s vs %s", managers.BCAST_ACTION_VAULT_VERSION, bp.Action)
+	}
+	if err := ws.ReadJSON(bp); err != nil {
+		t.Fatalf("Could not read the msg: %s", err)
+	}
 	if bp.Team != teams[0].Id || bp.Vault != v.Id {
 		t.Errorf("Mismatch either in the team or in vault: %s:%s vs %s:%s", teams[0].Id, v.Id, bp.Team, bp.Vault)
 	}

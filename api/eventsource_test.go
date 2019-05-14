@@ -11,6 +11,22 @@ import (
 	"github.com/keydotcat/keycatd/managers"
 )
 
+func getEvent(t *testing.T, source *bufio.Reader) *managers.BroadcastPayload {
+	for {
+		line, err := source.ReadString('\n')
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Index(line, "data: ") == 0 {
+			bp := &managers.BroadcastPayload{}
+			if err := json.NewDecoder(bytes.NewBuffer([]byte(line[6:]))).Decode(bp); err != nil {
+				t.Fatalf("Could not read the msg: %s", err)
+			}
+			return bp
+		}
+	}
+}
+
 func TestGetEventSourceNotifications(t *testing.T) {
 	u := loginDummyUser()
 	ctx := getCtx()
@@ -33,33 +49,12 @@ func TestGetEventSourceNotifications(t *testing.T) {
 		r, err := PostRequest(fmt.Sprintf("/team/%s/vault/%s/secret", teams[0].Id, v.Vault.Id), vcsr)
 		CheckErrorAndResponse(t, r, err, 200)
 	}()
-	bp := &managers.BroadcastPayload{}
 	source := bufio.NewReader(resp.Body)
-	line, err := source.ReadString('\n')
-	if err != nil {
-		t.Fatal(err)
+	bp := getEvent(t, source)
+	if bp.Action != managers.BCAST_ACTION_VAULT_VERSION {
+		t.Errorf("Unexpected action: %s vs %s", managers.BCAST_ACTION_VAULT_VERSION, bp.Action)
 	}
-	if strings.Index(line, "id: ") != 0 {
-		t.Fatalf("Didn't find 'id' in line %s", line)
-	}
-	line, err = source.ReadString('\n')
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Index(line, "event: ") != 0 {
-		t.Fatalf("Didn't find 'event' in line %s", line)
-	}
-	line, err = source.ReadString('\n')
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Index(line, "data: ") != 0 {
-		t.Fatalf("Didn't find 'data' in line %s", line)
-	}
-	fmt.Println(line[6:])
-	if err := json.NewDecoder(bytes.NewBuffer([]byte(line[6:]))).Decode(bp); err != nil {
-		t.Fatalf("Could not read the msg: %s", err)
-	}
+	bp = getEvent(t, source)
 	if bp.Team != teams[0].Id || bp.Vault != v.Id {
 		t.Errorf("Mismatch either in the team or in vault: %s:%s vs %s:%s", teams[0].Id, v.Id, bp.Team, bp.Vault)
 	}
