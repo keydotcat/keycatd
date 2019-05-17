@@ -136,8 +136,13 @@ func TestMoveSecretToVault(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := secrets[0].MoveToTeamVault(ctx, team.Id, vms[2].v.Id); err != nil {
+	oldSid := secrets[0].Id
+	secrets[0].Data = signAndPack(vms[2].priv, a32b)
+	if err := MoveSecretToVault(ctx, secrets[0], vms[0].v, vms[2].v); err != nil {
 		t.Fatal(err)
+	}
+	if secrets[0].Id == oldSid {
+		t.Fatal("Secret ID has not changed")
 	}
 	secrets[2], secrets[0] = secrets[0], secrets[2]
 	for i, vm := range vms {
@@ -150,8 +155,11 @@ func TestMoveSecretToVault(t *testing.T) {
 				t.Fatalf("Expected 0 secrets for vault %d and got %d", i, len(vs))
 			}
 		} else {
-			if len(vs) != 2 {
+			if i < len(secrets)-1 && len(vs) != 2 {
 				t.Fatalf("Expected 2 secrets for vault %d and got %d", i, len(vs))
+			}
+			if i == len(secrets)-1 && len(vs) != 1 {
+				t.Fatalf("Expected 1 secrets for vault %d and got %d", i, len(vs))
 			}
 			for si := range vs {
 				if secrets[i].Id != vs[si].Id {
@@ -185,10 +193,15 @@ func TestMoveSecretToTeamVault(t *testing.T) {
 			}
 		}
 	}
-	if err := secrets[0][0].MoveToTeamVault(ctx, teams[1].Id, vms[1][2].v.Id); err != nil {
+	oldSid := secrets[0][0].Id
+	secrets[0][0].Data = signAndPack(vms[1][2].priv, a32b)
+	if err := MoveSecretToVault(ctx, secrets[0][0], vms[0][0].v, vms[1][2].v); err != nil {
 		t.Fatal(err)
 	}
-	secrets[1][2], secrets[0][0] = secrets[0][0], secrets[1][2]
+	if secrets[0][0].Id == oldSid {
+		t.Fatal("Secret ID has not changed")
+	}
+	secrets[0][0], secrets[1][2] = secrets[1][2], secrets[0][0]
 	for it := range vms {
 		for iv, vm := range vms[it] {
 			vs, err := vm.v.GetSecretsAllVersions(ctx)
@@ -200,8 +213,11 @@ func TestMoveSecretToTeamVault(t *testing.T) {
 					t.Fatalf("Expected 0 secrets for vault %d/%d and got %d", it, iv, len(vs))
 				}
 			} else {
-				if len(vs) != 2 {
+				if iv < len(secrets[it])-1 && len(vs) != 2 {
 					t.Fatalf("Expected 2 secrets for vault %d/%d and got %d", it, iv, len(vs))
+				}
+				if iv == len(secrets[it])-1 && len(vs) != 1 {
+					t.Fatalf("Expected 1 secrets for vault %d/%d and got %d", it, iv, len(vs))
 				}
 				for si := range vs {
 					if secrets[it][iv].Id != vs[si].Id {

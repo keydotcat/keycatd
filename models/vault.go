@@ -176,19 +176,10 @@ func (v Vault) removeUser(tx *sql.Tx, username string) error {
 }
 
 func (v *Vault) AddSecret(ctx context.Context, s *Secret) error {
-	s.Team = v.Team
-	s.Vault = v.Id
-	if _, err := verifyAndUnpack(v.PublicKey, s.Data); err != nil {
-		return err
-	}
 	var err error
 	for retry := 0; retry < 3; retry++ {
 		err = doTx(ctx, func(tx *sql.Tx) error {
-			if err := v.update(tx); err != nil {
-				return err
-			}
-			s.VaultVersion = v.Version
-			return s.insert(tx)
+			return v.addSecret(tx, s)
 		})
 		if err == ErrAlreadyExists {
 			continue
@@ -196,6 +187,19 @@ func (v *Vault) AddSecret(ctx context.Context, s *Secret) error {
 		break
 	}
 	return err
+}
+
+func (v *Vault) addSecret(tx *sql.Tx, s *Secret) error {
+	s.Team = v.Team
+	s.Vault = v.Id
+	if _, err := verifyAndUnpack(v.PublicKey, s.Data); err != nil {
+		return err
+	}
+	if err := v.update(tx); err != nil {
+		return err
+	}
+	s.VaultVersion = v.Version
+	return s.insert(tx)
 }
 
 func (v *Vault) AddSecretList(ctx context.Context, sl []*Secret) error {
@@ -229,6 +233,10 @@ func (v *Vault) AddSecretList(ctx context.Context, sl []*Secret) error {
 }
 
 func (v *Vault) UpdateSecret(ctx context.Context, s *Secret) error {
+	_, err := verifyAndUnpack(v.PublicKey, s.Data)
+	if err != nil {
+		return err
+	}
 	return doTx(ctx, func(tx *sql.Tx) error {
 		os, err := v.getSecret(tx, s.Id)
 		if err != nil {
@@ -247,12 +255,16 @@ func (v *Vault) UpdateSecret(ctx context.Context, s *Secret) error {
 
 func (v *Vault) DeleteSecret(ctx context.Context, sid string) error {
 	return doTx(ctx, func(tx *sql.Tx) error {
-		if err := v.update(tx); err != nil {
-			return err
-		}
-		res, err := tx.Exec(`DELETE FROM "secret" WHERE "secret"."id" = $1`, sid)
-		return treatUpdateErr(res, err)
+		return v.deleteSecret(tx, sid)
 	})
+}
+
+func (v *Vault) deleteSecret(tx *sql.Tx, sid string) error {
+	if err := v.update(tx); err != nil {
+		return err
+	}
+	res, err := tx.Exec(`DELETE FROM "secret" WHERE "secret"."id" = $1`, sid)
+	return treatUpdateErr(res, err)
 }
 
 func (v Vault) GetSecrets(ctx context.Context) ([]*Secret, error) {

@@ -19,7 +19,12 @@ func runServer(c api.Conf) {
 	if err != nil {
 		log.Fatalf("Could not parse configuration: %s", err)
 	}
-	handler := cors.AllowAll().Handler(apiHandler)
+	handler := cors.New(cors.Options{
+		AllowOriginFunc:  func(origin string) bool { return true },
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPatch, http.MethodHead, http.MethodPut},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	}).Handler(apiHandler)
 	logHandler := logging.Wrap(handler, os.Stdout)
 	logHandler.Start()
 	defer logHandler.Stop()

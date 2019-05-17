@@ -50,18 +50,13 @@ func (v *Secret) update(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *Secret) MoveToTeamVault(ctx context.Context, tid, vid string) error {
+func MoveSecretToVault(ctx context.Context, s *Secret, source, target *Vault) error {
 	return doTx(ctx, func(tx *sql.Tx) error {
-		rows, err := tx.Exec(`UPDATE "secret" SET "team" = $1, "vault" = $2 WHERE "id" = $3 AND "team" = $4 AND "vault" = $5`, tid, vid, s.Id, s.Team, s.Vault)
-		if isErrOrPanic(err) {
-			return util.NewErrorFrom(err)
+		if err := source.deleteSecret(tx, s.Id); err != nil {
+			return err
 		}
-		if r, _ := rows.RowsAffected(); r == 0 {
-			return util.NewErrorFrom(ErrDoesntExist)
-		}
-		s.Team = tid
-		s.Vault = vid
-		return nil
+		s.Id = ""
+		return target.addSecret(tx, s)
 	})
 }
 

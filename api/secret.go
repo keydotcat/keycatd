@@ -103,39 +103,38 @@ func (ah apiHandler) vaultUpdateSecret(w http.ResponseWriter, r *http.Request, t
 	if err := jsonDecode(w, r, 16*1024, vscr); err != nil {
 		return err
 	}
-	//Modify secret
-	if len(vscr.Data) > 0 {
-		s := &models.Secret{Id: sid, Data: vscr.Data}
-		if err := v.UpdateSecret(ctx, s); err != nil {
-			return err
-		}
-		if len(vscr.Vault) == 0 {
+	s := &models.Secret{Id: sid, Data: vscr.Data}
+	if len(vscr.Vault) == 0 || (t.Id == vscr.Team && v.Id == vscr.Vault) {
+		//Modify secret
+		if len(vscr.Data) > 0 {
+			if err := v.UpdateSecret(ctx, s); err != nil {
+				return err
+			}
 			ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_CHANGE, s)
-			return jsonResponse(w, s)
 		}
-	}
-	//Move it to a different team/vault
-	u := ctxGetUser(r.Context())
-	var targetTeam = t
-	if len(vscr.Team) != 0 {
-		var err error
-		targetTeam, err = u.GetTeam(r.Context(), vscr.Team)
+		return jsonResponse(w, s)
+	} else {
+		//Move it to a different team/vault
+		u := ctxGetUser(r.Context())
+		var targetTeam = t
+		if len(vscr.Team) != 0 {
+			var err error
+			targetTeam, err = u.GetTeam(r.Context(), vscr.Team)
+			if err != nil {
+				return err
+			}
+		}
+		targetVault, err := targetTeam.GetVaultForUser(r.Context(), vscr.Vault, u)
 		if err != nil {
 			return err
 		}
+		if err := MoveToVault(ctx, s, v, targetVault); err != nil {
+			return err
+		}
+		ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_REMOVE, &models.Secret{Id: sid})
+		ah.bcast.Send(targetTeam.Id, targetVault.Id, managers.BCAST_ACTION_SECRET_NEW, s)
+		return jsonResponse(w, s)
 	}
-	targetVault, err := targetTeam.GetVaultForUser(r.Context(), vscr.Vault, u)
-	if err != nil {
-		return err
-	}
-	s := &models.Secret{Team: t.Id, Vault: v.Id, Id: sid}
-	if err := s.MoveToTeamVault(ctx, targetTeam.Id, targetVault.Id); err != nil {
-		return err
-	}
-	ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_REMOVE, s)
-	ah.bcast.Send(targetTeam.Id, targetVault.Id, managers.BCAST_ACTION_SECRET_NEW, s)
-	return jsonResponse(w, s)
-
 }
 
 // /team/:tid/vault/:vid/secrets
