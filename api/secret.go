@@ -128,7 +128,7 @@ func (ah apiHandler) vaultUpdateSecret(w http.ResponseWriter, r *http.Request, t
 		if err != nil {
 			return err
 		}
-		if err := MoveToVault(ctx, s, v, targetVault); err != nil {
+		if err := models.MoveSecretToVault(ctx, s, v, targetVault); err != nil {
 			return err
 		}
 		ah.bcast.Send(v.Team, v.Id, managers.BCAST_ACTION_SECRET_REMOVE, &models.Secret{Id: sid})
