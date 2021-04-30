@@ -19,8 +19,8 @@ webTag="${WEB_TAG:-$(git describe --abbrev=0 --tags origin/master)}"
 [ $(git describe --abbrev=8 --dirty --always --tags) == "${webTag}" ] || git checkout ${webTag} -b auto-${webTag}
 git submodule update --init --recursive --remote
 echo 'Set web version to' ${webTag}
-yarn install
-yarn build
+npm install
+npm run build
 )
 
 rm -f ${rootDir}/data/web
