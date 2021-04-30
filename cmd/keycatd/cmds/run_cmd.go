@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/codahale/http-handlers/logging"
-	"github.com/codahale/http-handlers/recovery"
 	"github.com/keydotcat/keycatd/api"
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
@@ -25,10 +22,6 @@ func runServer(c api.Conf) {
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	}).Handler(apiHandler)
-	logHandler := logging.Wrap(handler, os.Stdout)
-	logHandler.Start()
-	defer logHandler.Stop()
-	handler = recovery.Wrap(logHandler, recovery.LogOnPanic)
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", c.Port),
 		Handler:        handler,
