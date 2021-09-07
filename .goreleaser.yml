@@ -49,7 +49,7 @@ release:
 dockers:
   - goos: linux
     goarch: amd64
-    binaries: 
+    ids: 
       - keycatd
     image_templates:
       - 'keycat/keycatd:{{ .Tag }}'
